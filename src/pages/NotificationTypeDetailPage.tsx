@@ -1,0 +1,115 @@
+import { useEffect, useState } from "react";
+import { EmptyState } from "../components/ui/EmptyState";
+import { Panel } from "../components/ui/Panel";
+import { RegimentoView } from "../components/ui/RegimentoView";
+import { getNotificationTypeById } from "../services/notificationTypeService";
+import type { NotificationType } from "../types/domain";
+import { formatDate } from "../utils/format";
+
+interface NotificationTypeDetailPageProps {
+  typeId: string;
+  onNavigate: (to: string) => void;
+}
+
+export function NotificationTypeDetailPage({
+  typeId,
+  onNavigate,
+}: NotificationTypeDetailPageProps) {
+  const [type, setType] = useState<NotificationType | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadType() {
+      try {
+        const data = await getNotificationTypeById(typeId);
+
+        if (!active) {
+          return;
+        }
+
+        setType(data);
+      } catch (loadError) {
+        if (!active) {
+          return;
+        }
+
+        const message =
+          loadError instanceof Error
+            ? loadError.message
+            : "Nao foi possivel carregar o tipo_notificacao.";
+        setError(message);
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadType();
+
+    return () => {
+      active = false;
+    };
+  }, [typeId]);
+
+  return (
+    <Panel
+      title="Tipo de notificacao individual"
+      subtitle="Visualizacao somente leitura do tipo cadastrado"
+      action={
+        <button
+          type="button"
+          onClick={() => onNavigate("/tipos-notificacao")}
+          className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:bg-slate-100"
+        >
+          Voltar para lista
+        </button>
+      }
+    >
+      {loading ? (
+        <p className="text-sm text-slate-500">Carregando tipo_notificacao...</p>
+      ) : null}
+
+      {error ? (
+        <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+          {error}
+        </p>
+      ) : null}
+
+      {!loading && !error && !type ? (
+        <EmptyState
+          title="Tipo nao encontrado"
+          description="Este registro pode ter sido removido ou ainda nao existe."
+        />
+      ) : null}
+
+      {!loading && !error && type ? (
+        <article className="space-y-4 rounded-2xl border border-slate-200 p-5">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+              Titulo do tipo
+            </p>
+            <h3 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
+              {type.titulo ?? `Tipo ${type.id}`}
+            </h3>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs text-slate-400">
+            <span>ID {type.id}</span>
+            <span>Criado em {formatDate(type.createdAt)}</span>
+          </div>
+
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+              Texto do regimento
+            </p>
+            <RegimentoView textoRegimento={type.textoRegimento} />
+          </div>
+        </article>
+      ) : null}
+    </Panel>
+  );
+}

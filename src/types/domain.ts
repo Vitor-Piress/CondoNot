@@ -18,11 +18,26 @@ export interface Notification {
   valorMulta: number | null;
 }
 
+export interface RegimentoParagrafo {
+  artigo: string;
+  texto: string;
+}
+
+export interface RegimentoEscopo {
+  titulo: string;
+  paragrafos: RegimentoParagrafo[];
+}
+
+export type RegimentoTexto = RegimentoEscopo[];
+
+export const MAX_ESCOPOS = 2;
+export const MAX_PARAGRAFOS_POR_ESCOPO = 5;
+
 export interface NotificationType {
   id: string;
   createdAt: string;
   titulo: string | null;
-  textoPadrao: string | null;
+  textoRegimento: RegimentoTexto | null;
 }
 
 export interface Unit {
@@ -117,6 +132,90 @@ function toNullableResident(value: unknown): ResidentInfo | null {
   };
 }
 
+function parseRegimentoParagrafo(value: unknown): RegimentoParagrafo | null {
+  const raw = toNullableJsonObject(value);
+
+  if (!raw) {
+    return null;
+  }
+
+  return {
+    artigo: toStringValue(raw.artigo),
+    texto: toStringValue(raw.texto),
+  };
+}
+
+function parseRegimentoEscopo(value: unknown): RegimentoEscopo | null {
+  const raw = toNullableJsonObject(value);
+
+  if (!raw) {
+    return null;
+  }
+
+  const paragrafos: RegimentoParagrafo[] = [];
+
+  for (let i = 1; i <= MAX_PARAGRAFOS_POR_ESCOPO; i += 1) {
+    const key = `paragrafo_${String(i).padStart(2, "0")}`;
+    const paragrafo = parseRegimentoParagrafo(raw[key]);
+
+    if (paragrafo) {
+      paragrafos.push(paragrafo);
+    }
+  }
+
+  return {
+    titulo: toStringValue(raw.titulo),
+    paragrafos,
+  };
+}
+
+function toNullableRegimentoTexto(value: unknown): RegimentoTexto | null {
+  const raw = toNullableJsonObject(value);
+
+  if (!raw) {
+    return null;
+  }
+
+  const escopos: RegimentoEscopo[] = [];
+
+  for (let i = 1; i <= MAX_ESCOPOS; i += 1) {
+    const key = `escopo_${String(i).padStart(2, "0")}`;
+    const escopo = parseRegimentoEscopo(raw[key]);
+
+    if (escopo) {
+      escopos.push(escopo);
+    }
+  }
+
+  return escopos.length > 0 ? escopos : null;
+}
+
+export function serializeRegimentoTexto(escopos: RegimentoTexto): JsonObject {
+  const raw: JsonObject = {};
+
+  escopos.slice(0, MAX_ESCOPOS).forEach((escopo, escopoIndex) => {
+    const escopoKey = `escopo_${String(escopoIndex + 1).padStart(2, "0")}`;
+    const escopoRaw: JsonObject = { titulo: escopo.titulo };
+
+    escopo.paragrafos
+      .slice(0, MAX_PARAGRAFOS_POR_ESCOPO)
+      .forEach((paragrafo, paragrafoIndex) => {
+        const paragrafoKey = `paragrafo_${String(paragrafoIndex + 1).padStart(
+          2,
+          "0",
+        )}`;
+        escopoRaw[paragrafoKey] = {
+          artigo: paragrafo.artigo,
+          texto: paragrafo.texto,
+        };
+      });
+
+    raw[escopoKey] = escopoRaw;
+  });
+
+  return raw;
+}
+
 export function parseNotification(row: UnknownRow): Notification {
   return {
     id: toStringValue(row.id, crypto.randomUUID()),
@@ -145,8 +244,20 @@ export function parseNotificationType(row: UnknownRow): NotificationType {
       new Date().toISOString(),
     ),
     titulo: toNullableString(row.titulo),
-    textoPadrao: toNullableString(row.texto_padrao ?? row.textoPadrao),
+    textoRegimento: toNullableRegimentoTexto(
+      row.texto_regimento ?? row.textoRegimento,
+    ),
   };
+}
+
+export function getRegimentoPreview(
+  textoRegimento: RegimentoTexto | null,
+): string {
+  if (!textoRegimento || textoRegimento.length === 0) {
+    return "Sem texto de regimento";
+  }
+
+  return textoRegimento.map((escopo) => escopo.titulo).join(" / ");
 }
 
 export function parseUnit(row: UnknownRow): Unit {

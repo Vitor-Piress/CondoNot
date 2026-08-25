@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Panel } from "../components/ui/Panel";
+import { RegimentoView } from "../components/ui/RegimentoView";
 import { getNotificationById } from "../services/notificationService";
-import { listNotificationTypes } from "../services/notificationTypeService";
+import { getNotificationTypeById } from "../services/notificationTypeService";
 import { getUnitById } from "../services/unitService";
 import {
   getUnitLabel,
@@ -22,7 +23,7 @@ export function NotificationDetailPage({
   onNavigate,
 }: NotificationDetailPageProps) {
   const [row, setRow] = useState<Notification | null>(null);
-  const [types, setTypes] = useState<NotificationType[]>([]);
+  const [type, setType] = useState<NotificationType | null>(null);
   const [unit, setUnit] = useState<Unit | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,8 +44,8 @@ export function NotificationDetailPage({
           return;
         }
 
-        const [typeRows, unitRow] = await Promise.all([
-          listNotificationTypes(),
+        const [typeRow, unitRow] = await Promise.all([
+          getNotificationTypeById(notification.idTipoNotificacao),
           notification.idUnidade
             ? getUnitById(notification.idUnidade)
             : Promise.resolve(null),
@@ -55,7 +56,7 @@ export function NotificationDetailPage({
         }
 
         setRow(notification);
-        setTypes(typeRows);
+        setType(typeRow);
         setUnit(unitRow);
       } catch (loadError) {
         if (!active) {
@@ -81,14 +82,7 @@ export function NotificationDetailPage({
     };
   }, [notificationId]);
 
-  const typeTitle = useMemo(() => {
-    if (!row) {
-      return "-";
-    }
-
-    const found = types.find((type) => type.id === row.idTipoNotificacao);
-    return found?.titulo ?? `Tipo ${row.idTipoNotificacao}`;
-  }, [row, types]);
+  const typeTitle = type?.titulo ?? `Tipo ${row?.idTipoNotificacao ?? ""}`;
 
   return (
     <Panel
@@ -137,7 +131,15 @@ export function NotificationDetailPage({
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
                 Tipo de notificacao
               </p>
-              <p className="mt-1 text-sm text-slate-700">{typeTitle}</p>
+              <button
+                type="button"
+                onClick={() =>
+                  onNavigate(`/tipos-notificacao/${row.idTipoNotificacao}`)
+                }
+                className="mt-1 text-sm font-medium text-slate-900 underline decoration-slate-300 underline-offset-2 transition hover:text-slate-600"
+              >
+                {typeTitle}
+              </button>
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
@@ -190,6 +192,13 @@ export function NotificationDetailPage({
             <p className="mt-1 text-sm text-slate-700">
               {row.valorMulta === null ? "Nao informado" : row.valorMulta}
             </p>
+          </div>
+
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+              Texto do regimento do tipo
+            </p>
+            <RegimentoView textoRegimento={type?.textoRegimento ?? null} />
           </div>
         </article>
       ) : null}

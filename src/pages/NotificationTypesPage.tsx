@@ -6,6 +6,7 @@ import { listNotifications } from "../services/notificationService";
 import { listNotificationTypes } from "../services/notificationTypeService";
 import { includesQuery } from "../utils/format";
 import { formatDate } from "../utils/format";
+import { getRegimentoPreview } from "../types/domain";
 import type { Notification, NotificationType } from "../types/domain";
 
 interface NotificationTypesPageProps {
@@ -81,7 +82,7 @@ export function NotificationTypesPage({
     () =>
       types.filter((type) => {
         const title = type.titulo ?? "";
-        const text = type.textoPadrao ?? "";
+        const text = getRegimentoPreview(type.textoRegimento);
         return query.trim() === "" || includesQuery(`${title} ${text}`, query);
       }),
     [types, query],
@@ -133,14 +134,18 @@ export function NotificationTypesPage({
         <ul className="space-y-3">
           {filteredTypes.map((type) => (
             <li key={type.id}>
-              <article className="rounded-xl border border-slate-200 p-4">
+              <button
+                type="button"
+                onClick={() => onNavigate(`/tipos-notificacao/${type.id}`)}
+                className="block w-full rounded-xl border border-slate-200 p-4 text-left transition hover:border-slate-300 hover:bg-slate-50"
+              >
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
                     <h3 className="text-sm font-semibold text-slate-900">
                       {type.titulo ?? `Tipo ${type.id}`}
                     </h3>
                     <p className="mt-1 text-xs text-slate-500">
-                      {type.textoPadrao ?? "Sem texto padrao"}
+                      {getRegimentoPreview(type.textoRegimento)}
                     </p>
                   </div>
                   <div className="text-right">
@@ -157,7 +162,7 @@ export function NotificationTypesPage({
                   <span>ID {type.id}</span>
                   <span>Criado em {formatDate(type.createdAt)}</span>
                 </div>
-              </article>
+              </button>
             </li>
           ))}
         </ul>

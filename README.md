@@ -88,7 +88,7 @@ O codigo espera as seguintes tabelas no banco:
 | `notificacao`       | Consulta, filtros, detalhes e cadastro de notificacoes.          |
 | `tipos_notificacao` | Consulta e cadastro dos tipos de notificacao.                    |
 
-Os campos utilizados pela aplicacao incluem, entre outros, `created_at`, `bloco`, `apartamento`, `alugado`, `proprietario`, `inquilino`, `id_tipo_notificacao`, `id_unidade`, `motivo`, `categoria`, `data_retroativa`, `valor_multa`, `titulo` e `texto_padrao`. Os dados de proprietario e inquilino sao tratados como objetos JSON com nome, telefone e email.
+Os campos utilizados pela aplicacao incluem, entre outros, `created_at`, `bloco`, `apartamento`, `alugado`, `proprietario`, `inquilino`, `id_tipo_notificacao`, `id_unidade`, `motivo`, `categoria`, `data_retroativa`, `valor_multa`, `titulo` e `texto_regimento`. Os dados de proprietario e inquilino sao tratados como objetos JSON com nome, telefone e email. O campo `texto_regimento` e um `jsonb` com ate 2 escopos (`escopo_01`, `escopo_02`), cada um com `titulo` e ate 5 paragrafos (`paragrafo_01`..`paragrafo_05`), cada paragrafo com `artigo` e `texto`.
 
 Depois de criar o arquivo `.env`, reinicie o servidor de desenvolvimento para que o Vite carregue as variaveis.
 

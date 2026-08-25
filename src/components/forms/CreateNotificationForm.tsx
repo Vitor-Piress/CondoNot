@@ -1,15 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
+import { UnitCombobox } from "../ui/UnitCombobox";
 import { createNotification } from "../../services/notificationService";
 import { listNotificationTypes } from "../../services/notificationTypeService";
 import { listUnits } from "../../services/unitService";
-import {
-  getUnitLabel,
-  type NotificationType,
-  type Unit,
-} from "../../types/domain";
+import { type NotificationType, type Unit } from "../../types/domain";
 
 const createNotificationSchema = z.object({
   idTipoNotificacao: z
@@ -177,18 +174,19 @@ export function CreateNotificationForm({
 
         <label className="block space-y-1 text-sm">
           <span className="font-medium text-slate-700">Unidade</span>
-          <select
-            {...register("idUnidade")}
-            disabled={loadingOptions}
-            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none ring-slate-200 transition focus:ring disabled:bg-slate-100"
-          >
-            <option value="">Selecione</option>
-            {units.map((unit) => (
-              <option key={unit.id} value={unit.id}>
-                {getUnitLabel(unit)}
-              </option>
-            ))}
-          </select>
+          <Controller
+            control={control}
+            name="idUnidade"
+            render={({ field }) => (
+              <UnitCombobox
+                units={units}
+                value={field.value}
+                onChange={field.onChange}
+                disabled={loadingOptions}
+                placeholder="Digite o bloco ou apartamento"
+              />
+            )}
+          />
           {errors.idUnidade ? (
             <p className="text-xs font-medium text-rose-600">
               {errors.idUnidade.message}

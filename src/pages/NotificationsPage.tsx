@@ -2,6 +2,7 @@ import { Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Panel } from "../components/ui/Panel";
+import { UnitCombobox } from "../components/ui/UnitCombobox";
 import {
   listNotifications,
   type NotificationFilters,
@@ -141,23 +142,18 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
           ))}
         </select>
 
-        <select
+        <UnitCombobox
+          units={units}
           value={filters.unitId}
-          onChange={(event) =>
+          onChange={(unitId) =>
             setFilters((previous) => ({
               ...previous,
-              unitId: event.target.value,
+              unitId,
             }))
           }
-          className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none ring-slate-200 transition focus:ring"
-        >
-          <option value="">Todas as unidades</option>
-          {units.map((unit) => (
-            <option key={unit.id} value={unit.id}>
-              {getUnitLabel(unit)}
-            </option>
-          ))}
-        </select>
+          emptyOptionLabel="Todas as unidades"
+          placeholder="Buscar unidade"
+        />
       </div>
 
       {loading ? <p className="text-sm text-slate-500">Carregando...</p> : null}

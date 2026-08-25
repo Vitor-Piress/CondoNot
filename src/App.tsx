@@ -8,6 +8,7 @@ import { HomePage } from "./pages/HomePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { NotificationDetailPage } from "./pages/NotificationDetailPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
+import { NotificationTypeDetailPage } from "./pages/NotificationTypeDetailPage";
 import { NotificationTypesPage } from "./pages/NotificationTypesPage";
 import { UnitDetailPage } from "./pages/UnitDetailPage";
 import { UnitsPage } from "./pages/UnitsPage";
@@ -51,6 +52,10 @@ export default function App() {
   const unitEditId = getParam(pathname, /^\/unidades\/([^/]+)\/editar$/);
   const unitId = getParam(pathname, /^\/unidades\/([^/]+)$/);
   const notificationId = getParam(pathname, /^\/notificacoes\/([^/]+)$/);
+  const notificationTypeId = getParam(
+    pathname,
+    /^\/tipos-notificacao\/([^/]+)$/,
+  );
 
   let page: ReactNode;
 
@@ -68,6 +73,13 @@ export default function App() {
     page = (
       <NotificationDetailPage
         notificationId={notificationId}
+        onNavigate={navigate}
+      />
+    );
+  } else if (notificationTypeId) {
+    page = (
+      <NotificationTypeDetailPage
+        typeId={notificationTypeId}
         onNavigate={navigate}
       />
     );
