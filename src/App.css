@@ -12,10 +12,18 @@
     margin: 0;
   }
 
+  html {
+    /* Fixa o tamanho base da fonte na impressão, independente do zoom/config
+       de fonte do navegador do usuário (causa do conteúdo "vazar" para uma 2ª folha). */
+    font-size: 16px !important;
+  }
+
   body {
     /* Como a margem da página zerou, o conteúdo vai colar na borda do papel.
        Adicione um padding no body apenas na impressão para dar um respiro. */
     padding: 1.2cm;
+    width: 21cm;
+    min-height: 29.7cm;
 
     .app-background::before {
       background-image: none;
