@@ -17,6 +17,7 @@ import {
   type Condominio,
 } from "../types/domain";
 import { formatDate, formatOnlyDateInFull } from "../utils/format";
+import { useCondominio } from "../contexts/useCondominio";
 
 interface NotificationDetailPageProps {
   notificationId: string;
@@ -38,6 +39,7 @@ export function NotificationDetailPage({
   notificationId,
   onNavigate,
 }: NotificationDetailPageProps) {
+  const { activeCondominioId } = useCondominio();
   const location = useLocation();
   const sourceUnitId = getSourceUnitId(location.state);
   const [row, setRow] = useState<Notification | null>(null);
@@ -51,8 +53,15 @@ export function NotificationDetailPage({
     let active = true;
 
     async function loadRow() {
+      if (!activeCondominioId) {
+        return;
+      }
+
       try {
-        const notification = await getNotificationById(notificationId);
+        const notification = await getNotificationById(
+          notificationId,
+          activeCondominioId,
+        );
 
         if (!active) {
           return;
@@ -64,11 +73,14 @@ export function NotificationDetailPage({
         }
 
         const [typeRow, unitRow, condominioRow] = await Promise.all([
-          getNotificationTypeById(notification.idTipoNotificacao),
+          getNotificationTypeById(
+            notification.idTipoNotificacao,
+            activeCondominioId,
+          ),
           notification.idUnidade
-            ? getUnitById(notification.idUnidade)
+            ? getUnitById(notification.idUnidade, activeCondominioId)
             : Promise.resolve(null),
-          getCondominioById("1"),
+          getCondominioById(notification.idCondominio),
         ]);
 
         if (!active) {
@@ -101,7 +113,7 @@ export function NotificationDetailPage({
     return () => {
       active = false;
     };
-  }, [notificationId]);
+  }, [activeCondominioId, notificationId]);
 
   const typeTitle = type?.titulo ?? `Tipo ${row?.idTipoNotificacao ?? ""}`;
 
@@ -248,7 +260,7 @@ export function NotificationDetailPage({
           <header className="bg-black-900 flex flex-col items-center">
             {condominio?.logo_url ? (
               <img
-                className="w-40 mb-8 object-contain"
+                className="h-32 w-40 max-w-full shrink-0 mb-8 object-contain"
                 src={condominio.logo_url}
                 alt={`Logo ${condominio.name}`}
               />
@@ -278,8 +290,8 @@ export function NotificationDetailPage({
                 <span className="font-bold underline">
                   da unidade "{unit?.apartamento}" do Bloco "{unit?.bloco}"
                 </span>
-                , do Condomínio Residencial Villa do Sol, situado na Rua Dom
-                Helder Câmara, nº 35, Real Parque, São José/SC.
+                , do {condominio?.name ?? "condomínio"}, situado em{" "}
+                {condominio?.location ?? "endereço não informado"}.
               </p>
             </section>
           </header>
