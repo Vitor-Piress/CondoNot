@@ -13,7 +13,7 @@ export function CreateNotificationTypePage({
 
   return (
     <Panel
-      title="Inserir tipo_notificacao"
+      title="Inserir tipo de notificação"
       subtitle="Cadastre templates para agilizar novos registros"
       action={
         <button
@@ -21,7 +21,7 @@ export function CreateNotificationTypePage({
           onClick={() => onNavigate("/")}
           className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:bg-slate-100"
         >
-          Voltar para home
+          Voltar para o início
         </button>
       }
     >

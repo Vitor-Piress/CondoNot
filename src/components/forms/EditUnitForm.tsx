@@ -14,14 +14,14 @@ const editUnitSchema = z.object({
   bloco: z.string().trim().min(1, "Informe o bloco."),
   apartamento: z.string().trim().min(1, "Informe o apartamento."),
   alugado: z.enum(["sim", "nao", "nao_informado"]),
-  proprietarioNome: z.string().trim().min(2, "Informe o nome do proprietario."),
+  proprietarioNome: z.string().trim().min(2, "Informe o nome do proprietário."),
   proprietarioContatoTelefone: z.string().trim(),
   proprietarioContatoEmail: z
     .string()
     .trim()
     .refine(
       (value) => value === "" || z.string().email().safeParse(value).success,
-      "Informe um email valido.",
+      "Informe um e-mail válido.",
     ),
   inquilinoNome: z.string().trim(),
   inquilinoContatoTelefone: z.string().trim(),
@@ -30,7 +30,7 @@ const editUnitSchema = z.object({
     .trim()
     .refine(
       (value) => value === "" || z.string().email().safeParse(value).success,
-      "Informe um email valido.",
+      "Informe um e-mail válido.",
     ),
 });
 
@@ -77,7 +77,7 @@ function toResidentInfo(input: {
 }
 
 function toFormValue(value: string): string {
-  return value === "Nao informado" ? "" : value;
+  return value === "Não informado" ? "" : value;
 }
 
 export function EditUnitForm({ unitId, onSuccess }: EditUnitFormProps) {
@@ -122,7 +122,7 @@ export function EditUnitForm({ unitId, onSuccess }: EditUnitFormProps) {
         }
 
         if (!unit) {
-          setServerMessage("Unidade nao encontrada.");
+          setServerMessage("Unidade não encontrada.");
           return;
         }
 
@@ -155,7 +155,7 @@ export function EditUnitForm({ unitId, onSuccess }: EditUnitFormProps) {
         const message =
           error instanceof Error
             ? error.message
-            : "Nao foi possivel carregar a unidade.";
+            : "Não foi possível carregar a unidade.";
         setServerMessage(message);
       } finally {
         if (active) {
@@ -198,7 +198,7 @@ export function EditUnitForm({ unitId, onSuccess }: EditUnitFormProps) {
       const message =
         error instanceof Error
           ? error.message
-          : "Nao foi possivel atualizar a unidade.";
+          : "Não foi possível atualizar a unidade.";
       setServerMessage(message);
     }
   });
@@ -246,16 +246,16 @@ export function EditUnitForm({ unitId, onSuccess }: EditUnitFormProps) {
           {...register("alugado")}
           className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none ring-slate-200 transition focus:ring"
         >
-          <option value="nao_informado">Nao informado</option>
+          <option value="nao_informado">Não informado</option>
           <option value="sim">Sim</option>
-          <option value="nao">Nao</option>
+          <option value="nao">Não</option>
         </select>
       </label>
 
       <section className="rounded-xl border border-slate-200 p-4">
-        <h3 className="text-sm font-semibold text-slate-800">Proprietario</h3>
+        <h3 className="text-sm font-semibold text-slate-800">Proprietário</h3>
         <p className="mt-1 text-xs text-slate-500">
-          Os campos abaixo serao convertidos automaticamente para JSON no banco.
+          Os campos abaixo serão convertidos automaticamente para JSON no banco.
         </p>
 
         <div className="mt-3 grid gap-4 md:grid-cols-3">
@@ -273,7 +273,9 @@ export function EditUnitForm({ unitId, onSuccess }: EditUnitFormProps) {
           </label>
 
           <label className="block space-y-1 text-sm">
-            <span className="font-medium text-slate-700">Contato telefone</span>
+            <span className="font-medium text-slate-700">
+              Contato por telefone
+            </span>
             <input
               {...register("proprietarioContatoTelefone")}
               className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none ring-slate-200 transition focus:ring"
@@ -282,7 +284,9 @@ export function EditUnitForm({ unitId, onSuccess }: EditUnitFormProps) {
           </label>
 
           <label className="block space-y-1 text-sm">
-            <span className="font-medium text-slate-700">Contato email</span>
+            <span className="font-medium text-slate-700">
+              Contato por e-mail
+            </span>
             <input
               {...register("proprietarioContatoEmail")}
               className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none ring-slate-200 transition focus:ring"
@@ -301,7 +305,7 @@ export function EditUnitForm({ unitId, onSuccess }: EditUnitFormProps) {
         <section className="rounded-xl border border-slate-200 p-4">
           <h3 className="text-sm font-semibold text-slate-800">Inquilino</h3>
           <p className="mt-1 text-xs text-slate-500">
-            Como o imovel esta alugado, preencha os dados do inquilino.
+            Como o imóvel está alugado, preencha os dados do inquilino.
           </p>
 
           <div className="mt-3 grid gap-4 md:grid-cols-3">
@@ -315,7 +319,7 @@ export function EditUnitForm({ unitId, onSuccess }: EditUnitFormProps) {
 
             <label className="block space-y-1 text-sm">
               <span className="font-medium text-slate-700">
-                Contato telefone
+                Contato por telefone
               </span>
               <input
                 {...register("inquilinoContatoTelefone")}
@@ -325,7 +329,9 @@ export function EditUnitForm({ unitId, onSuccess }: EditUnitFormProps) {
             </label>
 
             <label className="block space-y-1 text-sm">
-              <span className="font-medium text-slate-700">Contato email</span>
+              <span className="font-medium text-slate-700">
+                Contato por e-mail
+              </span>
               <input
                 {...register("inquilinoContatoEmail")}
                 className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none ring-slate-200 transition focus:ring"

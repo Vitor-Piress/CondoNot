@@ -41,7 +41,7 @@ export function UnitsPage({ onNavigate }: UnitsPageProps) {
         const message =
           loadError instanceof Error
             ? loadError.message
-            : "Nao foi possivel carregar as unidades.";
+            : "Não foi possível carregar as unidades.";
         setError(message);
       } finally {
         if (active) {
@@ -60,7 +60,7 @@ export function UnitsPage({ onNavigate }: UnitsPageProps) {
   return (
     <Panel
       title="Unidades"
-      subtitle="Visualizacao dedicada de unidades com modo lista e grade"
+      subtitle="Visualização dedicada de unidades com modo lista e grade"
       action={
         <div className="inline-flex rounded-xl border border-slate-300 p-1">
           <button
@@ -126,10 +126,10 @@ export function UnitsPage({ onNavigate }: UnitsPageProps) {
                 </p>
                 <p className="text-sm text-slate-600">
                   {unit.alugado === null
-                    ? "Status nao informado"
+                    ? "Status não informado"
                     : unit.alugado
                       ? "Unidade alugada"
-                      : "Unidade do proprietario"}
+                      : "Unidade do proprietário"}
                 </p>
                 <p className="text-sm text-slate-500">
                   {getUnitMainResident(unit)}
@@ -154,10 +154,10 @@ export function UnitsPage({ onNavigate }: UnitsPageProps) {
               </p>
               <p className="mt-1 text-xs text-slate-500">
                 {unit.alugado === null
-                  ? "Status nao informado"
+                  ? "Status não informado"
                   : unit.alugado
                     ? "Unidade alugada"
-                    : "Unidade do proprietario"}
+                    : "Unidade do proprietário"}
               </p>
               <p className="mt-2 text-sm text-slate-600">
                 {getUnitMainResident(unit)}

@@ -1,36 +1,36 @@
 # Condonoti
 
-Dashboard web para apoiar a administracao de condominios. O sistema centraliza o acompanhamento de unidades, moradores e notificacoes, oferecendo uma visao operacional das ocorrencias e dos comunicados registrados.
+Dashboard web para apoiar a administração de condomínios. O sistema centraliza o acompanhamento de unidades, moradores e notificações, oferecendo uma visão operacional das ocorrências e dos comunicados registrados.
 
-O projeto esta em desenvolvimento e foi estruturado para funcionar tanto conectado ao Supabase quanto em modo demonstracao. Quando as credenciais do Supabase nao estao configuradas, a aplicacao utiliza dados de exemplo para permitir a navegacao local.
+O projeto está em desenvolvimento e foi estruturado para funcionar tanto conectado ao Supabase quanto em modo de demonstração. Quando as credenciais do Supabase não estão configuradas, a aplicação utiliza dados de exemplo para permitir a navegação local.
 
 ## Funcionalidades
 
-- Dashboard inicial com resumo da operacao e notificacoes recentes.
+- Dashboard inicial com resumo da operação e notificações recentes.
 - Listagem e busca de unidades por bloco, apartamento e moradores.
-- Visualizacao detalhada de uma unidade.
-- Edicao dos dados da unidade, incluindo proprietario, status de locacao e inquilino.
-- Listagem de notificacoes com busca e filtros por tipo e unidade.
-- Visualizacao dos detalhes de uma notificacao.
-- Cadastro de novas notificacoes com motivo, categoria, data retroativa e valor de multa.
-- Listagem e cadastro de tipos de notificacao com titulo e texto padrao.
+- Visualização detalhada de uma unidade.
+- Edição dos dados da unidade, incluindo proprietário, status de locação e inquilino.
+- Listagem de notificações com busca e filtros por tipo e unidade.
+- Visualização dos detalhes de uma notificação.
+- Cadastro de novas notificações com motivo, categoria, data retroativa e valor de multa.
+- Listagem e cadastro de tipos de notificação com título e texto padrão.
 - Navegacao responsiva por menu lateral e rotas baseadas no caminho da URL.
-- Estado de demonstracao automatico enquanto o ambiente do Supabase nao esta configurado.
+- Estado de demonstração automático enquanto o ambiente do Supabase não está configurado.
 
 ## Tecnologias
 
-### Aplicacao
+### Aplicação
 
 - [React](https://react.dev/) 19 para a interface.
-- [TypeScript](https://www.typescriptlang.org/) para tipagem estatica.
+- [TypeScript](https://www.typescriptlang.org/) para tipagem estática.
 - [Vite](https://vite.dev/) para desenvolvimento local e build.
 - [Tailwind CSS](https://tailwindcss.com/) 4 para estilos e layout.
 - [Lucide React](https://lucide.dev/) para icones.
 
-### Dados e formularios
+### Dados e formulários
 
 - [Supabase](https://supabase.com/) como camada de persistencia e acesso ao banco PostgreSQL.
-- [React Hook Form](https://react-hook-form.com/) para gerenciamento de formularios.
+- [React Hook Form](https://react-hook-form.com/) para gerenciamento de formulários.
 - [Zod](https://zod.dev/) e `@hookform/resolvers` para validacao dos dados de entrada.
 
 ### Qualidade e ferramentas
@@ -38,11 +38,11 @@ O projeto esta em desenvolvimento e foi estruturado para funcionar tanto conecta
 - ESLint com regras para TypeScript, React Hooks e React Refresh.
 - TypeScript no modo de build incremental configurado pelo projeto.
 
-## Pre-requisitos
+## Pré-requisitos
 
 - Node.js compativel com as versoes atuais do Vite e do TypeScript.
 - npm, incluido na instalacao do Node.js.
-- Uma instancia do Supabase apenas para persistencia real. Ela nao e obrigatoria para executar a interface em modo demonstracao.
+- Uma instância do Supabase apenas para persistência real. Ela não é obrigatória para executar a interface em modo de demonstração.
 
 ## Como rodar localmente
 
@@ -67,11 +67,11 @@ O projeto esta em desenvolvimento e foi estruturado para funcionar tanto conecta
 
 4. Abra no navegador a URL exibida pelo Vite, normalmente `http://localhost:5173`.
 
-Para executar sem configurar o Supabase, basta seguir os passos acima. A aplicacao exibira um aviso informando que esta usando dados de demonstracao.
+Para executar sem configurar o Supabase, basta seguir os passos acima. A aplicação exibirá um aviso informando que está usando dados de demonstração.
 
-## Configuracao do Supabase
+## Configuração do Supabase
 
-Para conectar a aplicacao a um projeto Supabase, crie um arquivo `.env` na raiz do repositorio com as variaveis abaixo:
+Para conectar a aplicação a um projeto Supabase, crie um arquivo `.env` na raiz do repositório com as variáveis abaixo:
 
 ```env
 VITE_SUPABASE_URL=https://seu-projeto.supabase.co
@@ -84,20 +84,20 @@ O codigo espera as seguintes tabelas no banco:
 
 | Tabela              | Uso                                                              |
 | ------------------- | ---------------------------------------------------------------- |
-| `unidades`          | Consulta e atualizacao das unidades, proprietarios e inquilinos. |
-| `notificacao`       | Consulta, filtros, detalhes e cadastro de notificacoes.          |
-| `tipos_notificacao` | Consulta e cadastro dos tipos de notificacao.                    |
+| `unidades`          | Consulta e atualização das unidades, proprietários e inquilinos. |
+| `notificacao`       | Consulta, filtros, detalhes e cadastro de notificações.          |
+| `tipos_notificacao` | Consulta e cadastro dos tipos de notificação.                    |
 
-Os campos utilizados pela aplicacao incluem, entre outros, `created_at`, `bloco`, `apartamento`, `alugado`, `proprietario`, `inquilino`, `id_tipo_notificacao`, `id_unidade`, `motivo`, `categoria`, `data_retroativa`, `valor_multa`, `titulo` e `texto_regimento`. Os dados de proprietario e inquilino sao tratados como objetos JSON com nome, telefone e email. O campo `texto_regimento` e um `jsonb` com ate 2 escopos (`escopo_01`, `escopo_02`), cada um com `titulo` e ate 5 paragrafos (`paragrafo_01`..`paragrafo_05`), cada paragrafo com `artigo` e `texto`.
+Os campos utilizados pela aplicação incluem, entre outros, `created_at`, `bloco`, `apartamento`, `alugado`, `proprietario`, `inquilino`, `id_tipo_notificacao`, `id_unidade`, `motivo`, `categoria`, `data_retroativa`, `valor_multa`, `titulo` e `texto_regimento`. Os dados de proprietário e inquilino são tratados como objetos JSON com nome, telefone e e-mail. O campo `texto_regimento` é um `jsonb` com até 2 escopos (`escopo_01`, `escopo_02`), cada um com `titulo` e até 5 parágrafos (`paragrafo_01`..`paragrafo_05`), cada parágrafo com `artigo` e `texto`.
 
-Depois de criar o arquivo `.env`, reinicie o servidor de desenvolvimento para que o Vite carregue as variaveis.
+Depois de criar o arquivo `.env`, reinicie o servidor de desenvolvimento para que o Vite carregue as variáveis.
 
-## Scripts disponiveis
+## Scripts disponíveis
 
 | Comando           | Descricao                                                      |
 | ----------------- | -------------------------------------------------------------- |
 | `npm run dev`     | Inicia o servidor de desenvolvimento com HMR.                  |
-| `npm run build`   | Executa o type-check do TypeScript e gera o build de producao. |
+| `npm run build`   | Executa o type-check do TypeScript e gera o build de produção. |
 | `npm run lint`    | Analisa o codigo com ESLint.                                   |
 | `npm run preview` | Serve localmente o build gerado pelo Vite.                     |
 
@@ -112,16 +112,16 @@ npm run build
 
 ```text
 src/
-├── components/   Componentes reutilizaveis e formularios
-├── layouts/      Estrutura compartilhada da aplicacao
+├── components/   Componentes reutilizáveis e formulários
+├── layouts/      Estrutura compartilhada da aplicação
 ├── pages/        Paginas e fluxos principais
-├── services/     Integracao com Supabase e dados de demonstracao
+├── services/     Integração com Supabase e dados de demonstração
 ├── types/        Tipos e normalizacao dos dados de dominio
 ├── utils/        Funcoes utilitarias de formatacao e busca
 ├── App.tsx       Roteamento e composicao das paginas
-└── main.tsx      Ponto de entrada da aplicacao
+└── main.tsx      Ponto de entrada da aplicação
 ```
 
 ## Estado atual
 
-O README documenta o desenvolvimento e a execucao local do projeto. As instrucoes de deploy serao adicionadas quando o ambiente de publicacao estiver definido e configurado.
+O README documenta o desenvolvimento e a execução local do projeto. As instruções de deploy serão adicionadas quando o ambiente de publicação estiver definido e configurado.

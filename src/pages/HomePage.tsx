@@ -4,6 +4,7 @@ import { listRecentNotifications } from "../services/notificationService";
 import { listNotificationTypes } from "../services/notificationTypeService";
 import { listUnits } from "../services/unitService";
 import {
+  getNotificationCategoryLabel,
   getUnitLabel,
   type Notification,
   type NotificationType,
@@ -51,7 +52,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
         const message =
           loadError instanceof Error
             ? loadError.message
-            : "Nao foi possivel carregar os registros recentes.";
+            : "Não foi possível carregar os registros recentes.";
         setError(message);
       } finally {
         if (active) {
@@ -86,21 +87,21 @@ export function HomePage({ onNavigate }: HomePageProps) {
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
       <div className="space-y-4">
         <Panel
-          title="Centro de Acoes"
-          subtitle="Atalhos para as operacoes principais"
+          title="Centro de ações"
+          subtitle="Atalhos para as operações principais"
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <ActionCard
-              title="Inserir notificacao"
-              description="Cadastro principal de novas notificacoes"
+              title="Inserir notificação"
+              description="Cadastro principal de novas notificações"
               icon={BellPlus}
               highlight
               onClick={() => onNavigate("/notificacoes/nova")}
             />
 
             <ActionCard
-              title="Inserir tipo_notificacao"
-              description="Adicionar novos modelos de notificacao"
+              title="Inserir tipo de notificação"
+              description="Adicionar novos modelos de notificação"
               icon={Layers2}
               onClick={() => onNavigate("/tipos-notificacao/novo")}
             />
@@ -113,7 +114,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
             />
 
             <ActionCard
-              title="Visualizar notificacoes"
+              title="Visualizar notificações"
               description="Acessar lista completa com filtros"
               icon={Eye}
               onClick={() => onNavigate("/notificacoes")}
@@ -123,7 +124,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
       </div>
 
       <Panel
-        title="Ultimas notificacoes"
+        title="Últimas notificações"
         subtitle="Resumo inicial com acesso ao detalhe"
         action={
           <button
@@ -147,8 +148,8 @@ export function HomePage({ onNavigate }: HomePageProps) {
 
         {!loading && !error && rows.length === 0 ? (
           <EmptyState
-            title="Nenhuma notificacao registrada"
-            description="Novas notificacoes aparecerao aqui automaticamente."
+            title="Nenhuma notificação registrada"
+            description="Novas notificações aparecerão aqui automaticamente."
           />
         ) : null}
 
@@ -163,7 +164,8 @@ export function HomePage({ onNavigate }: HomePageProps) {
                 >
                   <div>
                     <p className="text-sm font-semibold text-slate-900">
-                      {row.categoria ?? `Notificacao #${row.id}`}{" "}
+                      {getNotificationCategoryLabel(row.categoria) ??
+                        `Notificação #${row.id}`}{" "}
                       {row.idUnidade
                         ? ` • ${formatHomeUnitLabel(unitMap.get(row.idUnidade) ?? row.idUnidade)}`
                         : " • Sem unidade"}

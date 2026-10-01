@@ -11,6 +11,7 @@ import { Panel } from "../components/ui/Panel";
 import { listNotificationsByUnitId } from "../services/notificationService";
 import { getUnitById } from "../services/unitService";
 import {
+  getNotificationCategoryLabel,
   getPersonEmail,
   getPersonName,
   getPersonPhone,
@@ -70,7 +71,7 @@ export function UnitDetailPage({ unitId, onNavigate }: UnitDetailPageProps) {
         const message =
           loadError instanceof Error
             ? loadError.message
-            : "Nao foi possivel carregar a unidade.";
+            : "Não foi possível carregar a unidade.";
         setError(message);
       } finally {
         if (active) {
@@ -100,7 +101,7 @@ export function UnitDetailPage({ unitId, onNavigate }: UnitDetailPageProps) {
         const message =
           loadError instanceof Error
             ? loadError.message
-            : "Nao foi possivel carregar as notificacoes da unidade.";
+            : "Não foi possível carregar as notificações da unidade.";
         setNotificationsError(message);
       } finally {
         if (active) {
@@ -120,7 +121,7 @@ export function UnitDetailPage({ unitId, onNavigate }: UnitDetailPageProps) {
   return (
     <Panel
       title="Unidade individual"
-      subtitle="Visualizacao dedicada para cada unidade"
+      subtitle="Visualização dedicada para cada unidade"
       action={
         <div className="inline-flex gap-2">
           <button
@@ -152,8 +153,8 @@ export function UnitDetailPage({ unitId, onNavigate }: UnitDetailPageProps) {
 
       {!loading && !error && !unit ? (
         <EmptyState
-          title="Unidade nao encontrada"
-          description="Confira se o identificador esta correto e tente novamente."
+          title="Unidade não encontrada"
+          description="Confira se o identificador está correto e tente novamente."
         />
       ) : null}
 
@@ -180,7 +181,7 @@ export function UnitDetailPage({ unitId, onNavigate }: UnitDetailPageProps) {
                 Apartamento
               </p>
               <p className="mt-1 text-sm text-slate-700">
-                {unit.apartamento ?? "Nao informado"}
+                {unit.apartamento ?? "Não informado"}
               </p>
             </div>
             <div>
@@ -189,10 +190,10 @@ export function UnitDetailPage({ unitId, onNavigate }: UnitDetailPageProps) {
               </p>
               <p className="mt-1 text-sm text-slate-700">
                 {unit.alugado === null
-                  ? "Nao informado"
+                  ? "Não informado"
                   : unit.alugado
                     ? "Sim"
-                    : "Nao"}
+                    : "Não"}
               </p>
             </div>
             <div>
@@ -207,12 +208,12 @@ export function UnitDetailPage({ unitId, onNavigate }: UnitDetailPageProps) {
 
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
-              Proprietario
+              Proprietário
             </p>
             <div className="mt-1 space-y-1 text-sm leading-7 text-slate-700">
               <p>Nome: {getPersonName(unit.proprietario)}</p>
               <p>Telefone: {getPersonPhone(unit.proprietario)}</p>
-              <p>Email: {getPersonEmail(unit.proprietario)}</p>
+              <p>E-mail: {getPersonEmail(unit.proprietario)}</p>
             </div>
           </div>
 
@@ -224,7 +225,7 @@ export function UnitDetailPage({ unitId, onNavigate }: UnitDetailPageProps) {
               <div className="mt-1 space-y-1 text-sm leading-7 text-slate-700">
                 <p>Nome: {getPersonName(unit.inquilino)}</p>
                 <p>Telefone: {getPersonPhone(unit.inquilino)}</p>
-                <p>Email: {getPersonEmail(unit.inquilino)}</p>
+                <p>E-mail: {getPersonEmail(unit.inquilino)}</p>
               </div>
             </div>
           ) : null}
@@ -240,10 +241,10 @@ export function UnitDetailPage({ unitId, onNavigate }: UnitDetailPageProps) {
               </span>
               <div className="min-w-0">
                 <h3 className="text-base font-semibold text-slate-900">
-                  Notificacoes aplicadas
+                  Notificações aplicadas
                 </h3>
                 <p className="mt-0.5 text-xs text-slate-500">
-                  Historico vinculado a esta unidade
+                  Histórico vinculado a esta unidade
                 </p>
               </div>
             </div>
@@ -255,7 +256,7 @@ export function UnitDetailPage({ unitId, onNavigate }: UnitDetailPageProps) {
           </div>
 
           {notificationsLoading ? (
-            <p className="text-sm text-slate-500">Carregando notificacoes...</p>
+            <p className="text-sm text-slate-500">Carregando notificações...</p>
           ) : null}
 
           {notificationsError ? (
@@ -268,8 +269,8 @@ export function UnitDetailPage({ unitId, onNavigate }: UnitDetailPageProps) {
           !notificationsError &&
           notifications.length === 0 ? (
             <EmptyState
-              title="Nenhuma notificacao vinculada"
-              description="As notificacoes registradas para esta unidade aparecerao aqui."
+              title="Nenhuma notificação vinculada"
+              description="As notificações registradas para esta unidade aparecerão aqui."
             />
           ) : null}
 
@@ -296,12 +297,14 @@ export function UnitDetailPage({ unitId, onNavigate }: UnitDetailPageProps) {
                         <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
                           <span className="text-sm font-semibold text-slate-900">
                             {notification.motivo ??
-                              `Notificacao #${notification.id}`}
+                              `Notificação #${notification.id}`}
                           </span>
                           <span
                             className={`inline-flex max-w-full rounded-md border px-2 py-0.5 text-[11px] font-semibold ${getNotificationBadgeClass(notification.categoria)}`}
                           >
-                            {notification.categoria ?? "Notificacao"}
+                            {getNotificationCategoryLabel(
+                              notification.categoria,
+                            ) ?? "Notificação"}
                           </span>
                         </span>
                         <span className="mt-1 block text-xs text-slate-500">

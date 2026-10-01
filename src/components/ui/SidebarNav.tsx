@@ -23,12 +23,12 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
-    label: "Home",
+    label: "Início",
     path: "/",
     icon: House,
   },
   {
-    label: "Relatorios",
+    label: "Relatórios",
     path: "/notificacoes",
     icon: ClipboardList,
   },
@@ -38,7 +38,7 @@ const navItems: NavItem[] = [
     icon: Building2,
   },
   {
-    label: "Tipos Notificacao",
+    label: "Tipos de notificação",
     path: "/tipos-notificacao",
     icon: Tags,
   },

@@ -39,7 +39,7 @@ export function NotificationTypeDetailPage({
         const message =
           loadError instanceof Error
             ? loadError.message
-            : "Nao foi possivel carregar o tipo_notificacao.";
+            : "Não foi possível carregar o tipo de notificação.";
         setError(message);
       } finally {
         if (active) {
@@ -57,8 +57,8 @@ export function NotificationTypeDetailPage({
 
   return (
     <Panel
-      title="Tipo de notificacao individual"
-      subtitle="Visualizacao somente leitura do tipo cadastrado"
+      title="Tipo de notificação individual"
+      subtitle="Visualização somente leitura do tipo cadastrado"
       action={
         <button
           type="button"
@@ -70,7 +70,9 @@ export function NotificationTypeDetailPage({
       }
     >
       {loading ? (
-        <p className="text-sm text-slate-500">Carregando tipo_notificacao...</p>
+        <p className="text-sm text-slate-500">
+          Carregando tipo de notificação...
+        </p>
       ) : null}
 
       {error ? (
@@ -81,8 +83,8 @@ export function NotificationTypeDetailPage({
 
       {!loading && !error && !type ? (
         <EmptyState
-          title="Tipo nao encontrado"
-          description="Este registro pode ter sido removido ou ainda nao existe."
+          title="Tipo não encontrado"
+          description="Este registro pode ter sido removido ou ainda não existe."
         />
       ) : null}
 
@@ -90,7 +92,7 @@ export function NotificationTypeDetailPage({
         <article className="space-y-4 rounded-2xl border border-slate-200 p-5">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
-              Titulo do tipo
+              Título do tipo
             </p>
             <h3 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
               {type.titulo ?? `Tipo ${type.id}`}

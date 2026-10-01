@@ -10,6 +10,7 @@ import {
 import { listNotificationTypes } from "../services/notificationTypeService";
 import { listUnits } from "../services/unitService";
 import {
+  getNotificationCategoryLabel,
   getUnitLabel,
   type Notification,
   type NotificationType,
@@ -64,7 +65,7 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
         const message =
           loadError instanceof Error
             ? loadError.message
-            : "Nao foi possivel carregar as notificacoes.";
+            : "Não foi possível carregar as notificações.";
         setError(message);
       } finally {
         if (active) {
@@ -93,7 +94,7 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
 
   return (
     <Panel
-      title="Relatorios e visualizacao de notificacoes"
+      title="Relatórios e visualização de notificações"
       subtitle="Lista completa com filtros e acesso ao detalhe individual"
       action={
         <button
@@ -101,7 +102,7 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
           onClick={() => onNavigate("/notificacoes/nova")}
           className="rounded-xl bg-slate-900 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-slate-700"
         >
-          Inserir notificacao
+          Inserir notificação
         </button>
       }
     >
@@ -167,7 +168,7 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
       {!loading && !error && rows.length === 0 ? (
         <EmptyState
           title="Nenhum resultado"
-          description="Ajuste os filtros ou cadastre uma nova notificacao."
+          description="Ajuste os filtros ou cadastre uma nova notificação."
         />
       ) : null}
 
@@ -182,7 +183,8 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
               >
                 <div>
                   <p className="text-sm font-semibold text-slate-900">
-                    {row.categoria ?? `Notificacao #${row.id}`}
+                    {getNotificationCategoryLabel(row.categoria) ??
+                      `Notificação #${row.id}`}
                   </p>
                   <p className="mt-1 text-xs text-slate-500">
                     {row.motivo ?? "Sem motivo informado"}
@@ -190,7 +192,7 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
                 </div>
                 <div>
                   <p className="text-xs font-medium uppercase tracking-widest text-slate-400">
-                    Tipo de notificacao
+                    Tipo de notificação
                   </p>
                   <p className="text-sm text-slate-700">
                     {typeMap.get(row.idTipoNotificacao) ??

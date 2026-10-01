@@ -9,6 +9,7 @@ import { getNotificationTypeById } from "../services/notificationTypeService";
 import { getCondominioById } from "../services/condominioService";
 import { getUnitById } from "../services/unitService";
 import {
+  getNotificationCategoryLabel,
   getUnitLabel,
   type Notification,
   type NotificationType,
@@ -86,7 +87,7 @@ export function NotificationDetailPage({
         const message =
           loadError instanceof Error
             ? loadError.message
-            : "Nao foi possivel carregar a notificacao.";
+            : "Não foi possível carregar a notificação.";
         setError(message);
       } finally {
         if (active) {
@@ -107,15 +108,15 @@ export function NotificationDetailPage({
   return (
     <>
       <Panel
-        title="Notificacao individual"
-        subtitle="Visualizacao completa do registro"
+        title="Notificação individual"
+        subtitle="Visualização completa do registro"
         action={
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => window.print()}
-              aria-label="Imprimir notificacao"
-              title="Imprimir notificacao"
+              aria-label="Imprimir notificação"
+              title="Imprimir notificação"
               className="inline-flex size-9 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
             >
               <Printer aria-hidden="true" size={18} />
@@ -135,7 +136,7 @@ export function NotificationDetailPage({
         }
       >
         {loading ? (
-          <p className="text-sm text-slate-500">Carregando notificacao...</p>
+          <p className="text-sm text-slate-500">Carregando notificação...</p>
         ) : null}
 
         {error ? (
@@ -146,8 +147,8 @@ export function NotificationDetailPage({
 
         {!loading && !error && !row ? (
           <EmptyState
-            title="Notificacao nao encontrada"
-            description="Este registro pode ter sido removido ou ainda nao existe."
+            title="Notificação não encontrada"
+            description="Este registro pode ter sido removido ou ainda não existe."
           />
         ) : null}
 
@@ -158,21 +159,22 @@ export function NotificationDetailPage({
                 Categoria
               </p>
               <h3 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
-                {row.categoria ?? `Notificacao #${row.id}`}
+                {getNotificationCategoryLabel(row.categoria) ??
+                  `Notificação #${row.id}`}
               </h3>
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
-                  Tipo de notificacao
+                  Tipo de notificação
                 </p>
                 <button
                   type="button"
                   onClick={() =>
                     onNavigate(`/tipos-notificacao/${row.idTipoNotificacao}`)
                   }
-                  className="mt-1 text-sm font-medium text-slate-900 underline decoration-slate-300 underline-offset-2 transition hover:text-slate-600"
+                  className="mt-1 block w-full min-w-0 whitespace-normal wrap-break-words cursor-pointer text-left text-sm font-medium text-slate-900 underline decoration-slate-300 underline-offset-2 transition hover:text-slate-600"
                 >
                   {typeTitle}
                 </button>
@@ -207,7 +209,7 @@ export function NotificationDetailPage({
                 <p className="mt-1 text-sm text-slate-700">
                   {row.dataRetroativa
                     ? formatDate(row.dataRetroativa)
-                    : "Nao informada"}
+                    : "Não informada"}
                 </p>
               </div>
             </div>
@@ -226,7 +228,7 @@ export function NotificationDetailPage({
                 Valor da multa
               </p>
               <p className="mt-1 text-sm text-slate-700">
-                {row.valorMulta === null ? "Nao informado" : row.valorMulta}
+                {row.valorMulta === null ? "Não informado" : row.valorMulta}
               </p>
             </div>
 
@@ -253,20 +255,22 @@ export function NotificationDetailPage({
             ) : null}
             <h3 className="text-3xl mb-10 font-semibold tracking-tight text-slate-900 print:underline">
               {row.categoria
-                ? `CARTA DE ${row.categoria.toUpperCase()}`
-                : `Notificacao #${row.id}`}
+                ? `CARTA DE ${(getNotificationCategoryLabel(row.categoria) ?? row.categoria).toUpperCase()}`
+                : `Notificação #${row.id}`}
             </h3>
-            <section className="w-full mb-6 flex justify-between">
+            <section className="w-full mb-6 flex items-start gap-4">
               <button
                 type="button"
                 onClick={() =>
                   onNavigate(`/tipos-notificacao/${row.idTipoNotificacao}`)
                 }
-                className="font-medium text-slate-900 underline decoration-slate-300 underline-offset-2 transition hover:text-slate-600"
+                className="min-w-0 flex-1 whitespace-normal wrap-break-words text-left font-semibold leading-snug text-slate-900 underline decoration-slate-300 underline-offset-2 transition hover:text-slate-600"
               >
                 {typeTitle}
               </button>
-              <p className="font-bold">{formatOnlyDateInFull(row.createdAt)}</p>
+              <p className="shrink-0 whitespace-nowrap text-right font-bold">
+                {formatOnlyDateInFull(row.createdAt)}
+              </p>
             </section>
             <section className="w-full">
               <p>

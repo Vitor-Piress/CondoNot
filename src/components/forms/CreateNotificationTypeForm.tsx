@@ -6,19 +6,19 @@ import { MAX_ESCOPOS, MAX_PARAGRAFOS_POR_ESCOPO } from "../../types/domain";
 
 const paragrafoSchema = z.object({
   artigo: z.string().trim().min(1, "Informe o artigo."),
-  texto: z.string().trim().min(5, "Informe o texto do paragrafo."),
+  texto: z.string().trim().min(5, "Informe o texto do parágrafo."),
 });
 
 const escopoSchema = z.object({
-  titulo: z.string().trim().min(3, "Informe o titulo do escopo."),
+  titulo: z.string().trim().min(3, "Informe o título do escopo."),
   paragrafos: z
     .array(paragrafoSchema)
-    .min(1, "Adicione ao menos um paragrafo.")
+    .min(1, "Adicione ao menos um parágrafo.")
     .max(MAX_PARAGRAFOS_POR_ESCOPO),
 });
 
 const createNotificationTypeSchema = z.object({
-  titulo: z.string().trim().min(3, "Informe um titulo valido."),
+  titulo: z.string().trim().min(3, "Informe um título válido."),
   escopos: z
     .array(escopoSchema)
     .min(1, "Adicione ao menos um escopo.")
@@ -89,11 +89,11 @@ function EscopoFields({
       </div>
 
       <label className="block space-y-1 text-sm">
-        <span className="font-medium text-slate-700">Titulo do escopo</span>
+        <span className="font-medium text-slate-700">Título do escopo</span>
         <input
           {...register(`escopos.${escopoIndex}.titulo`)}
           className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none ring-slate-200 transition focus:ring"
-          placeholder="Ex: Regimento interno - Capitulo 1"
+          placeholder="Ex.: Regimento interno - Capítulo 1"
         />
         {escopoErrors?.titulo ? (
           <p className="text-xs font-medium text-rose-600">
@@ -113,7 +113,7 @@ function EscopoFields({
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
-                  Paragrafo {paragrafoIndex + 1}
+                  Parágrafo {paragrafoIndex + 1}
                 </span>
                 {paragrafoIndex > 0 ? (
                   <button
@@ -121,7 +121,7 @@ function EscopoFields({
                     onClick={() => removeParagrafo(paragrafoIndex)}
                     className="text-xs font-semibold text-rose-600 hover:underline"
                   >
-                    Remover paragrafo
+                    Remover parágrafo
                   </button>
                 ) : null}
               </div>
@@ -150,7 +150,7 @@ function EscopoFields({
                   )}
                   rows={3}
                   className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none ring-slate-200 transition focus:ring"
-                  placeholder="Texto do paragrafo do regimento"
+                  placeholder="Texto do parágrafo do regimento"
                 />
                 {paragrafoErrors?.texto ? (
                   <p className="text-xs font-medium text-rose-600">
@@ -169,7 +169,7 @@ function EscopoFields({
           onClick={() => appendParagrafo(emptyParagrafo())}
           className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:bg-slate-100"
         >
-          Adicionar paragrafo
+          Adicionar parágrafo
         </button>
       ) : null}
     </div>
@@ -214,11 +214,11 @@ export function CreateNotificationTypeForm({
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <label className="block space-y-1 text-sm">
-        <span className="font-medium text-slate-700">Titulo do tipo</span>
+        <span className="font-medium text-slate-700">Título do tipo</span>
         <input
           {...register("titulo")}
           className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none ring-slate-200 transition focus:ring"
-          placeholder="Ex: Alerta de seguranca"
+          placeholder="Ex.: Alerta de segurança"
         />
         {errors.titulo ? (
           <p className="text-xs font-medium text-rose-600">
@@ -257,7 +257,7 @@ export function CreateNotificationTypeForm({
         disabled={isSubmitting}
         className="rounded-xl bg-slate-900 ml-2 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
       >
-        {isSubmitting ? "Salvando..." : "Inserir tipo_notificacao"}
+        {isSubmitting ? "Salvando..." : "Inserir tipo de notificação"}
       </button>
     </form>
   );

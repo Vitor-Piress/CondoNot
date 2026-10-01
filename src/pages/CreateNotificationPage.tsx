@@ -10,8 +10,8 @@ export function CreateNotificationPage({
 }: CreateNotificationPageProps) {
   return (
     <Panel
-      title="Inserir notificacao"
-      subtitle="Registre uma notificacao completa e direcione para unidade e tipo"
+      title="Inserir notificação"
+      subtitle="Registre uma notificação completa e direcione para unidade e tipo"
       action={
         <button
           type="button"

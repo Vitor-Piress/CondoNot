@@ -21,10 +21,10 @@ const fallbackTypes: NotificationType[] = [
   {
     id: "2",
     createdAt: "2026-08-02T09:00:00.000Z",
-    titulo: "Aviso de Manutencao",
+    titulo: "Aviso de Manutenção",
     textoRegimento: [
       {
-        titulo: "A equipe ira realizar manutencao preventiva.",
+        titulo: "A equipe irá realizar manutenção preventiva.",
         paragrafos: [],
       },
     ],
@@ -32,10 +32,10 @@ const fallbackTypes: NotificationType[] = [
   {
     id: "3",
     createdAt: "2026-08-03T09:00:00.000Z",
-    titulo: "Ocorrencia",
+    titulo: "Ocorrência",
     textoRegimento: [
       {
-        titulo: "Registro de ocorrencia no condominio.",
+        titulo: "Registro de ocorrência no condomínio.",
         paragrafos: [],
       },
     ],

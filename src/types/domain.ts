@@ -272,6 +272,23 @@ export function getRegimentoPreview(
   return textoRegimento.map((escopo) => escopo.titulo).join(" / ");
 }
 
+export function getNotificationCategoryLabel(
+  category: string | null,
+): string | null {
+  if (!category) {
+    return null;
+  }
+
+  const labels: Record<string, string> = {
+    advertencia: "Advertência",
+    convivencia: "Convivência",
+    orientacao: "Orientação",
+    "perturbacao de sossego": "Perturbação do sossego",
+  };
+
+  return labels[category.toLocaleLowerCase("pt-BR")] ?? category;
+}
+
 export function parseUnit(row: UnknownRow): Unit {
   return {
     id: toStringValue(row.id, crypto.randomUUID()),
@@ -288,12 +305,12 @@ export function parseUnit(row: UnknownRow): Unit {
 }
 
 function getResidentField(value: string | null): string {
-  return value && value.trim() ? value.trim() : "Nao informado";
+  return value && value.trim() ? value.trim() : "Não informado";
 }
 
 export function getPersonName(person: ResidentInfo | null): string {
   if (!person) {
-    return "Nao informado";
+    return "Não informado";
   }
 
   return getResidentField(person.nome);
@@ -301,7 +318,7 @@ export function getPersonName(person: ResidentInfo | null): string {
 
 export function getPersonPhone(person: ResidentInfo | null): string {
   if (!person) {
-    return "Nao informado";
+    return "Não informado";
   }
 
   return getResidentField(person.contatoTelefone);
@@ -309,7 +326,7 @@ export function getPersonPhone(person: ResidentInfo | null): string {
 
 export function getPersonEmail(person: ResidentInfo | null): string {
   if (!person) {
-    return "Nao informado";
+    return "Não informado";
   }
 
   return getResidentField(person.contatoEmail);
@@ -323,7 +340,7 @@ export function getUnitLabel(unit: Unit): string {
 export function getUnitMainResident(unit: Unit): string {
   if (unit.alugado) {
     const tenant = getPersonName(unit.inquilino);
-    if (tenant !== "Nao informado") {
+    if (tenant !== "Não informado") {
       return tenant;
     }
   }

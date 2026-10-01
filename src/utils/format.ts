@@ -2,7 +2,7 @@ export function formatDate(value: string): string {
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
-    return "Data invalida";
+    return "Data inválida";
   }
 
   return new Intl.DateTimeFormat("pt-BR", {
@@ -15,7 +15,7 @@ export function formatOnlyDate(value: string): string {
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
-    return "Data invalida";
+    return "Data inválida";
   }
 
   return new Intl.DateTimeFormat("pt-BR", {
@@ -27,7 +27,7 @@ export function formatOnlyDateInFull(value: string): string {
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
-    return "Data invalida";
+    return "Data inválida";
   }
 
   const dateFormat = new Intl.DateTimeFormat("pt-BR", {

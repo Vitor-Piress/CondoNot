@@ -40,8 +40,8 @@ export function AppLayout({
         <main className="min-w-0 space-y-6">
           {supabaseConfigError ? (
             <section className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-              {supabaseConfigError}. O sistema segue com dados de demonstracao
-              enquanto o ambiente nao e configurado.
+              {supabaseConfigError}. O sistema segue com dados de demonstração
+              enquanto o ambiente não é configurado.
             </section>
           ) : null}
           {children}

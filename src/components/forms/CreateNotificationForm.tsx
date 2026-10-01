@@ -12,7 +12,7 @@ const createNotificationSchema = z.object({
   idTipoNotificacao: z
     .string()
     .trim()
-    .min(1, "Selecione um tipo de notificacao."),
+    .min(1, "Selecione um tipo de notificação."),
   idUnidade: z.string().trim().min(1, "Selecione uma unidade."),
   categoria: z.enum(["Multa", "Orientacao", "Advertencia"]),
   motivo: z
@@ -44,8 +44,8 @@ function toNullableFine(value: string): number | null {
 
 const categoryOptions = [
   { value: "Multa", label: "Multa" },
-  { value: "Orientacao", label: "Orientacao" },
-  { value: "Advertencia", label: "Advertencia" },
+  { value: "Orientacao", label: "Orientação" },
+  { value: "Advertencia", label: "Advertência" },
 ] as const;
 
 export function CreateNotificationForm({
@@ -98,7 +98,7 @@ export function CreateNotificationForm({
         const message =
           error instanceof Error
             ? error.message
-            : "Nao foi possivel carregar os campos de apoio.";
+            : "Não foi possível carregar os campos de apoio.";
         setServerMessage(message);
       } finally {
         if (active) {
@@ -141,7 +141,7 @@ export function CreateNotificationForm({
       const message =
         error instanceof Error
           ? error.message
-          : "Nao foi possivel criar a notificacao.";
+          : "Não foi possível criar a notificação.";
       setServerMessage(message);
     }
   });
@@ -151,7 +151,7 @@ export function CreateNotificationForm({
       <div className="grid gap-4 md:grid-cols-2">
         <label className="block space-y-1 text-sm">
           <span className="font-medium text-slate-700">
-            Tipo de notificacao
+            Tipo de notificação
           </span>
           <select
             {...register("idTipoNotificacao")}
@@ -222,7 +222,7 @@ export function CreateNotificationForm({
           {...register("motivo")}
           rows={4}
           className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none ring-slate-200 transition focus:ring"
-          placeholder="Descreva o motivo da notificacao"
+          placeholder="Descreva o motivo da notificação"
         />
         {errors.motivo ? (
           <p className="text-xs font-medium text-rose-600">
@@ -257,7 +257,7 @@ export function CreateNotificationForm({
           </label>
         ) : (
           <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-500">
-            Valor da multa aparece apenas quando categoria for Multa.
+            O valor da multa aparece apenas quando a categoria for Multa.
           </div>
         )}
       </div>
@@ -273,7 +273,7 @@ export function CreateNotificationForm({
         disabled={isSubmitting}
         className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
       >
-        {isSubmitting ? "Salvando..." : "Inserir notificacao"}
+        {isSubmitting ? "Salvando..." : "Inserir notificação"}
       </button>
     </form>
   );

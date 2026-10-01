@@ -49,7 +49,7 @@ export function NotificationTypesPage({
         const message =
           loadError instanceof Error
             ? loadError.message
-            : "Nao foi possivel carregar os tipos de notificacao.";
+            : "Não foi possível carregar os tipos de notificação.";
         setError(message);
       } finally {
         if (active) {
@@ -90,15 +90,15 @@ export function NotificationTypesPage({
 
   return (
     <Panel
-      title="Relatorio de tipos de notificacao"
-      subtitle="Visualizacao dedicada dos tipos cadastrados e sua utilizacao"
+      title="Relatório de tipos de notificação"
+      subtitle="Visualização dedicada dos tipos cadastrados e sua utilização"
       action={
         <button
           type="button"
           onClick={() => onNavigate("/tipos-notificacao/novo")}
           className="rounded-xl bg-slate-900 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-slate-700"
         >
-          Inserir tipo_notificacao
+          Inserir tipo de notificação
         </button>
       }
     >
@@ -111,7 +111,7 @@ export function NotificationTypesPage({
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           className="w-full rounded-xl border border-slate-300 py-2 pl-9 pr-3 text-sm outline-none ring-slate-200 transition focus:ring"
-          placeholder="Buscar por titulo ou texto padrao"
+          placeholder="Buscar por título ou texto padrão"
         />
       </label>
 
@@ -150,7 +150,7 @@ export function NotificationTypesPage({
                   </div>
                   <div className="text-right">
                     <p className="text-xs uppercase tracking-[0.12em] text-slate-400">
-                      Uso em notificacoes
+                      Uso em notificações
                     </p>
                     <p className="text-base font-semibold text-slate-700">
                       {typeUsageMap.get(type.id) ?? 0}
