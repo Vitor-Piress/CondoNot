@@ -39,21 +39,20 @@ export function AppLayout({
   }
 
   return (
-    <div className="min-h-screen app-background print:border-6 print:border-double print:rounded-sm print:p-3">
-      <header className="print:hidden border-b border-black/10 bg-slate-900 px-6 py-3 text-slate-100">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden app-background print:border-6 print:border-double print:rounded-sm print:p-3">
+      <header className="print:hidden border-b border-black/10 bg-slate-900 px-4 py-3 text-slate-100 sm:px-6">
+        <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3">
           <p className="text-sm font-medium tracking-[0.18em] text-slate-300">
             CONDONOT
           </p>
-          <div className="flex items-center gap-3">
-            <label className="flex items-center gap-2 text-xs font-medium text-slate-300">
-              {/* <span className="hidden sm:inline">Condomínio</span> */}
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+            <label className="flex min-w-0 flex-1 items-center gap-2 text-xs font-medium text-slate-300 sm:flex-none">
               <select
                 value={activeCondominioId ?? ""}
                 onChange={(event) => handleCondominioChange(event.target.value)}
                 disabled={loadingCondominios || condominios.length === 0}
                 aria-label="Selecionar condomínio"
-                className="max-w-60 rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1.5 text-sm text-white outline-none focus:ring-2 focus:ring-slate-400 disabled:opacity-60"
+                className="w-full min-w-0 rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1.5 text-sm text-white outline-none focus:ring-2 focus:ring-slate-400 disabled:opacity-60 sm:w-auto sm:max-w-60"
               >
                 {loadingCondominios ? (
                   <option value="">Carregando...</option>
@@ -88,17 +87,21 @@ export function AppLayout({
               onClick={() => onNavigate("/condominios")}
               aria-label="Gerenciar condomínios"
               title="Gerenciar condomínios"
-              className="inline-flex size-9 items-center justify-center rounded-lg border border-slate-700 text-slate-100 transition hover:bg-slate-800"
+              className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-slate-700 text-slate-100 transition hover:bg-slate-800"
             >
               <Building2 aria-hidden="true" size={17} />
             </button>
             <button
               type="button"
               onClick={() => onNavigate("/")}
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-700 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-100 transition hover:bg-slate-800"
+              aria-label="Ir para o dashboard"
+              title="Dashboard"
+              className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-slate-700 text-slate-100 transition hover:bg-slate-800 sm:size-auto sm:gap-2 sm:px-3 sm:py-1.5"
             >
               <BellRing className="h-3.5 w-3.5" aria-hidden="true" />
-              Dashboard
+              <span className="hidden text-xs font-semibold uppercase tracking-[0.15em] sm:inline">
+                Dashboard
+              </span>
             </button>
           </div>
         </div>
