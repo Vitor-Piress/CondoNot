@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
+  ArrowLeft,
   BellRing,
   CalendarDays,
   ChevronRight,
@@ -135,15 +136,19 @@ export function UnitDetailPage({ unitId, onNavigate }: UnitDetailPageProps) {
     <Panel
       title="Unidade individual"
       subtitle="Visualização dedicada para cada unidade"
+      leftAction={
+        <button
+          type="button"
+          onClick={() => onNavigate("/unidades")}
+          aria-label="Voltar para lista de unidades"
+          title="Voltar para lista de unidades"
+          className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+        >
+          <ArrowLeft aria-hidden="true" size={18} />
+        </button>
+      }
       action={
         <div className="inline-flex gap-2">
-          <button
-            type="button"
-            onClick={() => onNavigate("/unidades")}
-            className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:bg-slate-100"
-          >
-            Voltar
-          </button>
           <button
             type="button"
             onClick={() => onNavigate(`/unidades/${unitId}/editar`)}

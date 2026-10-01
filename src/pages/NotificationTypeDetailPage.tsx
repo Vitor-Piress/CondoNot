@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ArrowLeft } from "lucide-react";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Panel } from "../components/ui/Panel";
 import { RegimentoView } from "../components/ui/RegimentoView";
@@ -65,13 +66,15 @@ export function NotificationTypeDetailPage({
     <Panel
       title="Tipo de notificação individual"
       subtitle="Visualização somente leitura do tipo cadastrado"
-      action={
+      leftAction={
         <button
           type="button"
           onClick={() => onNavigate("/tipos-notificacao")}
-          className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:bg-slate-100"
+          aria-label="Voltar para lista"
+          title="Voltar para lista"
+          className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
         >
-          Voltar para lista
+          <ArrowLeft aria-hidden="true" size={18} />
         </button>
       }
     >
