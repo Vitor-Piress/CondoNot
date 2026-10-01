@@ -1,7 +1,10 @@
-import { BellRing, Building2 } from "lucide-react";
+import { BellRing, Building2, Loader2 } from "lucide-react";
+import { useState } from "react";
 import type { PropsWithChildren } from "react";
 import { SidebarNav } from "../components/ui/SidebarNav";
 import { useCondominio } from "../contexts/useCondominio";
+
+const CONDOMINIO_SWITCH_FEEDBACK_MS = 600;
 
 interface AppLayoutProps extends PropsWithChildren {
   currentPath: string;
@@ -23,23 +26,34 @@ export function AppLayout({
     condominioError,
     setActiveCondominioId,
   } = useCondominio();
+  const [isSwitchingCondominio, setIsSwitchingCondominio] = useState(false);
+
+  function handleCondominioChange(id: string) {
+    setActiveCondominioId(id);
+    onNavigate("/");
+    setIsSwitchingCondominio(true);
+    window.setTimeout(
+      () => setIsSwitchingCondominio(false),
+      CONDOMINIO_SWITCH_FEEDBACK_MS,
+    );
+  }
 
   return (
     <div className="min-h-screen app-background print:border-6 print:border-double print:rounded-sm print:p-3">
       <header className="print:hidden border-b border-black/10 bg-slate-900 px-6 py-3 text-slate-100">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4">
           <p className="text-sm font-medium tracking-[0.18em] text-slate-300">
-            CONDONOTI
+            CONDONOT
           </p>
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-2 text-xs font-medium text-slate-300">
-              <span className="hidden sm:inline">Condomínio</span>
+              {/* <span className="hidden sm:inline">Condomínio</span> */}
               <select
                 value={activeCondominioId ?? ""}
-                onChange={(event) => setActiveCondominioId(event.target.value)}
+                onChange={(event) => handleCondominioChange(event.target.value)}
                 disabled={loadingCondominios || condominios.length === 0}
                 aria-label="Selecionar condomínio"
-                className="max-w-52 rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1.5 text-sm text-white outline-none focus:ring-2 focus:ring-slate-400 disabled:opacity-60"
+                className="max-w-60 rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1.5 text-sm text-white outline-none focus:ring-2 focus:ring-slate-400 disabled:opacity-60"
               >
                 {loadingCondominios ? (
                   <option value="">Carregando...</option>
@@ -127,6 +141,15 @@ export function AppLayout({
           )}
         </main>
       </div>
+
+      {isSwitchingCondominio ? (
+        <div className="print:hidden fixed inset-0 z-50 flex items-center justify-center bg-white/70 backdrop-blur-sm">
+          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-lg">
+            <Loader2 className="animate-spin" aria-hidden="true" size={18} />
+            Trocando de condomínio...
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
