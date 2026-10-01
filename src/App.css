@@ -1,8 +1,35 @@
 @import "tailwindcss";
 
+@media print {
+  * {
+    /* Força o navegador a renderizar as cores exatas da tela */
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  @page {
+    size: A4;
+    /* Isso remove as margens padrões onde o navegador injeta o cabeçalho/rodapé */
+    margin: 0;
+  }
+
+  body {
+    /* Como a margem da página zerou, o conteúdo vai colar na borda do papel.
+       Adicione um padding no body apenas na impressão para dar um respiro. */
+    padding: 1.2cm;
+
+    .app-background::before {
+      background-image: none;
+    }
+  }
+}
+
 :root {
   font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif;
   color: #111827;
+}
+
+html {
+  overscroll-behavior-y: none;
 }
 
 * {

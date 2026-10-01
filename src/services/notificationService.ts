@@ -96,6 +96,30 @@ export async function listNotifications(
   return applyFilters(rows, filters);
 }
 
+export async function listNotificationsByUnitId(
+  unitId: string,
+): Promise<Notification[]> {
+  if (!supabase) {
+    return applyFilters(sortByDateDesc(fallbackNotifications), {
+      query: "",
+      typeId: "",
+      unitId,
+    });
+  }
+
+  const { data, error } = await supabase
+    .from(NOTIFICATION_TABLE)
+    .select("*")
+    .eq("id_unidade", unitId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return sortByDateDesc((data ?? []).map((row) => parseNotification(row)));
+}
+
 export async function listRecentNotifications(
   limit = 7,
 ): Promise<Notification[]> {

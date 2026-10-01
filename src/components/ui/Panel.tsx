@@ -8,8 +8,8 @@ interface PanelProps extends PropsWithChildren {
 
 export function Panel({ title, subtitle, action, children }: PanelProps) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
+    <section className="print:hidden rounded-2xl border print:border-none border-slate-200 bg-white p-6 shadow-sm print:shadow-none">
+      <header className="print:hidden mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
             {title}

@@ -9,10 +9,11 @@ import {
   type NotificationType,
   type Unit,
 } from "../types/domain";
-import { formatDate } from "../utils/format";
+import { formatOnlyDate } from "../utils/format";
 import { ActionCard } from "../components/ui/ActionCard";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Panel } from "../components/ui/Panel";
+import { ImageUpload } from "../components/forms/ImageUpload";
 
 interface HomePageProps {
   onNavigate: (to: string) => void;
@@ -177,7 +178,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
                     </p>
                   </div>
                   <span className="text-xs text-slate-500">
-                    {formatDate(row.createdAt)}
+                    {formatOnlyDate(row.createdAt)}
                   </span>
                 </button>
               </li>

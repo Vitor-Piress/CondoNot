@@ -6,6 +6,18 @@ export interface ResidentInfo {
   contatoEmail: string | null;
 }
 
+export interface Condominio {
+  id: string;
+  createdAt: string;
+  name: string;
+  location: string;
+  logo_url: string | null;
+}
+
+export type CondominioInsert = Omit<Condominio, "id" | "createdAt">;
+
+export type CondominioUpdate = Partial<CondominioInsert>;
+
 export interface Notification {
   id: string;
   createdAt: string;
@@ -240,7 +252,7 @@ export function parseNotificationType(row: UnknownRow): NotificationType {
   return {
     id: toStringValue(row.id, crypto.randomUUID()),
     createdAt: toStringValue(
-      row.created_at ?? row.createdAt,
+      row.createdAt ?? row.createdAt,
       new Date().toISOString(),
     ),
     titulo: toNullableString(row.titulo),
@@ -264,7 +276,7 @@ export function parseUnit(row: UnknownRow): Unit {
   return {
     id: toStringValue(row.id, crypto.randomUUID()),
     createdAt: toStringValue(
-      row.created_at ?? row.createdAt,
+      row.createdAt ?? row.createdAt,
       new Date().toISOString(),
     ),
     bloco: toStringValue(row.bloco, "-"),

@@ -1,4 +1,10 @@
-import { useEffect, useState, type ReactNode } from "react";
+import {
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 import "./App.css";
 import { AppLayout } from "./layouts/AppLayout";
 import { CreateNotificationPage } from "./pages/CreateNotificationPage";
@@ -14,92 +20,100 @@ import { UnitDetailPage } from "./pages/UnitDetailPage";
 import { UnitsPage } from "./pages/UnitsPage";
 import { supabaseConfigError } from "./services/supabase";
 
-function usePathname(): string {
-  const [pathname, setPathname] = useState(() => window.location.pathname);
-
-  useEffect(() => {
-    const onPopState = () => {
-      setPathname(window.location.pathname);
-    };
-
-    window.addEventListener("popstate", onPopState);
-
-    return () => {
-      window.removeEventListener("popstate", onPopState);
-    };
-  }, []);
-
-  return pathname;
+interface RoutedPageProps {
+  onNavigate: (to: string) => void;
 }
 
-function getParam(pathname: string, pattern: RegExp): string | null {
-  const match = pattern.exec(pathname);
-  return match?.[1] ?? null;
+function NotificationDetailRoute({ onNavigate }: RoutedPageProps) {
+  const { notificationId } = useParams();
+  return notificationId ? (
+    <NotificationDetailPage
+      notificationId={notificationId}
+      onNavigate={onNavigate}
+    />
+  ) : (
+    <NotFoundPage onNavigate={onNavigate} />
+  );
+}
+
+function NotificationTypeDetailRoute({ onNavigate }: RoutedPageProps) {
+  const { typeId } = useParams();
+  return typeId ? (
+    <NotificationTypeDetailPage typeId={typeId} onNavigate={onNavigate} />
+  ) : (
+    <NotFoundPage onNavigate={onNavigate} />
+  );
+}
+
+function UnitDetailRoute({ onNavigate }: RoutedPageProps) {
+  const { unitId } = useParams();
+  return unitId ? (
+    <UnitDetailPage unitId={unitId} onNavigate={onNavigate} />
+  ) : (
+    <NotFoundPage onNavigate={onNavigate} />
+  );
+}
+
+function EditUnitRoute({ onNavigate }: RoutedPageProps) {
+  const { unitId } = useParams();
+  return unitId ? (
+    <EditUnitPage unitId={unitId} onNavigate={onNavigate} />
+  ) : (
+    <NotFoundPage onNavigate={onNavigate} />
+  );
 }
 
 export default function App() {
-  const pathname = usePathname();
-
-  const navigate = (to: string) => {
-    if (to === pathname) {
-      return;
-    }
-
-    window.history.pushState({}, "", to);
-    window.dispatchEvent(new PopStateEvent("popstate"));
-  };
-
-  const unitEditId = getParam(pathname, /^\/unidades\/([^/]+)\/editar$/);
-  const unitId = getParam(pathname, /^\/unidades\/([^/]+)$/);
-  const notificationId = getParam(pathname, /^\/notificacoes\/([^/]+)$/);
-  const notificationTypeId = getParam(
-    pathname,
-    /^\/tipos-notificacao\/([^/]+)$/,
-  );
-
-  let page: ReactNode;
-
-  if (pathname === "/") {
-    page = <HomePage onNavigate={navigate} />;
-  } else if (pathname === "/notificacoes" || pathname === "/relatorios") {
-    page = <NotificationsPage onNavigate={navigate} />;
-  } else if (pathname === "/notificacoes/nova") {
-    page = <CreateNotificationPage onNavigate={navigate} />;
-  } else if (pathname === "/tipos-notificacao/novo") {
-    page = <CreateNotificationTypePage onNavigate={navigate} />;
-  } else if (pathname === "/tipos-notificacao") {
-    page = <NotificationTypesPage onNavigate={navigate} />;
-  } else if (notificationId && notificationId !== "nova") {
-    page = (
-      <NotificationDetailPage
-        notificationId={notificationId}
-        onNavigate={navigate}
-      />
-    );
-  } else if (notificationTypeId) {
-    page = (
-      <NotificationTypeDetailPage
-        typeId={notificationTypeId}
-        onNavigate={navigate}
-      />
-    );
-  } else if (pathname === "/unidades") {
-    page = <UnitsPage onNavigate={navigate} />;
-  } else if (unitEditId) {
-    page = <EditUnitPage unitId={unitEditId} onNavigate={navigate} />;
-  } else if (unitId) {
-    page = <UnitDetailPage unitId={unitId} onNavigate={navigate} />;
-  } else {
-    page = <NotFoundPage onNavigate={navigate} />;
-  }
+  const location = useLocation();
+  const navigate = useNavigate();
 
   return (
     <AppLayout
-      currentPath={pathname}
+      currentPath={location.pathname}
       onNavigate={navigate}
       supabaseConfigError={supabaseConfigError}
     >
-      {page}
+      <Routes>
+        <Route path="/" element={<HomePage onNavigate={navigate} />} />
+        <Route
+          path="/notificacoes"
+          element={<NotificationsPage onNavigate={navigate} />}
+        />
+        <Route
+          path="/relatorios"
+          element={<NotificationsPage onNavigate={navigate} />}
+        />
+        <Route
+          path="/notificacoes/nova"
+          element={<CreateNotificationPage onNavigate={navigate} />}
+        />
+        <Route
+          path="/notificacoes/:notificationId"
+          element={<NotificationDetailRoute onNavigate={navigate} />}
+        />
+        <Route
+          path="/tipos-notificacao"
+          element={<NotificationTypesPage onNavigate={navigate} />}
+        />
+        <Route
+          path="/tipos-notificacao/novo"
+          element={<CreateNotificationTypePage onNavigate={navigate} />}
+        />
+        <Route
+          path="/tipos-notificacao/:typeId"
+          element={<NotificationTypeDetailRoute onNavigate={navigate} />}
+        />
+        <Route path="/unidades" element={<UnitsPage onNavigate={navigate} />} />
+        <Route
+          path="/unidades/:unitId/editar"
+          element={<EditUnitRoute onNavigate={navigate} />}
+        />
+        <Route
+          path="/unidades/:unitId"
+          element={<UnitDetailRoute onNavigate={navigate} />}
+        />
+        <Route path="*" element={<NotFoundPage onNavigate={navigate} />} />
+      </Routes>
     </AppLayout>
   );
 }

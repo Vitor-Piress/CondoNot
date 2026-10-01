@@ -18,12 +18,12 @@ export function RegimentoView({ textoRegimento }: RegimentoViewProps) {
       {textoRegimento.map((escopo, escopoIndex) => (
         <div
           key={escopoIndex}
-          className="rounded-xl border border-slate-200 p-4"
+          className="rounded-xl print:rounded-none print:border-none border border-slate-200 p-4"
         >
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+          <p className="print:hidden  text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
             Escopo {escopoIndex + 1}
           </p>
-          <h4 className="mt-1 text-sm font-semibold text-slate-900">
+          <h4 className="mt-1 text-sm font-semibold print:text-lg  text-slate-900">
             {escopo.titulo || "Sem titulo"}
           </h4>
 
@@ -32,16 +32,20 @@ export function RegimentoView({ textoRegimento }: RegimentoViewProps) {
               Sem paragrafos cadastrados.
             </p>
           ) : (
-            <div className="mt-3 space-y-3">
+            <div className="mt-3 print:mt-0 space-y-3">
               {escopo.paragrafos.map((paragrafo, paragrafoIndex) => (
                 <div
                   key={paragrafoIndex}
-                  className="rounded-lg bg-slate-50 p-3"
+                  className="rounded-lg print:rounded-none print:bg-transparent bg-slate-50 p-3"
                 >
-                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-400">
-                    {paragrafo.artigo || `Paragrafo ${paragrafoIndex + 1}`}
+                  <p className="text-xs font-semibold uppercase print:capitalize tracking-widest print:text-lg print:text-black text-slate-400">
+                    {"Art." + paragrafo.artigo ||
+                      `Paragrafo ${paragrafoIndex + 1}`}
                   </p>
-                  <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                  <p className="mt-1 whitespace-pre-wrap text-sm print:text-lg leading-6 text-slate-700">
+                    <span className="print:font-bold">
+                      § {paragrafoIndex + 1}° -{" "}
+                    </span>
                     {paragrafo.texto}
                   </p>
                 </div>

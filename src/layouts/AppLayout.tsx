@@ -15,8 +15,8 @@ export function AppLayout({
   children,
 }: AppLayoutProps) {
   return (
-    <div className="min-h-screen app-background">
-      <header className="border-b border-black/10 bg-slate-900 px-6 py-3 text-slate-100">
+    <div className="min-h-screen app-background print:border-6 print:border-double print:rounded-sm print:p-3">
+      <header className="print:hidden border-b border-black/10 bg-slate-900 px-6 py-3 text-slate-100">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between">
           <p className="text-sm font-medium tracking-[0.18em] text-slate-300">
             CONDONOTI
@@ -32,10 +32,12 @@ export function AppLayout({
         </div>
       </header>
 
-      <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:px-6">
-        <SidebarNav currentPath={currentPath} onNavigate={onNavigate} />
+      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 px-4 py-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:px-6">
+        <div className="print:hidden">
+          <SidebarNav currentPath={currentPath} onNavigate={onNavigate} />
+        </div>
 
-        <main className="space-y-6">
+        <main className="min-w-0 space-y-6">
           {supabaseConfigError ? (
             <section className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
               {supabaseConfigError}. O sistema segue com dados de demonstracao
