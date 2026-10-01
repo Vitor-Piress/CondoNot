@@ -5,7 +5,19 @@ import type {
 } from "../types/domain";
 import { supabase } from "./supabase";
 
-const fallbackTypes: Condominio[] = [
+function parseCondominio(row: Record<string, unknown>): Condominio {
+  return {
+    id: String(row.id),
+    createdAt: String(
+      row.created_at ?? row.createdAt ?? new Date().toISOString(),
+    ),
+    name: String(row.name ?? ""),
+    location: String(row.location ?? ""),
+    logo_url: typeof row.logo_url === "string" ? row.logo_url : null,
+  };
+}
+
+let fallbackCondominios: Condominio[] = [
   {
     id: "1",
     createdAt: "2026-08-01T09:00:00.000Z",
@@ -31,46 +43,56 @@ const fallbackTypes: Condominio[] = [
 
 export async function getCondominios(): Promise<Condominio[]> {
   if (!supabase) {
-    return fallbackTypes;
+    return fallbackCondominios.slice();
   }
 
   const { data, error } = await supabase
     .from("condominio")
     .select("*")
-    .order("createdAt", { ascending: false });
+    .order("created_at", { ascending: false });
 
   if (error) throw error;
-  return data || [];
+  return (data ?? []).map((row) => parseCondominio(row));
 }
 
 export async function getCondominioById(
   id: string,
 ): Promise<Condominio | null> {
   if (!supabase) {
-    return fallbackTypes.find((type) => type.id === id) ?? null;
+    return (
+      fallbackCondominios.find((condominio) => condominio.id === id) ?? null
+    );
   }
 
   const { data, error } = await supabase
     .from("condominio")
     .select("*")
     .eq("id", id)
-    .single(); // Garante que retorna apenas 1 objeto, e não um array
+    .maybeSingle();
 
   if (error) throw error;
-  return data;
+  return data ? parseCondominio(data) : null;
 }
 
 export async function createCondominio(
   condominioData: CondominioInsert,
 ): Promise<Condominio> {
   if (!supabase) {
-    return {
-      id: crypto.randomUUID(),
+    const nextId = String(
+      Math.max(
+        0,
+        ...fallbackCondominios.map((condominio) => Number(condominio.id)),
+      ) + 1,
+    );
+    const created = {
+      id: nextId,
       createdAt: new Date().toISOString(),
       name: condominioData.name,
       location: condominioData.location,
-      logo_url: null,
+      logo_url: condominioData.logo_url,
     };
+    fallbackCondominios = [...fallbackCondominios, created];
+    return created;
   }
   const { data, error } = await supabase
     .from("condominio")
@@ -79,7 +101,7 @@ export async function createCondominio(
     .single();
 
   if (error) throw error;
-  return data;
+  return parseCondominio(data);
 }
 
 export async function updateCondominio(
@@ -87,13 +109,15 @@ export async function updateCondominio(
   condominioData: CondominioUpdate,
 ): Promise<Condominio> {
   if (!supabase) {
-    return {
-      id,
-      createdAt: new Date().toISOString(),
-      name: condominioData.name ?? "Erro!",
-      location: condominioData.location ?? "Erro!",
-      logo_url: condominioData.logo_url ?? "Erro!",
-    };
+    const index = fallbackCondominios.findIndex(
+      (condominio) => condominio.id === id,
+    );
+    if (index < 0) throw new Error("Condomínio não encontrado.");
+    const updated = { ...fallbackCondominios[index], ...condominioData };
+    fallbackCondominios = fallbackCondominios.map((condominio, rowIndex) =>
+      rowIndex === index ? updated : condominio,
+    );
+    return updated;
   }
   const { data, error } = await supabase
     .from("condominio")
@@ -103,11 +127,14 @@ export async function updateCondominio(
     .single();
 
   if (error) throw error;
-  return data;
+  return parseCondominio(data);
 }
 
-export async function deleteCondominio(id: number): Promise<void> {
+export async function deleteCondominio(id: string): Promise<void> {
   if (!supabase) {
+    fallbackCondominios = fallbackCondominios.filter(
+      (condominio) => condominio.id !== id,
+    );
     return;
   }
   const { error } = await supabase.from("condominio").delete().eq("id", id);
@@ -116,10 +143,11 @@ export async function deleteCondominio(id: number): Promise<void> {
 }
 
 export async function updateCondominioLogo(
-  id: number,
+  id: string,
   logoUrl: string,
 ): Promise<void> {
   if (!supabase) {
+    await updateCondominio(id, { logo_url: logoUrl });
     return;
   }
   const { error } = await supabase
@@ -130,13 +158,14 @@ export async function updateCondominioLogo(
   if (error) throw error;
 }
 
-export async function removeCondominioLogo(id: number): Promise<void> {
+export async function removeCondominioLogo(id: string): Promise<void> {
   if (!supabase) {
+    await updateCondominio(id, { logo_url: null });
     return;
   }
   const { error } = await supabase
     .from("condominio")
-    .update({ logo_url: "" }) // Pode ser "" ou null, dependendo de como sua tabela aceita
+    .update({ logo_url: null })
     .eq("id", id);
 
   if (error) throw error;

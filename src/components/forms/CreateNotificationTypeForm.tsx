@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm, type Control } from "react-hook-form";
 import { z } from "zod";
+import { useCondominio } from "../../contexts/useCondominio";
 import { createNotificationType } from "../../services/notificationTypeService";
 import { MAX_ESCOPOS, MAX_PARAGRAFOS_POR_ESCOPO } from "../../types/domain";
 
@@ -179,6 +180,7 @@ function EscopoFields({
 export function CreateNotificationTypeForm({
   onSuccess,
 }: CreateNotificationTypeFormProps) {
+  const { activeCondominioId } = useCondominio();
   const {
     register,
     handleSubmit,
@@ -203,7 +205,12 @@ export function CreateNotificationTypeForm({
   });
 
   const onSubmit = handleSubmit(async (values) => {
+    if (!activeCondominioId) {
+      return;
+    }
+
     await createNotificationType({
+      idCondominio: activeCondominioId,
       titulo: values.titulo,
       textoRegimento: values.escopos,
     });

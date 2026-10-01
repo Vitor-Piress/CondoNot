@@ -17,6 +17,7 @@ import {
   type Unit,
 } from "../types/domain";
 import { formatDate } from "../utils/format";
+import { useCondominio } from "../contexts/useCondominio";
 
 interface NotificationsPageProps {
   onNavigate: (to: string) => void;
@@ -29,6 +30,7 @@ const initialFilters: NotificationFilters = {
 };
 
 export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
+  const { activeCondominioId } = useCondominio();
   const [filters, setFilters] = useState<NotificationFilters>(initialFilters);
   const [rows, setRows] = useState<Notification[]>([]);
   const [types, setTypes] = useState<NotificationType[]>([]);
@@ -40,14 +42,18 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
     let active = true;
 
     async function loadRows() {
+      if (!activeCondominioId) {
+        return;
+      }
+
       setLoading(true);
       setError(null);
 
       try {
         const [notifications, typeRows, unitRows] = await Promise.all([
-          listNotifications(filters),
-          listNotificationTypes(),
-          listUnits(""),
+          listNotifications(filters, activeCondominioId),
+          listNotificationTypes(activeCondominioId),
+          listUnits("", activeCondominioId),
         ]);
 
         if (!active) {
@@ -79,7 +85,7 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
     return () => {
       active = false;
     };
-  }, [filters]);
+  }, [activeCondominioId, filters]);
 
   const typeMap = useMemo(
     () =>

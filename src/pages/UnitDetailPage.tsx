@@ -20,6 +20,7 @@ import {
   type Unit,
 } from "../types/domain";
 import { formatDate } from "../utils/format";
+import { useCondominio } from "../contexts/useCondominio";
 
 function getNotificationBadgeClass(category: string | null): string {
   const normalizedCategory = category?.toLocaleLowerCase() ?? "";
@@ -41,6 +42,7 @@ interface UnitDetailPageProps {
 }
 
 export function UnitDetailPage({ unitId, onNavigate }: UnitDetailPageProps) {
+  const { activeCondominioId } = useCondominio();
   const routerNavigate = useNavigate();
   const [unit, setUnit] = useState<Unit | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -55,8 +57,12 @@ export function UnitDetailPage({ unitId, onNavigate }: UnitDetailPageProps) {
     let active = true;
 
     async function loadUnit() {
+      if (!activeCondominioId) {
+        return;
+      }
+
       try {
-        const data = await getUnitById(unitId);
+        const data = await getUnitById(unitId, activeCondominioId);
 
         if (!active) {
           return;
@@ -81,12 +87,19 @@ export function UnitDetailPage({ unitId, onNavigate }: UnitDetailPageProps) {
     }
 
     async function loadNotifications() {
+      if (!activeCondominioId) {
+        return;
+      }
+
       setNotificationsLoading(true);
       setNotificationsError(null);
       setNotifications([]);
 
       try {
-        const rows = await listNotificationsByUnitId(unitId);
+        const rows = await listNotificationsByUnitId(
+          unitId,
+          activeCondominioId,
+        );
 
         if (!active) {
           return;
@@ -116,7 +129,7 @@ export function UnitDetailPage({ unitId, onNavigate }: UnitDetailPageProps) {
     return () => {
       active = false;
     };
-  }, [unitId]);
+  }, [activeCondominioId, unitId]);
 
   return (
     <Panel

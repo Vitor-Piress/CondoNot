@@ -14,6 +14,7 @@ const UNIT_TABLE = "unidades";
 const fallbackUnits: Unit[] = [
   {
     id: "101",
+    idCondominio: "1",
     createdAt: "2026-08-01T10:00:00.000Z",
     bloco: "A",
     apartamento: 101,
@@ -27,6 +28,7 @@ const fallbackUnits: Unit[] = [
   },
   {
     id: "102",
+    idCondominio: "1",
     createdAt: "2026-08-02T10:00:00.000Z",
     bloco: "B",
     apartamento: 302,
@@ -44,6 +46,7 @@ const fallbackUnits: Unit[] = [
   },
   {
     id: "103",
+    idCondominio: "1",
     createdAt: "2026-08-03T10:00:00.000Z",
     bloco: "C",
     apartamento: 210,
@@ -88,14 +91,21 @@ function applyQueryFilter(rows: Unit[], query: string): Unit[] {
   );
 }
 
-export async function listUnits(query: string): Promise<Unit[]> {
+export async function listUnits(
+  query: string,
+  condominioId: string,
+): Promise<Unit[]> {
   if (!supabase) {
-    return applyQueryFilter(fallbackUnits, query);
+    return applyQueryFilter(
+      fallbackUnits.filter((unit) => unit.idCondominio === condominioId),
+      query,
+    );
   }
 
   const { data, error } = await supabase
     .from(UNIT_TABLE)
     .select("*")
+    .eq("id_condominio", condominioId)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -108,15 +118,23 @@ export async function listUnits(query: string): Promise<Unit[]> {
   );
 }
 
-export async function getUnitById(id: string): Promise<Unit | null> {
+export async function getUnitById(
+  id: string,
+  condominioId: string,
+): Promise<Unit | null> {
   if (!supabase) {
-    return fallbackUnits.find((unit) => unit.id === id) ?? null;
+    return (
+      fallbackUnits.find(
+        (unit) => unit.id === id && unit.idCondominio === condominioId,
+      ) ?? null
+    );
   }
 
   const { data, error } = await supabase
     .from(UNIT_TABLE)
     .select("*")
     .eq("id", id)
+    .eq("id_condominio", condominioId)
     .maybeSingle();
 
   if (error) {
@@ -132,6 +150,7 @@ export async function getUnitById(id: string): Promise<Unit | null> {
 
 export async function updateUnit(
   id: string,
+  condominioId: string,
   input: {
     bloco: string;
     apartamento: number | null;
@@ -148,6 +167,7 @@ export async function updateUnit(
   if (!supabase) {
     return {
       id,
+      idCondominio: condominioId,
       createdAt: new Date().toISOString(),
       bloco: input.bloco,
       apartamento: input.apartamento,
@@ -167,6 +187,7 @@ export async function updateUnit(
       inquilino: inquilinoDb,
     })
     .eq("id", id)
+    .eq("id_condominio", condominioId)
     .select("*")
     .single();
 

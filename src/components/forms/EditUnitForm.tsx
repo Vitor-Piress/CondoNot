@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
+import { useCondominio } from "../../contexts/useCondominio";
 import {
   getPersonEmail,
   getPersonName,
@@ -81,6 +82,7 @@ function toFormValue(value: string): string {
 }
 
 export function EditUnitForm({ unitId, onSuccess }: EditUnitFormProps) {
+  const { activeCondominioId } = useCondominio();
   const [loading, setLoading] = useState(true);
   const [serverMessage, setServerMessage] = useState<string | null>(null);
 
@@ -114,8 +116,12 @@ export function EditUnitForm({ unitId, onSuccess }: EditUnitFormProps) {
     let active = true;
 
     async function loadUnit() {
+      if (!activeCondominioId) {
+        return;
+      }
+
       try {
-        const unit = await getUnitById(unitId);
+        const unit = await getUnitById(unitId, activeCondominioId);
 
         if (!active) {
           return;
@@ -169,13 +175,18 @@ export function EditUnitForm({ unitId, onSuccess }: EditUnitFormProps) {
     return () => {
       active = false;
     };
-  }, [unitId, reset]);
+  }, [activeCondominioId, unitId, reset]);
 
   const onSubmit = handleSubmit(async (values) => {
     setServerMessage(null);
 
+    if (!activeCondominioId) {
+      setServerMessage("Selecione um condomínio antes de editar a unidade.");
+      return;
+    }
+
     try {
-      await updateUnit(unitId, {
+      await updateUnit(unitId, activeCondominioId, {
         bloco: values.bloco,
         apartamento: toNullableApartment(values.apartamento),
         alugado: toNullableRented(values.alugado),

@@ -14,12 +14,14 @@ import { formatOnlyDate } from "../utils/format";
 import { ActionCard } from "../components/ui/ActionCard";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Panel } from "../components/ui/Panel";
+import { useCondominio } from "../contexts/useCondominio";
 
 interface HomePageProps {
   onNavigate: (to: string) => void;
 }
 
 export function HomePage({ onNavigate }: HomePageProps) {
+  const { activeCondominioId } = useCondominio();
   const [rows, setRows] = useState<Notification[]>([]);
   const [types, setTypes] = useState<NotificationType[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
@@ -30,11 +32,15 @@ export function HomePage({ onNavigate }: HomePageProps) {
     let active = true;
 
     async function loadRows() {
+      if (!activeCondominioId) {
+        return;
+      }
+
       try {
         const [notifications, typeRows, unitRows] = await Promise.all([
-          listRecentNotifications(8),
-          listNotificationTypes(),
-          listUnits(""),
+          listRecentNotifications(8, activeCondominioId),
+          listNotificationTypes(activeCondominioId),
+          listUnits("", activeCondominioId),
         ]);
 
         if (!active) {
@@ -66,7 +72,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
     return () => {
       active = false;
     };
-  }, []);
+  }, [activeCondominioId]);
 
   const typeMap = useMemo(
     () =>

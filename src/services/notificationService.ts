@@ -13,6 +13,7 @@ export interface NotificationFilters {
 const fallbackNotifications: Notification[] = [
   {
     id: "401",
+    idCondominio: "1",
     createdAt: "2026-08-10T09:20:00.000Z",
     idTipoNotificacao: "2",
     idUnidade: "101",
@@ -24,6 +25,7 @@ const fallbackNotifications: Notification[] = [
   },
   {
     id: "402",
+    idCondominio: "1",
     createdAt: "2026-08-09T18:00:00.000Z",
     idTipoNotificacao: "1",
     idUnidade: "102",
@@ -35,6 +37,7 @@ const fallbackNotifications: Notification[] = [
   },
   {
     id: "403",
+    idCondominio: "1",
     createdAt: "2026-08-08T13:45:00.000Z",
     idTipoNotificacao: "3",
     idUnidade: "103",
@@ -76,14 +79,23 @@ function applyFilters(
 
 export async function listNotifications(
   filters: NotificationFilters,
+  condominioId: string,
 ): Promise<Notification[]> {
   if (!supabase) {
-    return applyFilters(sortByDateDesc(fallbackNotifications), filters);
+    return applyFilters(
+      sortByDateDesc(
+        fallbackNotifications.filter(
+          (row) => row.idCondominio === condominioId,
+        ),
+      ),
+      filters,
+    );
   }
 
   const { data, error } = await supabase
     .from(NOTIFICATION_TABLE)
     .select("*")
+    .eq("id_condominio", condominioId)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -98,18 +110,27 @@ export async function listNotifications(
 
 export async function listNotificationsByUnitId(
   unitId: string,
+  condominioId: string,
 ): Promise<Notification[]> {
   if (!supabase) {
-    return applyFilters(sortByDateDesc(fallbackNotifications), {
-      query: "",
-      typeId: "",
-      unitId,
-    });
+    return applyFilters(
+      sortByDateDesc(
+        fallbackNotifications.filter(
+          (row) => row.idCondominio === condominioId,
+        ),
+      ),
+      {
+        query: "",
+        typeId: "",
+        unitId,
+      },
+    );
   }
 
   const { data, error } = await supabase
     .from(NOTIFICATION_TABLE)
     .select("*")
+    .eq("id_condominio", condominioId)
     .eq("id_unidade", unitId)
     .order("created_at", { ascending: false });
 
@@ -122,22 +143,32 @@ export async function listNotificationsByUnitId(
 
 export async function listRecentNotifications(
   limit = 7,
+  condominioId: string,
 ): Promise<Notification[]> {
-  const all = await listNotifications({ query: "", typeId: "", unitId: "" });
+  const all = await listNotifications(
+    { query: "", typeId: "", unitId: "" },
+    condominioId,
+  );
   return all.slice(0, limit);
 }
 
 export async function getNotificationById(
   id: string,
+  condominioId: string,
 ): Promise<Notification | null> {
   if (!supabase) {
-    return fallbackNotifications.find((item) => item.id === id) ?? null;
+    return (
+      fallbackNotifications.find(
+        (item) => item.id === id && item.idCondominio === condominioId,
+      ) ?? null
+    );
   }
 
   const { data, error } = await supabase
     .from(NOTIFICATION_TABLE)
     .select("*")
     .eq("id", id)
+    .eq("id_condominio", condominioId)
     .maybeSingle();
 
   if (error) {
@@ -152,6 +183,7 @@ export async function getNotificationById(
 }
 
 export async function createNotification(input: {
+  idCondominio: string;
   idTipoNotificacao: string;
   idUnidade: string;
   motivo: string;
@@ -162,6 +194,7 @@ export async function createNotification(input: {
   if (!supabase) {
     return {
       id: crypto.randomUUID(),
+      idCondominio: input.idCondominio,
       createdAt: new Date().toISOString(),
       idTipoNotificacao: input.idTipoNotificacao,
       idUnidade: input.idUnidade,
@@ -177,6 +210,7 @@ export async function createNotification(input: {
     .from(NOTIFICATION_TABLE)
     .insert([
       {
+        id_condominio: input.idCondominio,
         id_tipo_notificacao: input.idTipoNotificacao,
         id_unidade: input.idUnidade,
         motivo: input.motivo || null,

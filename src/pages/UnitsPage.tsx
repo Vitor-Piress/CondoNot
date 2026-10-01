@@ -4,6 +4,7 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { Panel } from "../components/ui/Panel";
 import { listUnits } from "../services/unitService";
 import { getUnitLabel, getUnitMainResident, type Unit } from "../types/domain";
+import { useCondominio } from "../contexts/useCondominio";
 
 interface UnitsPageProps {
   onNavigate: (to: string) => void;
@@ -12,6 +13,7 @@ interface UnitsPageProps {
 type UnitsViewMode = "list" | "grid";
 
 export function UnitsPage({ onNavigate }: UnitsPageProps) {
+  const { activeCondominioId } = useCondominio();
   const [query, setQuery] = useState("");
   const [rows, setRows] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,11 +24,15 @@ export function UnitsPage({ onNavigate }: UnitsPageProps) {
     let active = true;
 
     async function loadRows() {
+      if (!activeCondominioId) {
+        return;
+      }
+
       setLoading(true);
       setError(null);
 
       try {
-        const data = await listUnits(query);
+        const data = await listUnits(query, activeCondominioId);
 
         if (!active) {
           return;
@@ -55,7 +61,7 @@ export function UnitsPage({ onNavigate }: UnitsPageProps) {
     return () => {
       active = false;
     };
-  }, [query]);
+  }, [activeCondominioId, query]);
 
   return (
     <Panel

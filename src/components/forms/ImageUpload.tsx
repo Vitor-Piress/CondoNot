@@ -1,8 +1,10 @@
 import { useState, type ChangeEvent } from "react";
 import { uploadImageToStorage } from "../../services/storageService";
 import { updateCondominioLogo } from "../../services/condominioService";
+import { useCondominio } from "../../contexts/useCondominio";
 
 export function ImageUpload() {
+  const { activeCondominioId } = useCondominio();
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState<boolean>(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -15,6 +17,7 @@ export function ImageUpload() {
 
   const handleUpload = async () => {
     if (!file) return alert("Selecione uma imagem!");
+    if (!activeCondominioId) return alert("Selecione um condomínio primeiro.");
 
     try {
       setUploading(true);
@@ -23,8 +26,7 @@ export function ImageUpload() {
       const publicUrl = await uploadImageToStorage(file, "images-app");
       setImageUrl(publicUrl);
 
-      // 2. Salva no Banco (aqui usamos o ID 1 para teste)
-      await updateCondominioLogo(1, publicUrl);
+      await updateCondominioLogo(activeCondominioId, publicUrl);
 
       alert("Imagem enviada e salva com sucesso!");
     } catch (error) {

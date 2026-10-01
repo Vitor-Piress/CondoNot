@@ -8,6 +8,7 @@ import { includesQuery } from "../utils/format";
 import { formatDate } from "../utils/format";
 import { getRegimentoPreview } from "../types/domain";
 import type { Notification, NotificationType } from "../types/domain";
+import { useCondominio } from "../contexts/useCondominio";
 
 interface NotificationTypesPageProps {
   onNavigate: (to: string) => void;
@@ -16,6 +17,7 @@ interface NotificationTypesPageProps {
 export function NotificationTypesPage({
   onNavigate,
 }: NotificationTypesPageProps) {
+  const { activeCondominioId } = useCondominio();
   const [query, setQuery] = useState("");
   const [types, setTypes] = useState<NotificationType[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -26,13 +28,20 @@ export function NotificationTypesPage({
     let active = true;
 
     async function loadData() {
+      if (!activeCondominioId) {
+        return;
+      }
+
       setLoading(true);
       setError(null);
 
       try {
         const [typeRows, notificationRows] = await Promise.all([
-          listNotificationTypes(),
-          listNotifications({ query: "", typeId: "", unitId: "" }),
+          listNotificationTypes(activeCondominioId),
+          listNotifications(
+            { query: "", typeId: "", unitId: "" },
+            activeCondominioId,
+          ),
         ]);
 
         if (!active) {
@@ -63,7 +72,7 @@ export function NotificationTypesPage({
     return () => {
       active = false;
     };
-  }, []);
+  }, [activeCondominioId]);
 
   const typeUsageMap = useMemo(() => {
     const usage = new Map<string, number>();

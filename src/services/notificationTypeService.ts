@@ -9,6 +9,7 @@ import {
 const fallbackTypes: NotificationType[] = [
   {
     id: "1",
+    idCondominio: "1",
     createdAt: "2026-08-01T09:00:00.000Z",
     titulo: "Comunicado Geral",
     textoRegimento: [
@@ -20,6 +21,7 @@ const fallbackTypes: NotificationType[] = [
   },
   {
     id: "2",
+    idCondominio: "1",
     createdAt: "2026-08-02T09:00:00.000Z",
     titulo: "Aviso de Manutenção",
     textoRegimento: [
@@ -31,6 +33,7 @@ const fallbackTypes: NotificationType[] = [
   },
   {
     id: "3",
+    idCondominio: "1",
     createdAt: "2026-08-03T09:00:00.000Z",
     titulo: "Ocorrência",
     textoRegimento: [
@@ -42,14 +45,17 @@ const fallbackTypes: NotificationType[] = [
   },
 ];
 
-export async function listNotificationTypes(): Promise<NotificationType[]> {
+export async function listNotificationTypes(
+  condominioId: string,
+): Promise<NotificationType[]> {
   if (!supabase) {
-    return fallbackTypes;
+    return fallbackTypes.filter((type) => type.idCondominio === condominioId);
   }
 
   const { data, error } = await supabase
     .from("tipos_notificacao")
     .select("*")
+    .eq("id_condominio", condominioId)
     .order("id", { ascending: true });
 
   if (error) {
@@ -61,15 +67,21 @@ export async function listNotificationTypes(): Promise<NotificationType[]> {
 
 export async function getNotificationTypeById(
   id: string,
+  condominioId: string,
 ): Promise<NotificationType | null> {
   if (!supabase) {
-    return fallbackTypes.find((type) => type.id === id) ?? null;
+    return (
+      fallbackTypes.find(
+        (type) => type.id === id && type.idCondominio === condominioId,
+      ) ?? null
+    );
   }
 
   const { data, error } = await supabase
     .from("tipos_notificacao")
     .select("*")
     .eq("id", id)
+    .eq("id_condominio", condominioId)
     .maybeSingle();
 
   if (error) {
@@ -84,12 +96,14 @@ export async function getNotificationTypeById(
 }
 
 export async function createNotificationType(input: {
+  idCondominio: string;
   titulo: string;
   textoRegimento: RegimentoTexto;
 }): Promise<NotificationType> {
   if (!supabase) {
     return {
       id: crypto.randomUUID(),
+      idCondominio: input.idCondominio,
       createdAt: new Date().toISOString(),
       titulo: input.titulo,
       textoRegimento: input.textoRegimento,
@@ -100,6 +114,7 @@ export async function createNotificationType(input: {
     .from("tipos_notificacao")
     .insert([
       {
+        id_condominio: input.idCondominio,
         titulo: input.titulo,
         texto_regimento: serializeRegimentoTexto(input.textoRegimento),
       },

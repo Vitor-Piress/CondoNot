@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
+import { useCondominio } from "../../contexts/useCondominio";
 import { UnitCombobox } from "../ui/UnitCombobox";
 import { createNotification } from "../../services/notificationService";
 import { listNotificationTypes } from "../../services/notificationTypeService";
@@ -51,6 +52,7 @@ const categoryOptions = [
 export function CreateNotificationForm({
   onSuccess,
 }: CreateNotificationFormProps) {
+  const { activeCondominioId } = useCondominio();
   const [types, setTypes] = useState<NotificationType[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(true);
@@ -78,10 +80,14 @@ export function CreateNotificationForm({
     let active = true;
 
     async function loadOptions() {
+      if (!activeCondominioId) {
+        return;
+      }
+
       try {
         const [typeRows, unitRows] = await Promise.all([
-          listNotificationTypes(),
-          listUnits(""),
+          listNotificationTypes(activeCondominioId),
+          listUnits("", activeCondominioId),
         ]);
 
         if (!active) {
@@ -112,7 +118,7 @@ export function CreateNotificationForm({
     return () => {
       active = false;
     };
-  }, []);
+  }, [activeCondominioId]);
 
   const selectedCategory = useWatch({
     control,
@@ -122,8 +128,14 @@ export function CreateNotificationForm({
   const onSubmit = handleSubmit(async (values) => {
     setServerMessage(null);
 
+    if (!activeCondominioId) {
+      setServerMessage("Selecione um condomínio antes de criar a notificação.");
+      return;
+    }
+
     try {
       const created = await createNotification({
+        idCondominio: activeCondominioId,
         idTipoNotificacao: values.idTipoNotificacao,
         idUnidade: values.idUnidade,
         categoria: values.categoria,

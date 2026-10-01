@@ -20,6 +20,7 @@ export type CondominioUpdate = Partial<CondominioInsert>;
 
 export interface Notification {
   id: string;
+  idCondominio: string;
   createdAt: string;
   idTipoNotificacao: string;
   idUnidade: string;
@@ -47,6 +48,7 @@ export const MAX_PARAGRAFOS_POR_ESCOPO = 5;
 
 export interface NotificationType {
   id: string;
+  idCondominio: string;
   createdAt: string;
   titulo: string | null;
   textoRegimento: RegimentoTexto | null;
@@ -54,6 +56,7 @@ export interface NotificationType {
 
 export interface Unit {
   id: string;
+  idCondominio: string;
   createdAt: string;
   bloco: string;
   apartamento: number | null;
@@ -231,6 +234,7 @@ export function serializeRegimentoTexto(escopos: RegimentoTexto): JsonObject {
 export function parseNotification(row: UnknownRow): Notification {
   return {
     id: toStringValue(row.id, crypto.randomUUID()),
+    idCondominio: toStringValue(row.id_condominio ?? row.idCondominio),
     createdAt: toStringValue(
       row.created_at ?? row.createdAt,
       new Date().toISOString(),
@@ -251,8 +255,9 @@ export function parseNotification(row: UnknownRow): Notification {
 export function parseNotificationType(row: UnknownRow): NotificationType {
   return {
     id: toStringValue(row.id, crypto.randomUUID()),
+    idCondominio: toStringValue(row.id_condominio ?? row.idCondominio),
     createdAt: toStringValue(
-      row.createdAt ?? row.createdAt,
+      row.created_at ?? row.createdAt,
       new Date().toISOString(),
     ),
     titulo: toNullableString(row.titulo),
@@ -292,8 +297,9 @@ export function getNotificationCategoryLabel(
 export function parseUnit(row: UnknownRow): Unit {
   return {
     id: toStringValue(row.id, crypto.randomUUID()),
+    idCondominio: toStringValue(row.id_condominio ?? row.idCondominio),
     createdAt: toStringValue(
-      row.createdAt ?? row.createdAt,
+      row.created_at ?? row.createdAt,
       new Date().toISOString(),
     ),
     bloco: toStringValue(row.bloco, "-"),

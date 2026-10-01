@@ -5,6 +5,7 @@ import { RegimentoView } from "../components/ui/RegimentoView";
 import { getNotificationTypeById } from "../services/notificationTypeService";
 import type { NotificationType } from "../types/domain";
 import { formatDate } from "../utils/format";
+import { useCondominio } from "../contexts/useCondominio";
 
 interface NotificationTypeDetailPageProps {
   typeId: string;
@@ -15,6 +16,7 @@ export function NotificationTypeDetailPage({
   typeId,
   onNavigate,
 }: NotificationTypeDetailPageProps) {
+  const { activeCondominioId } = useCondominio();
   const [type, setType] = useState<NotificationType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,8 +25,12 @@ export function NotificationTypeDetailPage({
     let active = true;
 
     async function loadType() {
+      if (!activeCondominioId) {
+        return;
+      }
+
       try {
-        const data = await getNotificationTypeById(typeId);
+        const data = await getNotificationTypeById(typeId, activeCondominioId);
 
         if (!active) {
           return;
@@ -53,7 +59,7 @@ export function NotificationTypeDetailPage({
     return () => {
       active = false;
     };
-  }, [typeId]);
+  }, [activeCondominioId, typeId]);
 
   return (
     <Panel
