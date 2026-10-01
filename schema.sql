@@ -23,6 +23,15 @@ COMMENT ON SCHEMA "public" IS 'standard public schema';
 
 
 
+CREATE TYPE "public"."notificacao_status" AS ENUM (
+    'ativa',
+    'baixada'
+);
+
+
+ALTER TYPE "public"."notificacao_status" OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."rls_auto_enable"() RETURNS "event_trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'pg_catalog'
@@ -121,7 +130,11 @@ CREATE TABLE IF NOT EXISTS "public"."notificacao" (
     "categoria" "text",
     "data_retroativa" "date",
     "valor_multa" smallint,
-    "id_condominio" bigint NOT NULL
+    "id_condominio" bigint NOT NULL,
+    "status" "public"."notificacao_status" DEFAULT 'ativa'::"public"."notificacao_status" NOT NULL,
+    "data_baixa" timestamp with time zone,
+    "motivo_baixa" "text",
+    CONSTRAINT "notificacao_baixa_consistente" CHECK (((("status" = 'ativa'::"public"."notificacao_status") AND ("data_baixa" IS NULL) AND ("motivo_baixa" IS NULL)) OR (("status" = 'baixada'::"public"."notificacao_status") AND ("data_baixa" IS NOT NULL) AND ("motivo_baixa" IS NOT NULL))))
 );
 
 
@@ -215,6 +228,18 @@ ALTER TABLE ONLY "public"."unidades"
 
 
 
+CREATE INDEX "notificacao_condominio_created_at_idx" ON "public"."notificacao" USING "btree" ("id_condominio", "created_at" DESC);
+
+
+
+CREATE INDEX "tipos_notificacao_id_condominio_idx" ON "public"."tipos_notificacao" USING "btree" ("id_condominio");
+
+
+
+CREATE INDEX "unidades_id_condominio_idx" ON "public"."unidades" USING "btree" ("id_condominio");
+
+
+
 ALTER TABLE ONLY "public"."notificacao"
     ADD CONSTRAINT "notificacao_id_condominio_fkey" FOREIGN KEY ("id_condominio") REFERENCES "public"."condominio"("id");
 
@@ -275,8 +300,8 @@ GRANT USAGE ON SCHEMA "public" TO "service_role";
 
 
 
-GRANT SELECT,REFERENCES,TRIGGER,TRUNCATE,MAINTAIN,UPDATE ON TABLE "public"."condominio" TO "anon";
-GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE "public"."condominio" TO "authenticated";
+GRANT SELECT,INSERT,REFERENCES,TRIGGER,TRUNCATE,MAINTAIN,UPDATE ON TABLE "public"."condominio" TO "anon";
+GRANT SELECT,INSERT,REFERENCES,TRIGGER,TRUNCATE,MAINTAIN,UPDATE ON TABLE "public"."condominio" TO "authenticated";
 GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE "public"."condominio" TO "service_role";
 
 

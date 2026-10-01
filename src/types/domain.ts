@@ -18,6 +18,8 @@ export type CondominioInsert = Omit<Condominio, "id" | "createdAt">;
 
 export type CondominioUpdate = Partial<CondominioInsert>;
 
+export type NotificationStatus = "ativa" | "baixada";
+
 export interface Notification {
   id: string;
   idCondominio: string;
@@ -29,6 +31,9 @@ export interface Notification {
   categoria: string | null;
   dataRetroativa: string | null;
   valorMulta: number | null;
+  status: NotificationStatus;
+  dataBaixa: string | null;
+  motivoBaixa: string | null;
 }
 
 export interface RegimentoParagrafo {
@@ -231,6 +236,10 @@ export function serializeRegimentoTexto(escopos: RegimentoTexto): JsonObject {
   return raw;
 }
 
+function toNotificationStatus(value: unknown): NotificationStatus {
+  return value === "baixada" ? "baixada" : "ativa";
+}
+
 export function parseNotification(row: UnknownRow): Notification {
   return {
     id: toStringValue(row.id, crypto.randomUUID()),
@@ -249,6 +258,9 @@ export function parseNotification(row: UnknownRow): Notification {
     categoria: toNullableString(row.categoria),
     dataRetroativa: toNullableString(row.data_retroativa ?? row.dataRetroativa),
     valorMulta: toNullableNumber(row.valor_multa ?? row.valorMulta),
+    status: toNotificationStatus(row.status),
+    dataBaixa: toNullableString(row.data_baixa ?? row.dataBaixa),
+    motivoBaixa: toNullableString(row.motivo_baixa ?? row.motivoBaixa),
   };
 }
 

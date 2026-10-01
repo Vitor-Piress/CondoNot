@@ -29,9 +29,12 @@ const initialFilters: NotificationFilters = {
   unitId: "",
 };
 
+type StatusFilter = "ativa" | "todas";
+
 export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
   const { activeCondominioId } = useCondominio();
   const [filters, setFilters] = useState<NotificationFilters>(initialFilters);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ativa");
   const [rows, setRows] = useState<Notification[]>([]);
   const [types, setTypes] = useState<NotificationType[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
@@ -98,6 +101,14 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
     [units],
   );
 
+  const visibleRows = useMemo(
+    () =>
+      statusFilter === "ativa"
+        ? rows.filter((row) => row.status === "ativa")
+        : rows,
+    [rows, statusFilter],
+  );
+
   return (
     <Panel
       title="Relatórios e visualização de notificações"
@@ -161,6 +172,17 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
           emptyOptionLabel="Todas as unidades"
           placeholder="Buscar unidade"
         />
+
+        <select
+          value={statusFilter}
+          onChange={(event) =>
+            setStatusFilter(event.target.value as StatusFilter)
+          }
+          className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none ring-slate-200 transition focus:ring"
+        >
+          <option value="ativa">Somente ativas</option>
+          <option value="todas">Todas (inclui baixadas)</option>
+        </select>
       </div>
 
       {loading ? <p className="text-sm text-slate-500">Carregando...</p> : null}
@@ -171,16 +193,16 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
         </p>
       ) : null}
 
-      {!loading && !error && rows.length === 0 ? (
+      {!loading && !error && visibleRows.length === 0 ? (
         <EmptyState
           title="Nenhum resultado"
           description="Ajuste os filtros ou cadastre uma nova notificação."
         />
       ) : null}
 
-      {!loading && !error && rows.length > 0 ? (
+      {!loading && !error && visibleRows.length > 0 ? (
         <ul className="space-y-3">
-          {rows.map((row) => (
+          {visibleRows.map((row) => (
             <li key={row.id}>
               <button
                 type="button"
@@ -188,10 +210,17 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
                 className="grid w-full gap-2 rounded-xl border border-slate-200 p-4 text-left transition hover:border-slate-300 hover:bg-slate-50 md:grid-cols-[minmax(0,1fr)_220px_160px] md:items-center"
               >
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">
-                    {getNotificationCategoryLabel(row.categoria) ??
-                      `Notificação #${row.id}`}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-semibold text-slate-900">
+                      {getNotificationCategoryLabel(row.categoria) ??
+                        `Notificação #${row.id}`}
+                    </p>
+                    {row.status === "baixada" ? (
+                      <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-rose-700">
+                        Baixada
+                      </span>
+                    ) : null}
+                  </div>
                   <p className="mt-1 text-xs text-slate-500">
                     {row.motivo ?? "Sem motivo informado"}
                   </p>

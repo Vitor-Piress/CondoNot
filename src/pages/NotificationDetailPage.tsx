@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
-import { Printer } from "lucide-react";
+import { ArrowLeft, Printer, ShieldOff } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Panel } from "../components/ui/Panel";
 import { RegimentoView } from "../components/ui/RegimentoView";
-import { getNotificationById } from "../services/notificationService";
+import {
+  getNotificationById,
+  inactivateNotification,
+} from "../services/notificationService";
 import { getNotificationTypeById } from "../services/notificationTypeService";
 import { getCondominioById } from "../services/condominioService";
 import { getUnitById } from "../services/unitService";
@@ -48,6 +51,10 @@ export function NotificationDetailPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [condominio, setCondominio] = useState<Condominio | null>(null);
+  const [isBaixaModalOpen, setIsBaixaModalOpen] = useState(false);
+  const [motivoBaixaInput, setMotivoBaixaInput] = useState("");
+  const [baixaError, setBaixaError] = useState<string | null>(null);
+  const [isSubmittingBaixa, setIsSubmittingBaixa] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -115,6 +122,40 @@ export function NotificationDetailPage({
     };
   }, [activeCondominioId, notificationId]);
 
+  async function handleConfirmBaixa() {
+    if (!row || !activeCondominioId) {
+      return;
+    }
+
+    const trimmedMotivo = motivoBaixaInput.trim();
+    if (!trimmedMotivo) {
+      setBaixaError("Informe o motivo da baixa.");
+      return;
+    }
+
+    setIsSubmittingBaixa(true);
+    setBaixaError(null);
+
+    try {
+      const updated = await inactivateNotification(
+        row.id,
+        activeCondominioId,
+        trimmedMotivo,
+      );
+      setRow(updated);
+      setIsBaixaModalOpen(false);
+      setMotivoBaixaInput("");
+    } catch (inactivateError) {
+      setBaixaError(
+        inactivateError instanceof Error
+          ? inactivateError.message
+          : "Não foi possível dar baixa na notificação.",
+      );
+    } finally {
+      setIsSubmittingBaixa(false);
+    }
+  }
+
   const typeTitle = type?.titulo ?? `Tipo ${row?.idTipoNotificacao ?? ""}`;
 
   return (
@@ -122,8 +163,36 @@ export function NotificationDetailPage({
       <Panel
         title="Notificação individual"
         subtitle="Visualização completa do registro"
+        leftAction={
+          <button
+            type="button"
+            onClick={() =>
+              onNavigate(
+                sourceUnitId ? `/unidades/${sourceUnitId}` : "/notificacoes",
+              )
+            }
+            aria-label={
+              sourceUnitId ? "Voltar para unidade" : "Voltar para lista"
+            }
+            title={sourceUnitId ? "Voltar para unidade" : "Voltar para lista"}
+            className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+          >
+            <ArrowLeft aria-hidden="true" size={18} />
+          </button>
+        }
         action={
           <div className="flex items-center gap-2">
+            {row && row.status === "ativa" ? (
+              <button
+                type="button"
+                onClick={() => setIsBaixaModalOpen(true)}
+                aria-label="Dar baixa na notificação"
+                title="Dar baixa na notificação"
+                className="inline-flex size-9 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-rose-50 hover:text-rose-700"
+              >
+                <ShieldOff aria-hidden="true" size={18} />
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={() => window.print()}
@@ -132,17 +201,6 @@ export function NotificationDetailPage({
               className="inline-flex size-9 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
             >
               <Printer aria-hidden="true" size={18} />
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                onNavigate(
-                  sourceUnitId ? `/unidades/${sourceUnitId}` : "/notificacoes",
-                )
-              }
-              className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:bg-slate-100"
-            >
-              {sourceUnitId ? "Voltar para unidade" : "Voltar para lista"}
             </button>
           </div>
         }
@@ -167,14 +225,36 @@ export function NotificationDetailPage({
         {!loading && !error && row ? (
           <article className="space-y-4 rounded-2xl print:border-none border border-slate-200 p-5">
             <div>
-              <p className="print:hidden text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
-                Categoria
-              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="print:hidden text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                  Categoria
+                </p>
+                <span
+                  className={`print:hidden rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-widest ${
+                    row.status === "ativa"
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-rose-100 text-rose-700"
+                  }`}
+                >
+                  {row.status === "ativa" ? "Ativa" : "Baixada"}
+                </span>
+              </div>
               <h3 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
                 {getNotificationCategoryLabel(row.categoria) ??
                   `Notificação #${row.id}`}
               </h3>
             </div>
+
+            {row.status === "baixada" ? (
+              <div className="print:hidden rounded-xl border border-rose-200 bg-rose-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-rose-500">
+                  Baixada em {row.dataBaixa ? formatDate(row.dataBaixa) : "-"}
+                </p>
+                <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-rose-800">
+                  {row.motivoBaixa}
+                </p>
+              </div>
+            ) : null}
 
             <div className="grid gap-4 md:grid-cols-3">
               <div className="min-w-0">
@@ -270,6 +350,11 @@ export function NotificationDetailPage({
                 ? `CARTA DE ${(getNotificationCategoryLabel(row.categoria) ?? row.categoria).toUpperCase()}`
                 : `Notificação #${row.id}`}
             </h3>
+            {row.status === "baixada" ? (
+              <p className="mb-6 text-2xl font-bold tracking-[0.2em] text-rose-700">
+                BAIXADA
+              </p>
+            ) : null}
             <section className="w-full mb-6 flex items-start gap-4">
               <button
                 type="button"
@@ -280,7 +365,7 @@ export function NotificationDetailPage({
               >
                 {typeTitle}
               </button>
-              <p className="shrink-0 whitespace-nowrap text-right font-bold">
+              <p className="shrink-0 whitespace-nowrap text-right font-bold text-md">
                 {formatOnlyDateInFull(row.createdAt)}
               </p>
             </section>
@@ -330,6 +415,57 @@ export function NotificationDetailPage({
               <p>Síndica</p>
             </div>
           </footer>
+        </div>
+      ) : null}
+
+      {isBaixaModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
+            <h3 className="text-lg font-semibold text-slate-900">
+              Dar baixa na notificação
+            </h3>
+            <p className="mt-1 text-sm text-slate-500">
+              Essa ação é permanente e marcará o registro como baixado, mantendo
+              o histórico para fins de auditoria.
+            </p>
+            <label className="mt-4 block text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+              Motivo da baixa
+              <textarea
+                value={motivoBaixaInput}
+                onChange={(event) => setMotivoBaixaInput(event.target.value)}
+                rows={4}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal normal-case tracking-normal text-slate-900 outline-none focus:ring-2 focus:ring-slate-400"
+                placeholder="Ex.: Notificação emitida para a unidade incorreta."
+              />
+            </label>
+            {baixaError ? (
+              <p className="mt-2 text-sm font-medium text-rose-600">
+                {baixaError}
+              </p>
+            ) : null}
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsBaixaModalOpen(false);
+                  setMotivoBaixaInput("");
+                  setBaixaError(null);
+                }}
+                disabled={isSubmittingBaixa}
+                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 disabled:opacity-60"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleConfirmBaixa()}
+                disabled={isSubmittingBaixa}
+                className="rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-rose-500 disabled:opacity-60"
+              >
+                {isSubmittingBaixa ? "Dando baixa..." : "Confirmar baixa"}
+              </button>
+            </div>
+          </div>
         </div>
       ) : null}
     </>

@@ -22,6 +22,9 @@ const fallbackNotifications: Notification[] = [
     categoria: "Perturbação do sossego",
     dataRetroativa: "2026-08-09",
     valorMulta: 150,
+    status: "ativa",
+    dataBaixa: null,
+    motivoBaixa: null,
   },
   {
     id: "402",
@@ -34,6 +37,9 @@ const fallbackNotifications: Notification[] = [
     categoria: "Estacionamento indevido",
     dataRetroativa: null,
     valorMulta: null,
+    status: "ativa",
+    dataBaixa: null,
+    motivoBaixa: null,
   },
   {
     id: "403",
@@ -46,6 +52,9 @@ const fallbackNotifications: Notification[] = [
     categoria: "Convivência",
     dataRetroativa: null,
     valorMulta: 80,
+    status: "ativa",
+    dataBaixa: null,
+    motivoBaixa: null,
   },
 ];
 
@@ -203,6 +212,9 @@ export async function createNotification(input: {
       categoria: input.categoria || null,
       dataRetroativa: input.dataRetroativa,
       valorMulta: input.valorMulta,
+      status: "ativa",
+      dataBaixa: null,
+      motivoBaixa: null,
     };
   }
 
@@ -219,6 +231,43 @@ export async function createNotification(input: {
         valor_multa: input.valorMulta,
       },
     ])
+    .select("*")
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return parseNotification(data);
+}
+
+export async function inactivateNotification(
+  id: string,
+  condominioId: string,
+  motivoBaixa: string,
+): Promise<Notification> {
+  if (!supabase) {
+    const row = fallbackNotifications.find(
+      (item) => item.id === id && item.idCondominio === condominioId,
+    );
+    if (!row) {
+      throw new Error("Notificação não encontrada.");
+    }
+    row.status = "baixada";
+    row.dataBaixa = new Date().toISOString();
+    row.motivoBaixa = motivoBaixa;
+    return row;
+  }
+
+  const { data, error } = await supabase
+    .from(NOTIFICATION_TABLE)
+    .update({
+      status: "baixada",
+      data_baixa: new Date().toISOString(),
+      motivo_baixa: motivoBaixa,
+    })
+    .eq("id", id)
+    .eq("id_condominio", condominioId)
     .select("*")
     .single();
 

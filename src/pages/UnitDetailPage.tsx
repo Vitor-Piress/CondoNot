@@ -319,6 +319,11 @@ export function UnitDetailPage({ unitId, onNavigate }: UnitDetailPageProps) {
                               notification.categoria,
                             ) ?? "Notificação"}
                           </span>
+                          {notification.status === "baixada" ? (
+                            <span className="inline-flex rounded-md border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700">
+                              Baixada
+                            </span>
+                          ) : null}
                         </span>
                         <span className="mt-1 block text-xs text-slate-500">
                           Registro #{notification.id}
