@@ -336,26 +336,26 @@ export function NotificationDetailPage({
       {/* <ImageUpload></ImageUpload> */}
       {/* Página para impressão: */}
       {!loading && !error && row ? (
-        <div className="print:break-inside-avoid print:flex hidden text-lg text-justify leading-tight px-8 flex-col justify-center font-serif">
+        <div className="print:break-inside-avoid print:flex hidden text-base text-justify leading-snug px-8 flex-col justify-center font-serif">
           <header className="bg-black-900 flex flex-col items-center">
             {condominio?.logo_url ? (
               <img
-                className="h-32 w-40 max-w-full shrink-0 mb-8 object-contain"
+                className="h-24 w-32 max-w-full shrink-0 mb-4 object-contain"
                 src={condominio.logo_url}
                 alt={`Logo ${condominio.name}`}
               />
             ) : null}
-            <h3 className="text-3xl mb-10 font-semibold tracking-tight text-slate-900 print:underline">
+            <h3 className="text-2xl mb-5 font-semibold tracking-tight text-slate-900 print:underline">
               {row.categoria
                 ? `CARTA DE ${(getNotificationCategoryLabel(row.categoria) ?? row.categoria).toUpperCase()}`
                 : `Notificação #${row.id}`}
             </h3>
             {row.status === "baixada" ? (
-              <p className="mb-6 text-2xl font-bold tracking-[0.2em] text-rose-700">
+              <p className="mb-4 text-xl font-bold tracking-[0.2em] text-rose-700">
                 BAIXADA
               </p>
             ) : null}
-            <section className="w-full mb-6 flex items-start gap-4">
+            <section className="w-full mb-4 flex items-start gap-4">
               <button
                 type="button"
                 onClick={() =>
@@ -380,9 +380,9 @@ export function NotificationDetailPage({
               </p>
             </section>
           </header>
-          <main className="mt-8">
+          <main className="mt-5">
             <header className="main-header">
-              <p className="mb-3">Prezado(a) Senhor(a),</p>
+              <p className="mb-2">Prezado(a) Senhor(a),</p>
               <p>
                 Na qualidade de Síndica deste Condomínio, venho{" "}
                 <span className="font-bold">adverti-lo</span> por desrespeito às
@@ -402,14 +402,14 @@ export function NotificationDetailPage({
               </p>
             </section>
           </main>
-          <p className="mt-5">
+          <p className="mt-3">
             Sendo assim, solicitamos sua intervenção e orientação aos moradores
             de seu apartamento para que esse fato{" "}
             <span className="font-bold underline">não</span> mais se repita, sob
             pena de <span className="font-bold underline">multa</span> por
             desrespeito aos estatutos deste Condomínio.
           </p>
-          <footer className="mt-10 flex flex-col items-end print:break-inside-avoid mx-auto">
+          <footer className="mt-6 flex flex-col items-end print:break-inside-avoid mx-auto">
             <div className="text-center">
               <p>Ana Paula Palmezan</p>
               <p>Síndica</p>

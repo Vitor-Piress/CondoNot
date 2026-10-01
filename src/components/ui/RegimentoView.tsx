@@ -14,16 +14,16 @@ export function RegimentoView({ textoRegimento }: RegimentoViewProps) {
   }
 
   return (
-    <div className="min-w-0 space-y-4">
+    <div className="min-w-0 space-y-4 print:space-y-2">
       {textoRegimento.map((escopo, escopoIndex) => (
         <div
           key={escopoIndex}
-          className="min-w-0 rounded-xl print:rounded-none print:border-none border border-slate-200 p-4"
+          className="min-w-0 rounded-xl print:rounded-none print:border-none print:p-0 border border-slate-200 p-4"
         >
           <p className="print:hidden  text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
             Escopo {escopoIndex + 1}
           </p>
-          <h4 className="mt-1 wrap-break-word text-sm font-semibold print:text-lg text-slate-900">
+          <h4 className="mt-1 wrap-break-word text-sm font-semibold print:text-base text-slate-900">
             {escopo.titulo || "Sem título"}
           </h4>
 
@@ -32,18 +32,18 @@ export function RegimentoView({ textoRegimento }: RegimentoViewProps) {
               Sem parágrafos cadastrados.
             </p>
           ) : (
-            <div className="mt-3 min-w-0 print:mt-0 space-y-3">
+            <div className="mt-3 min-w-0 print:mt-1 space-y-3 print:space-y-1">
               {escopo.paragrafos.map((paragrafo, paragrafoIndex) => (
                 <div
                   key={paragrafoIndex}
-                  className="min-w-0 rounded-lg print:rounded-none print:bg-transparent bg-slate-50 p-3"
+                  className="min-w-0 rounded-lg print:rounded-none print:bg-transparent print:p-0 bg-slate-50 p-3"
                 >
-                  <p className="text-xs font-semibold uppercase print:capitalize tracking-widest print:text-lg print:text-black text-slate-400">
+                  <p className="text-xs font-semibold uppercase print:capitalize tracking-widest print:text-base print:text-black text-slate-400">
                     {paragrafo.artigo
                       ? `Art. ${paragrafo.artigo}`
                       : `Parágrafo ${paragrafoIndex + 1}`}
                   </p>
-                  <p className="mt-1 whitespace-pre-wrap wrap-break-word text-sm print:text-lg leading-6 text-slate-700">
+                  <p className="mt-1 whitespace-pre-wrap wrap-break-word text-sm print:text-base leading-6 print:leading-snug text-slate-700">
                     {paragrafo.texto}
                   </p>
                 </div>

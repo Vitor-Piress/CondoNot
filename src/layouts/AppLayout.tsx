@@ -39,7 +39,7 @@ export function AppLayout({
   }
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden app-background print:border-6 print:border-double print:rounded-sm print:p-3">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden app-background print:border-4 print:border-double print:rounded-sm print:p-2">
       <header className="print:hidden border-b border-black/10 bg-slate-900 px-4 py-3 text-slate-100 sm:px-6">
         <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3">
           <p className="text-sm font-medium tracking-[0.18em] text-slate-300">
