@@ -91,13 +91,29 @@ function applyQueryFilter(rows: Unit[], query: string): Unit[] {
   );
 }
 
+function sortByBlocoApartamento(rows: Unit[]): Unit[] {
+  return rows.slice().sort((a, b) => {
+    const blocoComparison = a.bloco.localeCompare(b.bloco, "pt-BR", {
+      numeric: true,
+      sensitivity: "base",
+    });
+    if (blocoComparison !== 0) {
+      return blocoComparison;
+    }
+
+    return (a.apartamento ?? 0) - (b.apartamento ?? 0);
+  });
+}
+
 export async function listUnits(
   query: string,
   condominioId: string,
 ): Promise<Unit[]> {
   if (!supabase) {
     return applyQueryFilter(
-      fallbackUnits.filter((unit) => unit.idCondominio === condominioId),
+      sortByBlocoApartamento(
+        fallbackUnits.filter((unit) => unit.idCondominio === condominioId),
+      ),
       query,
     );
   }
@@ -106,14 +122,15 @@ export async function listUnits(
     .from(UNIT_TABLE)
     .select("*")
     .eq("id_condominio", condominioId)
-    .order("created_at", { ascending: false });
+    .order("bloco", { ascending: true })
+    .order("apartamento", { ascending: true });
 
   if (error) {
     throw new Error(error.message);
   }
 
   return applyQueryFilter(
-    (data ?? []).map((row) => parseUnit(row)),
+    sortByBlocoApartamento((data ?? []).map((row) => parseUnit(row))),
     query,
   );
 }
