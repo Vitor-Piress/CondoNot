@@ -13,7 +13,6 @@ import { formatOnlyDate } from "../utils/format";
 import { ActionCard } from "../components/ui/ActionCard";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Panel } from "../components/ui/Panel";
-import { ImageUpload } from "../components/forms/ImageUpload";
 
 interface HomePageProps {
   onNavigate: (to: string) => void;
