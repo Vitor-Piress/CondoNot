@@ -348,83 +348,88 @@ export function NotificationDetailPage({
       {/* Página para impressão: */}
       {!loading && !error && row ? (
         <div className="hidden w-full print:block print:px-[8mm] print:py-[8mm] text-base leading-relaxed font-serif">
-          <header className="flex flex-col items-center text-center">
-            {condominio?.logo_url ? (
-              <img
-                className="mb-3 h-[22mm] w-[48mm] max-w-full shrink-0 object-contain"
-                src={condominio.logo_url}
-                alt={`Logo ${condominio.name}`}
-              />
-            ) : null}
-            <h3 className="mb-5 border-b border-slate-400 pb-2 text-xl font-bold text-slate-900">
-              {row.categoria
-                ? `CARTA DE ${(getNotificationCategoryLabel(row.categoria) ?? row.categoria).toUpperCase()}`
-                : `Notificação #${row.id}`}
-            </h3>
-            {row.status === "baixada" ? (
-              <p className="mb-4 text-xl font-bold tracking-[0.2em] text-rose-700">
-                BAIXADA
-              </p>
-            ) : null}
-            <section className="mb-4 flex w-full items-start justify-between gap-4 border-y border-slate-300 py-2 text-sm">
-              <p className="min-w-0 flex-1 whitespace-normal wrap-break-words text-left font-semibold leading-snug text-slate-900">
-                {typeTitle}
-              </p>
-              <p className="shrink-0 whitespace-nowrap text-right font-bold">
-                {formatOnlyDateInFull(row.createdAt)}
-              </p>
-            </section>
-            <section className="w-full">
-              <p className="text-justify">
-                Ao condômino(a){" "}
-                <span className="font-bold underline">
-                  da unidade "{unit?.apartamento}" do Bloco "{unit?.bloco}"
-                </span>
-                , do {condominio?.name ?? "condomínio"}, situado em{" "}
-                {condominio?.location ?? "endereço não informado"}.
-              </p>
-            </section>
-          </header>
-          <main className="mt-5 space-y-4">
-            <header className="main-header">
-              <p className="mb-2">Prezado(a) Senhor(a),</p>
-              <p className="text-justify">
-                Na qualidade de Síndica deste Condomínio, venho{" "}
-                <span className="font-bold">adverti-lo</span> por desrespeito às
-                normas do <span className="font-bold">Regimento Interno</span>,
-                como segue:
-              </p>
-            </header>
-            <section className="statute">
-              <RegimentoView textoRegimento={type?.textoRegimento ?? null} />
-            </section>
-            <section className="reason">
-              <p className="mb-1 font-bold underline">Motivo da Notificação</p>
-              <p className="whitespace-pre-wrap wrap-break-word text-justify">
-                {row.motivo ?? "Sem motivo informado"}.
-              </p>
-            </section>
-            {type?.textoApoio ? (
-              <section className="support-text">
-                <p className="whitespace-pre-wrap wrap-break-word text-justify">
-                  {type.textoApoio}
+          <div className="w-full text-justify">
+            <header className="flex flex-col items-center">
+              {condominio?.logo_url ? (
+                <img
+                  className="mb-3 h-[22mm] w-[48mm] max-w-full shrink-0 object-contain"
+                  src={condominio.logo_url}
+                  alt={`Logo ${condominio.name}`}
+                />
+              ) : null}
+              <h3 className="mb-5 border-b border-slate-400 pb-2 text-center text-xl font-bold text-slate-900">
+                {row.categoria
+                  ? `CARTA DE ${(getNotificationCategoryLabel(row.categoria) ?? row.categoria).toUpperCase()}`
+                  : `Notificação #${row.id}`}
+              </h3>
+              {row.status === "baixada" ? (
+                <p className="mb-4 text-center text-xl font-bold tracking-[0.2em] text-rose-700">
+                  BAIXADA
+                </p>
+              ) : null}
+              <section className="mb-4 flex w-full flex-col items-center gap-1 border-y border-slate-300 py-2 text-sm">
+                <p className="min-w-0 whitespace-normal wrap-break-words text-center font-semibold leading-snug text-slate-900">
+                  {typeTitle}
+                </p>
+                <p className="shrink-0 whitespace-nowrap text-center font-bold">
+                  {formatOnlyDateInFull(row.createdAt)}
                 </p>
               </section>
-            ) : null}
-          </main>
-          <p className="mt-3 text-justify">
-            Sendo assim, solicitamos sua intervenção e orientação aos moradores
-            de seu apartamento para que esse fato{" "}
-            <span className="font-bold underline">não</span> mais se repita, sob
-            pena de <span className="font-bold underline">multa</span> por
-            desrespeito aos estatutos deste Condomínio.
-          </p>
-          <footer className="mx-auto mt-[16mm] flex flex-col items-center print:break-inside-avoid">
-            <div className="w-64 border-t border-slate-500 pt-2 text-center">
-              <p>Ana Paula Palmezan</p>
-              <p>Síndica</p>
-            </div>
-          </footer>
+              <section className="w-full">
+                <p className="text-justify">
+                  Ao condômino(a){" "}
+                  <span className="font-bold underline">
+                    da unidade "{unit?.apartamento}" do Bloco "{unit?.bloco}"
+                  </span>
+                  , do {condominio?.name ?? "condomínio"}, situado em{" "}
+                  {condominio?.location ?? "endereço não informado"}.
+                </p>
+              </section>
+            </header>
+            <main className="mt-5 space-y-4">
+              <header className="main-header">
+                <p className="mb-2">Prezado(a) Senhor(a),</p>
+                <p>
+                  Na qualidade de Síndica deste Condomínio, venho{" "}
+                  <span className="font-bold">adverti-lo</span> por desrespeito
+                  às normas do{" "}
+                  <span className="font-bold">Regimento Interno</span>, como
+                  segue:
+                </p>
+              </header>
+              <section className="statute">
+                <RegimentoView textoRegimento={type?.textoRegimento ?? null} />
+              </section>
+              <section className="reason">
+                <p className="mb-1 font-bold underline">
+                  Motivo da Notificação
+                </p>
+                <p className="whitespace-pre-wrap wrap-break-word">
+                  {row.motivo ?? "Sem motivo informado"}.
+                </p>
+              </section>
+              {type?.textoApoio ? (
+                <section className="support-text">
+                  <p className="whitespace-pre-wrap wrap-break-word">
+                    {type.textoApoio}
+                  </p>
+                </section>
+              ) : null}
+            </main>
+            <p className="mt-3">
+              Sendo assim, solicitamos sua intervenção e orientação aos
+              moradores de seu apartamento para que esse fato{" "}
+              <span className="font-bold underline">não</span> mais se repita,
+              sob pena de <span className="font-bold underline">multa</span> por
+              desrespeito aos estatutos deste Condomínio.
+            </p>
+            <footer className="mx-auto mt-[16mm] flex flex-col items-center print:break-inside-avoid">
+              <div className="w-64 border-t border-slate-500 pt-2 text-center">
+                <p>Ana Paula Palmezan</p>
+                <p>Síndica</p>
+              </div>
+            </footer>
+          </div>
         </div>
       ) : null}
 

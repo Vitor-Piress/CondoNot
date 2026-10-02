@@ -5,6 +5,7 @@
     /* Força o navegador a renderizar as cores exatas da tela */
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    background: transparent !important;
   }
   @page {
     size: A4;
@@ -19,10 +20,15 @@
   }
 
   body {
-    padding: 10mm;
-    width: 210mm;
-    min-height: 297mm !important;
-    background: #fff !important;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100vh !important;
+  }
+
+  .app-background {
+    width: 100% !important;
+    min-height: 100vh !important;
   }
 
   .app-background::before {
@@ -31,8 +37,8 @@
 
   .app-background::after {
     content: "";
-    position: fixed;
-    inset: 10mm;
+    position: absolute;
+    inset: 0;
     z-index: 9999;
     border: 4px double #334155;
     pointer-events: none;
