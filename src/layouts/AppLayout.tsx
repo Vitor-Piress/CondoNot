@@ -147,7 +147,7 @@ export function AppLayout({
         </main>
       </div>
 
-      <footer className="print:hidden border-t border-slate-200/80 px-4 py-4 text-center text-xs text-slate-500">
+      <footer className="print:hidden border-t bg-white border-slate-200/80 px-4 py-4 text-center text-xs text-slate-500">
         © {new Date().getFullYear()} Condonot. Todos os direitos reservados.
       </footer>
 
