@@ -113,6 +113,13 @@ export function NotificationTypeDetailPage({
             <span>Criado em {formatDate(type.createdAt)}</span>
           </div>
 
+          {type.deletedAt ? (
+            <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">
+              Tipo arquivado em {formatDate(type.deletedAt)}. Este registro
+              continua disponível para consulta do histórico.
+            </p>
+          ) : null}
+
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
               Texto do regimento

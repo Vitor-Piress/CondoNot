@@ -1,9 +1,12 @@
-import { Search } from "lucide-react";
+import { Archive, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Panel } from "../components/ui/Panel";
 import { listNotifications } from "../services/notificationService";
-import { listNotificationTypes } from "../services/notificationTypeService";
+import {
+  listNotificationTypes,
+  softDeleteNotificationType,
+} from "../services/notificationTypeService";
 import { includesQuery } from "../utils/format";
 import { formatDate } from "../utils/format";
 import { getRegimentoPreview } from "../types/domain";
@@ -22,7 +25,9 @@ export function NotificationTypesPage({
   const [types, setTypes] = useState<NotificationType[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [archivingTypeId, setArchivingTypeId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -97,6 +102,37 @@ export function NotificationTypesPage({
     [types, query],
   );
 
+  async function handleArchive(type: NotificationType) {
+    if (!activeCondominioId) return;
+
+    const usageCount = typeUsageMap.get(type.id) ?? 0;
+    const usageMessage =
+      usageCount > 0
+        ? ` ${usageCount} notificação(ões) já registrada(s) continuará(ão) vinculada(s) a ele.`
+        : "";
+    const confirmed = window.confirm(
+      `Arquivar o tipo "${type.titulo ?? `Tipo ${type.id}`}"?${usageMessage} Ele deixará de aparecer em novas notificações.`,
+    );
+    if (!confirmed) return;
+
+    setArchivingTypeId(type.id);
+    setError(null);
+    setMessage(null);
+    try {
+      await softDeleteNotificationType(type.id, activeCondominioId);
+      setTypes((current) => current.filter((item) => item.id !== type.id));
+      setMessage("Tipo arquivado. O histórico de notificações foi preservado.");
+    } catch (archiveError) {
+      setError(
+        archiveError instanceof Error
+          ? archiveError.message
+          : "Não foi possível arquivar o tipo de notificação.",
+      );
+    } finally {
+      setArchivingTypeId(null);
+    }
+  }
+
   return (
     <Panel
       title="Relatório de tipos de notificação"
@@ -132,6 +168,15 @@ export function NotificationTypesPage({
         </p>
       ) : null}
 
+      {message ? (
+        <p
+          role="status"
+          className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700"
+        >
+          {message}
+        </p>
+      ) : null}
+
       {!loading && !error && filteredTypes.length === 0 ? (
         <EmptyState
           title="Nenhum tipo encontrado"
@@ -143,35 +188,47 @@ export function NotificationTypesPage({
         <ul className="space-y-3">
           {filteredTypes.map((type) => (
             <li key={type.id}>
-              <button
-                type="button"
-                onClick={() => onNavigate(`/tipos-notificacao/${type.id}`)}
-                className="block w-full rounded-xl border border-slate-200 p-4 text-left transition hover:border-slate-300 hover:bg-slate-50"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div>
-                    <h3 className="text-sm font-semibold text-slate-900">
-                      {type.titulo ?? `Tipo ${type.id}`}
-                    </h3>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {getRegimentoPreview(type.textoRegimento)}
-                    </p>
+              <div className="flex items-stretch gap-2">
+                <button
+                  type="button"
+                  onClick={() => onNavigate(`/tipos-notificacao/${type.id}`)}
+                  className="min-w-0 flex-1 rounded-xl border border-slate-200 p-4 text-left transition hover:border-slate-300 hover:bg-slate-50"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-900">
+                        {type.titulo ?? `Tipo ${type.id}`}
+                      </h3>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {getRegimentoPreview(type.textoRegimento)}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs uppercase tracking-[0.12em] text-slate-400">
+                        Uso em notificações
+                      </p>
+                      <p className="text-base font-semibold text-slate-700">
+                        {typeUsageMap.get(type.id) ?? 0}
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-xs uppercase tracking-[0.12em] text-slate-400">
-                      Uso em notificações
-                    </p>
-                    <p className="text-base font-semibold text-slate-700">
-                      {typeUsageMap.get(type.id) ?? 0}
-                    </p>
-                  </div>
-                </div>
 
-                <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
-                  <span>ID {type.id}</span>
-                  <span>Criado em {formatDate(type.createdAt)}</span>
-                </div>
-              </button>
+                  <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
+                    <span>ID {type.id}</span>
+                    <span>Criado em {formatDate(type.createdAt)}</span>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleArchive(type)}
+                  disabled={archivingTypeId !== null}
+                  aria-label={`Arquivar ${type.titulo ?? `Tipo ${type.id}`}`}
+                  title="Arquivar tipo"
+                  className="inline-flex size-11 shrink-0 self-center items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800 disabled:cursor-wait disabled:opacity-50"
+                >
+                  <Archive aria-hidden="true" size={17} />
+                </button>
+              </div>
             </li>
           ))}
         </ul>

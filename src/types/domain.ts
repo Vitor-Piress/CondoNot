@@ -59,6 +59,7 @@ export interface NotificationType {
   id: string;
   idCondominio: string;
   createdAt: string;
+  deletedAt: string | null;
   titulo: string | null;
   textoRegimento: RegimentoTexto | null;
   textoApoio: string | null;
@@ -277,6 +278,7 @@ export function parseNotificationType(row: UnknownRow): NotificationType {
       row.created_at ?? row.createdAt,
       new Date().toISOString(),
     ),
+    deletedAt: toNullableString(row.deleted_at ?? row.deletedAt),
     titulo: toNullableString(row.titulo),
     textoRegimento: toNullableRegimentoTexto(
       row.texto_regimento ?? row.textoRegimento,

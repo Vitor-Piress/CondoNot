@@ -6,11 +6,12 @@ import {
   type RegimentoTexto,
 } from "../types/domain";
 
-const fallbackTypes: NotificationType[] = [
+let fallbackTypes: NotificationType[] = [
   {
     id: "1",
     idCondominio: "1",
     createdAt: "2026-08-01T09:00:00.000Z",
+    deletedAt: null,
     titulo: "Comunicado Geral",
     textoRegimento: [
       {
@@ -24,6 +25,7 @@ const fallbackTypes: NotificationType[] = [
     id: "2",
     idCondominio: "1",
     createdAt: "2026-08-02T09:00:00.000Z",
+    deletedAt: null,
     titulo: "Aviso de Manutenção",
     textoRegimento: [
       {
@@ -37,6 +39,7 @@ const fallbackTypes: NotificationType[] = [
     id: "3",
     idCondominio: "1",
     createdAt: "2026-08-03T09:00:00.000Z",
+    deletedAt: null,
     titulo: "Ocorrência",
     textoRegimento: [
       {
@@ -52,13 +55,16 @@ export async function listNotificationTypes(
   condominioId: string,
 ): Promise<NotificationType[]> {
   if (!supabase) {
-    return fallbackTypes.filter((type) => type.idCondominio === condominioId);
+    return fallbackTypes.filter(
+      (type) => type.idCondominio === condominioId && type.deletedAt === null,
+    );
   }
 
   const { data, error } = await supabase
     .from("tipos_notificacao")
     .select("*")
     .eq("id_condominio", condominioId)
+    .is("deleted_at", null)
     .order("id", { ascending: true });
 
   if (error) {
@@ -109,6 +115,7 @@ export async function createNotificationType(input: {
       id: crypto.randomUUID(),
       idCondominio: input.idCondominio,
       createdAt: new Date().toISOString(),
+      deletedAt: null,
       titulo: input.titulo,
       textoRegimento: input.textoRegimento,
       textoApoio: input.textoApoio,
@@ -133,4 +140,39 @@ export async function createNotificationType(input: {
   }
 
   return parseNotificationType(data);
+}
+
+export async function softDeleteNotificationType(
+  id: string,
+  condominioId: string,
+): Promise<void> {
+  const deletedAt = new Date().toISOString();
+
+  if (!supabase) {
+    const type = fallbackTypes.find(
+      (item) =>
+        item.id === id &&
+        item.idCondominio === condominioId &&
+        item.deletedAt === null,
+    );
+    if (!type) throw new Error("Tipo não encontrado ou já arquivado.");
+    fallbackTypes = fallbackTypes.map((item) =>
+      item.id === id && item.idCondominio === condominioId
+        ? { ...item, deletedAt }
+        : item,
+    );
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from("tipos_notificacao")
+    .update({ deleted_at: deletedAt })
+    .eq("id", id)
+    .eq("id_condominio", condominioId)
+    .is("deleted_at", null)
+    .select("id")
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Tipo não encontrado ou já arquivado.");
 }
