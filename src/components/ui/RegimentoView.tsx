@@ -14,7 +14,7 @@ export function RegimentoView({ textoRegimento }: RegimentoViewProps) {
   }
 
   return (
-    <div className="min-w-0 space-y-4 print:space-y-2">
+    <div className="min-w-0 space-y-4 print:space-y-2 print:ml-5">
       {textoRegimento.map((escopo, escopoIndex) => (
         <div
           key={escopoIndex}
@@ -32,7 +32,7 @@ export function RegimentoView({ textoRegimento }: RegimentoViewProps) {
               Sem parágrafos cadastrados.
             </p>
           ) : (
-            <div className="mt-3 min-w-0 print:mt-1 space-y-3 print:space-y-1">
+            <div className="mt-3 min-w-0 print:ml-3 print:mt-1 space-y-3 print:space-y-1">
               {escopo.paragrafos.map((paragrafo, paragrafoIndex) => (
                 <div
                   key={paragrafoIndex}
@@ -43,7 +43,7 @@ export function RegimentoView({ textoRegimento }: RegimentoViewProps) {
                       ? `Art. ${paragrafo.artigo}`
                       : `Parágrafo ${paragrafoIndex + 1}`}
                   </p>
-                  <p className="mt-1 whitespace-pre-wrap wrap-break-word text-sm print:text-base print:text-justify leading-6 print:leading-snug text-slate-700">
+                  <p className="mt-1 whitespace-pre-wrap wrap-break-word text-sm print:text-base print:ml-3 print:text-justify leading-6 print:leading-snug text-slate-700">
                     {paragrafo.texto}
                   </p>
                 </div>

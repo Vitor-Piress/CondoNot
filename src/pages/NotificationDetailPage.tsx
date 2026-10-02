@@ -357,13 +357,13 @@ export function NotificationDetailPage({
                   alt={`Logo ${condominio.name}`}
                 />
               ) : null}
-              <h3 className="mb-5 border-b border-slate-400 pb-2 text-center text-xl font-bold text-slate-900">
+              <h3 className="mb-5 border-b border-slate-400 pb-1 text-center text-xl font-bold text-slate-900">
                 {row.categoria
                   ? `CARTA DE ${(getNotificationCategoryLabel(row.categoria) ?? row.categoria).toUpperCase()}`
                   : `Notificação #${row.id}`}
               </h3>
               {row.status === "baixada" ? (
-                <p className="mb-4 text-center text-xl font-bold tracking-[0.2em] text-rose-700">
+                <p className="mb-4 text-center text-3xl font-bold tracking-[0.2em] text-rose-700">
                   BAIXADA
                 </p>
               ) : null}
