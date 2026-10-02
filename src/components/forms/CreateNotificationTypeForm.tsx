@@ -18,13 +18,25 @@ const escopoSchema = z.object({
     .max(MAX_PARAGRAFOS_POR_ESCOPO),
 });
 
-const createNotificationTypeSchema = z.object({
-  titulo: z.string().trim().min(3, "Informe um título válido."),
-  escopos: z
-    .array(escopoSchema)
-    .min(1, "Adicione ao menos um escopo.")
-    .max(MAX_ESCOPOS),
-});
+const createNotificationTypeSchema = z
+  .object({
+    titulo: z.string().trim().min(3, "Informe um título válido."),
+    escopos: z
+      .array(escopoSchema)
+      .min(1, "Adicione ao menos um escopo.")
+      .max(MAX_ESCOPOS),
+    usarTextoApoio: z.boolean(),
+    textoApoio: z.string().trim().optional(),
+  })
+  .refine(
+    (values) =>
+      !values.usarTextoApoio ||
+      (values.textoApoio && values.textoApoio.length >= 5),
+    {
+      message: "Informe o texto de apoio ou desative essa opção.",
+      path: ["textoApoio"],
+    },
+  );
 
 type CreateNotificationTypeValues = z.infer<
   typeof createNotificationTypeSchema
@@ -186,14 +198,19 @@ export function CreateNotificationTypeForm({
     handleSubmit,
     reset,
     control,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<CreateNotificationTypeValues>({
     resolver: zodResolver(createNotificationTypeSchema),
     defaultValues: {
       titulo: "",
       escopos: [emptyEscopo()],
+      usarTextoApoio: false,
+      textoApoio: "",
     },
   });
+
+  const usarTextoApoio = watch("usarTextoApoio");
 
   const {
     fields: escopoFields,
@@ -213,6 +230,10 @@ export function CreateNotificationTypeForm({
       idCondominio: activeCondominioId,
       titulo: values.titulo,
       textoRegimento: values.escopos,
+      textoApoio:
+        values.usarTextoApoio && values.textoApoio
+          ? values.textoApoio.trim()
+          : null,
     });
     reset();
     onSuccess();
@@ -258,6 +279,33 @@ export function CreateNotificationTypeForm({
           Adicionar escopo
         </button>
       ) : null}
+
+      <div className="rounded-xl border border-slate-200 p-4">
+        <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+          <input type="checkbox" {...register("usarTextoApoio")} />
+          Incluir texto de apoio na carta impressa
+        </label>
+        <p className="mt-1 text-xs text-slate-500">
+          Texto livre exibido entre o motivo e o fechamento da carta, útil para
+          reforçar uma orientação específica deste tipo de notificação.
+        </p>
+        {usarTextoApoio ? (
+          <label className="mt-3 block space-y-1 text-sm">
+            <span className="font-medium text-slate-700">Texto de apoio</span>
+            <textarea
+              {...register("textoApoio")}
+              rows={3}
+              className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none ring-slate-200 transition focus:ring"
+              placeholder="Ex.: Reforçamos que o descumprimento reincidente poderá resultar em multa."
+            />
+            {errors.textoApoio ? (
+              <p className="text-xs font-medium text-rose-600">
+                {errors.textoApoio.message}
+              </p>
+            ) : null}
+          </label>
+        ) : null}
+      </div>
 
       <button
         type="submit"

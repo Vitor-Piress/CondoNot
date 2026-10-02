@@ -23,9 +23,69 @@ export async function uploadImageToStorage(
 }
 
 const CONDOMINIO_LOGO_BUCKET = "images-app";
+export const CONDOMINIO_REGIMENTO_BUCKET = "regimentos-internos";
+export const MAX_REGIMENTO_SIZE_BYTES = 20 * 1024 * 1024;
 const MAX_LOGO_SIZE_BYTES = 5 * 1024 * 1024;
 const NORMALIZED_LOGO_WIDTH = 1200;
 const NORMALIZED_LOGO_HEIGHT = 720;
+
+export async function uploadCondominioRegimento(
+  condominioId: string,
+  file: File,
+): Promise<string> {
+  if (!supabase) {
+    throw new Error("O Supabase não está configurado.");
+  }
+
+  if (!file.name.toLocaleLowerCase().endsWith(".pdf")) {
+    throw new Error("Selecione um arquivo PDF.");
+  }
+
+  if (file.size > MAX_REGIMENTO_SIZE_BYTES) {
+    throw new Error("O PDF deve ter no máximo 20 MB.");
+  }
+
+  const signature = await file.slice(0, 5).text();
+  if (signature !== "%PDF-") {
+    throw new Error("O arquivo selecionado não parece ser um PDF válido.");
+  }
+
+  const path = `condominios/${condominioId}/regimento/${crypto.randomUUID()}.pdf`;
+  const { error } = await supabase.storage
+    .from(CONDOMINIO_REGIMENTO_BUCKET)
+    .upload(path, file, {
+      contentType: "application/pdf",
+      upsert: false,
+    });
+
+  if (error) throw error;
+  return path;
+}
+
+export async function createCondominioRegimentoSignedUrl(
+  path: string,
+): Promise<string> {
+  if (!supabase) {
+    throw new Error("O Supabase não está configurado.");
+  }
+
+  const { data, error } = await supabase.storage
+    .from(CONDOMINIO_REGIMENTO_BUCKET)
+    .createSignedUrl(path, 60 * 60);
+
+  if (error) throw error;
+  return data.signedUrl;
+}
+
+export async function deleteCondominioRegimento(path: string): Promise<void> {
+  if (!supabase) return;
+
+  const { error } = await supabase.storage
+    .from(CONDOMINIO_REGIMENTO_BUCKET)
+    .remove([path]);
+
+  if (error) throw error;
+}
 
 async function normalizeLogoFile(file: File): Promise<File> {
   const imageUrl = URL.createObjectURL(file);

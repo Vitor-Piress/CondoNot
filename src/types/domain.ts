@@ -12,6 +12,10 @@ export interface Condominio {
   name: string;
   location: string;
   logo_url: string | null;
+  regimento_pdf_path?: string | null;
+  regimento_pdf_filename?: string | null;
+  regimento_pdf_uploaded_at?: string | null;
+  regimento_pdf_size_bytes?: number | null;
 }
 
 export type CondominioInsert = Omit<Condominio, "id" | "createdAt">;
@@ -57,6 +61,7 @@ export interface NotificationType {
   createdAt: string;
   titulo: string | null;
   textoRegimento: RegimentoTexto | null;
+  textoApoio: string | null;
 }
 
 export interface Unit {
@@ -276,6 +281,7 @@ export function parseNotificationType(row: UnknownRow): NotificationType {
     textoRegimento: toNullableRegimentoTexto(
       row.texto_regimento ?? row.textoRegimento,
     ),
+    textoApoio: toNullableString(row.texto_apoio ?? row.textoApoio),
   };
 }
 

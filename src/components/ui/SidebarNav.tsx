@@ -1,6 +1,7 @@
 import {
   Building2,
   ClipboardList,
+  FileText,
   House,
   LayoutList,
   Tags,
@@ -41,6 +42,11 @@ const navItems: NavItem[] = [
     label: "Tipos de notificação",
     path: "/tipos-notificacao",
     icon: Tags,
+  },
+  {
+    label: "Regimento interno",
+    path: "/regimento-interno",
+    icon: FileText,
   },
 ];
 

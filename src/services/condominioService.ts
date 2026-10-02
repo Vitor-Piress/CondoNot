@@ -14,6 +14,22 @@ function parseCondominio(row: Record<string, unknown>): Condominio {
     name: String(row.name ?? ""),
     location: String(row.location ?? ""),
     logo_url: typeof row.logo_url === "string" ? row.logo_url : null,
+    regimento_pdf_path:
+      typeof row.regimento_pdf_path === "string"
+        ? row.regimento_pdf_path
+        : null,
+    regimento_pdf_filename:
+      typeof row.regimento_pdf_filename === "string"
+        ? row.regimento_pdf_filename
+        : null,
+    regimento_pdf_uploaded_at:
+      typeof row.regimento_pdf_uploaded_at === "string"
+        ? row.regimento_pdf_uploaded_at
+        : null,
+    regimento_pdf_size_bytes:
+      typeof row.regimento_pdf_size_bytes === "number"
+        ? row.regimento_pdf_size_bytes
+        : null,
   };
 }
 

@@ -119,6 +119,17 @@ export function NotificationTypeDetailPage({
             </p>
             <RegimentoView textoRegimento={type.textoRegimento} />
           </div>
+
+          {type.textoApoio ? (
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                Texto de apoio
+              </p>
+              <p className="whitespace-pre-wrap text-sm leading-7 text-slate-700">
+                {type.textoApoio}
+              </p>
+            </div>
+          ) : null}
         </article>
       ) : null}
     </Panel>

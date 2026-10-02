@@ -43,7 +43,7 @@ export function RegimentoView({ textoRegimento }: RegimentoViewProps) {
                       ? `Art. ${paragrafo.artigo}`
                       : `Parágrafo ${paragrafoIndex + 1}`}
                   </p>
-                  <p className="mt-1 whitespace-pre-wrap wrap-break-word text-sm print:text-base leading-6 print:leading-snug text-slate-700">
+                  <p className="mt-1 whitespace-pre-wrap wrap-break-word text-sm print:text-base print:text-justify leading-6 print:leading-snug text-slate-700">
                     {paragrafo.texto}
                   </p>
                 </div>

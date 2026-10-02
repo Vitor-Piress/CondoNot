@@ -8,26 +8,34 @@
   }
   @page {
     size: A4;
-    /* Isso remove as margens padrões onde o navegador injeta o cabeçalho/rodapé */
     margin: 0;
   }
 
-  html {
-    /* Fixa o tamanho base da fonte na impressão, independente do zoom/config
-       de fonte do navegador do usuário (causa do conteúdo "vazar" para uma 2ª folha). */
+  html,
+  body {
     font-size: 16px !important;
+    max-width: none;
+    overflow: visible;
   }
 
   body {
-    /* Como a margem da página zerou, o conteúdo vai colar na borda do papel.
-       Adicione um padding no body apenas na impressão para dar um respiro. */
-    padding: 1cm;
-    width: 21cm;
-    min-height: 29.7cm;
+    padding: 10mm;
+    width: 210mm;
+    min-height: 297mm !important;
+    background: #fff !important;
+  }
 
-    .app-background::before {
-      background-image: none;
-    }
+  .app-background::before {
+    display: none;
+  }
+
+  .app-background::after {
+    content: "";
+    position: fixed;
+    inset: 10mm;
+    z-index: 9999;
+    border: 4px double #334155;
+    pointer-events: none;
   }
 }
 

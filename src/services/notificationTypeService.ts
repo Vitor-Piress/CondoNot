@@ -18,6 +18,7 @@ const fallbackTypes: NotificationType[] = [
         paragrafos: [],
       },
     ],
+    textoApoio: null,
   },
   {
     id: "2",
@@ -30,6 +31,7 @@ const fallbackTypes: NotificationType[] = [
         paragrafos: [],
       },
     ],
+    textoApoio: null,
   },
   {
     id: "3",
@@ -42,6 +44,7 @@ const fallbackTypes: NotificationType[] = [
         paragrafos: [],
       },
     ],
+    textoApoio: null,
   },
 ];
 
@@ -99,6 +102,7 @@ export async function createNotificationType(input: {
   idCondominio: string;
   titulo: string;
   textoRegimento: RegimentoTexto;
+  textoApoio: string | null;
 }): Promise<NotificationType> {
   if (!supabase) {
     return {
@@ -107,6 +111,7 @@ export async function createNotificationType(input: {
       createdAt: new Date().toISOString(),
       titulo: input.titulo,
       textoRegimento: input.textoRegimento,
+      textoApoio: input.textoApoio,
     };
   }
 
@@ -117,6 +122,7 @@ export async function createNotificationType(input: {
         id_condominio: input.idCondominio,
         titulo: input.titulo,
         texto_regimento: serializeRegimentoTexto(input.textoRegimento),
+        texto_apoio: input.textoApoio,
       },
     ])
     .select("*")

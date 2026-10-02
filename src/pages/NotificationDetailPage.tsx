@@ -315,6 +315,17 @@ export function NotificationDetailPage({
               </p>
             </div>
 
+            {type?.textoApoio ? (
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                  Texto de apoio do tipo
+                </p>
+                <p className="mt-1 whitespace-pre-wrap text-sm leading-7 text-slate-700">
+                  {type.textoApoio}
+                </p>
+              </div>
+            ) : null}
+
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
                 Valor da multa
@@ -336,16 +347,16 @@ export function NotificationDetailPage({
       {/* <ImageUpload></ImageUpload> */}
       {/* Página para impressão: */}
       {!loading && !error && row ? (
-        <div className="print:break-inside-avoid print:flex hidden text-base text-justify leading-snug px-8 flex-col justify-center font-serif">
-          <header className="bg-black-900 flex flex-col items-center">
+        <div className="hidden w-full print:block print:px-[8mm] print:py-[8mm] text-base leading-relaxed font-serif">
+          <header className="flex flex-col items-center text-center">
             {condominio?.logo_url ? (
               <img
-                className="h-24 w-32 max-w-full shrink-0 mb-4 object-contain"
+                className="mb-3 h-[22mm] w-[48mm] max-w-full shrink-0 object-contain"
                 src={condominio.logo_url}
                 alt={`Logo ${condominio.name}`}
               />
             ) : null}
-            <h3 className="text-2xl mb-5 font-semibold tracking-tight text-slate-900 print:underline">
+            <h3 className="mb-5 border-b border-slate-400 pb-2 text-xl font-bold text-slate-900">
               {row.categoria
                 ? `CARTA DE ${(getNotificationCategoryLabel(row.categoria) ?? row.categoria).toUpperCase()}`
                 : `Notificação #${row.id}`}
@@ -355,22 +366,16 @@ export function NotificationDetailPage({
                 BAIXADA
               </p>
             ) : null}
-            <section className="w-full mb-4 flex items-start gap-4">
-              <button
-                type="button"
-                onClick={() =>
-                  onNavigate(`/tipos-notificacao/${row.idTipoNotificacao}`)
-                }
-                className="min-w-0 flex-1 whitespace-normal wrap-break-words text-left font-semibold leading-snug text-slate-900 underline decoration-slate-300 underline-offset-2 transition hover:text-slate-600"
-              >
+            <section className="mb-4 flex w-full items-start justify-between gap-4 border-y border-slate-300 py-2 text-sm">
+              <p className="min-w-0 flex-1 whitespace-normal wrap-break-words text-left font-semibold leading-snug text-slate-900">
                 {typeTitle}
-              </button>
-              <p className="shrink-0 whitespace-nowrap text-right font-bold text-md">
+              </p>
+              <p className="shrink-0 whitespace-nowrap text-right font-bold">
                 {formatOnlyDateInFull(row.createdAt)}
               </p>
             </section>
             <section className="w-full">
-              <p>
+              <p className="text-justify">
                 Ao condômino(a){" "}
                 <span className="font-bold underline">
                   da unidade "{unit?.apartamento}" do Bloco "{unit?.bloco}"
@@ -380,10 +385,10 @@ export function NotificationDetailPage({
               </p>
             </section>
           </header>
-          <main className="mt-5">
+          <main className="mt-5 space-y-4">
             <header className="main-header">
               <p className="mb-2">Prezado(a) Senhor(a),</p>
-              <p>
+              <p className="text-justify">
                 Na qualidade de Síndica deste Condomínio, venho{" "}
                 <span className="font-bold">adverti-lo</span> por desrespeito às
                 normas do <span className="font-bold">Regimento Interno</span>,
@@ -394,23 +399,28 @@ export function NotificationDetailPage({
               <RegimentoView textoRegimento={type?.textoRegimento ?? null} />
             </section>
             <section className="reason">
-              <p>
-                <span className="font-bold underline">
-                  Motivo da Notificação:
-                </span>{" "}
+              <p className="mb-1 font-bold underline">Motivo da Notificação</p>
+              <p className="whitespace-pre-wrap wrap-break-word text-justify">
                 {row.motivo ?? "Sem motivo informado"}.
               </p>
             </section>
+            {type?.textoApoio ? (
+              <section className="support-text">
+                <p className="whitespace-pre-wrap wrap-break-word text-justify">
+                  {type.textoApoio}
+                </p>
+              </section>
+            ) : null}
           </main>
-          <p className="mt-3">
+          <p className="mt-3 text-justify">
             Sendo assim, solicitamos sua intervenção e orientação aos moradores
             de seu apartamento para que esse fato{" "}
             <span className="font-bold underline">não</span> mais se repita, sob
             pena de <span className="font-bold underline">multa</span> por
             desrespeito aos estatutos deste Condomínio.
           </p>
-          <footer className="mt-6 flex flex-col items-end print:break-inside-avoid mx-auto">
-            <div className="text-center">
+          <footer className="mx-auto mt-[16mm] flex flex-col items-center print:break-inside-avoid">
+            <div className="w-64 border-t border-slate-500 pt-2 text-center">
               <p>Ana Paula Palmezan</p>
               <p>Síndica</p>
             </div>

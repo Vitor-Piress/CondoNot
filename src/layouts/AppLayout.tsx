@@ -39,12 +39,14 @@ export function AppLayout({
   }
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden app-background print:border-4 print:border-double print:rounded-sm print:p-2">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden app-background print:min-h-0 print:overflow-visible print:border-0 print:p-0">
       <header className="print:hidden border-b border-black/10 bg-slate-900 px-4 py-3 text-slate-100 sm:px-6">
         <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3">
-          <p className="text-sm font-medium tracking-[0.18em] text-slate-300">
-            CONDONOT
-          </p>
+          <img
+            src="https://clkjgwxwjmymqctvnldf.supabase.co/storage/v1/object/public/images-app/uploads/condonot/Gemini_Generated_Image_4qszmx4qszmx4qsz-removebg-preview.png"
+            alt="Condonot"
+            className="h-8 w-auto max-w-36 rounded-md bg-white p-1 object-contain"
+          />
           <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             <label className="flex min-w-0 flex-1 items-center gap-2 text-xs font-medium text-slate-300 sm:flex-none">
               <select
@@ -107,12 +109,12 @@ export function AppLayout({
         </div>
       </header>
 
-      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 px-4 py-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:px-6">
+      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 px-4 py-6 print:mx-0 print:block print:max-w-none print:px-0 print:py-0 lg:grid-cols-[240px_minmax(0,1fr)] lg:px-6">
         <div className="print:hidden">
           <SidebarNav currentPath={currentPath} onNavigate={onNavigate} />
         </div>
 
-        <main className="min-w-0 space-y-6">
+        <main className="min-w-0 space-y-6 print:w-full print:space-y-0">
           {condominioError ? (
             <section className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
               {condominioError}

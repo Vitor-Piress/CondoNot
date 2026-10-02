@@ -161,7 +161,8 @@ CREATE TABLE IF NOT EXISTS "public"."tipos_notificacao" (
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "titulo" "text",
     "texto_regimento" "jsonb",
-    "id_condominio" bigint NOT NULL
+    "id_condominio" bigint NOT NULL,
+    "texto_apoio" "text"
 );
 
 

@@ -21,6 +21,7 @@ import { UnitsPage } from "./pages/UnitsPage";
 import { supabaseConfigError } from "./services/supabase";
 import { CondominioProvider } from "./contexts/CondominioProvider";
 import { CondominiosPage } from "./pages/CondominiosPage";
+import { RegimentoInternoPage } from "./pages/RegimentoInternoPage";
 
 interface RoutedPageProps {
   onNavigate: (to: string) => void;
@@ -79,6 +80,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage onNavigate={navigate} />} />
           <Route path="/condominios" element={<CondominiosPage />} />
+          <Route path="/regimento-interno" element={<RegimentoInternoPage />} />
           <Route
             path="/notificacoes"
             element={<NotificationsPage onNavigate={navigate} />}
