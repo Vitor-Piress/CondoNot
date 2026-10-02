@@ -13,7 +13,7 @@ export function CreateNotificationTypePage({
 
   return (
     <Panel
-      title="Inserir tipo de notificação"
+      title="Inserir modelo de notificação"
       subtitle="Cadastre templates para agilizar novos registros"
       action={
         <button
@@ -33,7 +33,7 @@ export function CreateNotificationTypePage({
 
       {success ? (
         <p className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700">
-          Tipo cadastrado com sucesso.
+          Modelo cadastrado com sucesso.
         </p>
       ) : null}
     </Panel>

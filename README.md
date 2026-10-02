@@ -10,10 +10,11 @@ O projeto está em desenvolvimento e foi estruturado para funcionar tanto conect
 - Listagem e busca de unidades por bloco, apartamento e moradores.
 - Visualização detalhada de uma unidade.
 - Edição dos dados da unidade, incluindo proprietário, status de locação e inquilino.
-- Listagem de notificações com busca e filtros por tipo e unidade.
+- Listagem de notificações com busca e filtros por modelo e unidade.
 - Visualização dos detalhes de uma notificação.
 - Cadastro de novas notificações com motivo, categoria, data retroativa e valor de multa.
-- Listagem e cadastro de tipos de notificação com título e texto padrão.
+- Inclusão de até cinco fotos JPEG, PNG ou WebP em cada notificação.
+- Listagem e cadastro de modelos de notificação com título e texto padrão.
 - Navegacao responsiva por menu lateral e rotas baseadas no caminho da URL.
 - Estado de demonstração automático enquanto o ambiente do Supabase não está configurado.
 
@@ -86,7 +87,36 @@ O codigo espera as seguintes tabelas no banco:
 | ------------------- | ---------------------------------------------------------------- |
 | `unidades`          | Consulta e atualização das unidades, proprietários e inquilinos. |
 | `notificacao`       | Consulta, filtros, detalhes e cadastro de notificações.          |
-| `tipos_notificacao` | Consulta e cadastro dos tipos de notificação.                    |
+| `modelo_notificacao` | Consulta e cadastro dos modelos de notificação.                   |
+| `notificacao_anexo` | Metadados dos anexos de cada notificação.                         |
+| `condominio`        | Dados do condomínio e valor vigente da multa.                     |
+
+O campo `condominio.valor_multa` guarda o valor vigente definido por cada
+condomínio. O sistema copia esse valor para `notificacao.valor_multa` ao emitir
+uma multa, preservando o valor usado mesmo se a configuração mudar depois.
+Em bases já existentes, aplique a migração
+`supabase/migrations/20261002203000_condominium_fine_amount.sql`.
+
+### Fotos anexas às notificações
+
+Antes de usar anexos, aplique a migração
+`supabase/migrations/20261002160000_notification_attachments.sql` no projeto
+Supabase. Ela cria a tabela `notificacao_anexo` quando necessário e configura o
+bucket privado `notificacoes-anexos` e as políticas para upload e leitura por
+URL assinada. A migração pressupõe que as tabelas base `condominio` e
+`notificacao` já existam. Se estiver preparando um banco vazio com `schema.sql`,
+execute primeiro o schema base e depois a migração; não reaplique o dump inteiro
+em um banco já configurado.
+
+O formulário aceita até cinco imagens JPEG, PNG ou WebP, de no máximo 5 MB cada.
+Os arquivos ficam no Storage e a tabela guarda somente caminho e metadados. Na
+impressão, a galeria começa sempre em uma nova página após a carta da notificação.
+
+O projeto ainda não autentica usuários e já usa políticas abertas para os dados
+da aplicação. As políticas da migração mantêm esse mesmo modelo para os anexos;
+portanto, o bucket não é público, mas a autorização não é individual por usuário
+ou condomínio. URLs assinadas não substituem autenticação e políticas de acesso
+por usuário.
 
 Os campos utilizados pela aplicação incluem, entre outros, `created_at`, `bloco`, `apartamento`, `alugado`, `proprietario`, `inquilino`, `id_tipo_notificacao`, `id_unidade`, `motivo`, `categoria`, `data_retroativa`, `valor_multa`, `titulo` e `texto_regimento`. Os dados de proprietário e inquilino são tratados como objetos JSON com nome, telefone e e-mail. O campo `texto_regimento` é um `jsonb` com até 2 escopos (`escopo_01`, `escopo_02`), cada um com `titulo` e até 5 parágrafos (`paragrafo_01`..`paragrafo_05`), cada parágrafo com `artigo` e `texto`.
 

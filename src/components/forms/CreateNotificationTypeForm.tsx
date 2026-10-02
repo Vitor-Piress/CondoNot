@@ -242,7 +242,7 @@ export function CreateNotificationTypeForm({
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <label className="block space-y-1 text-sm">
-        <span className="font-medium text-slate-700">Título do tipo</span>
+        <span className="font-medium text-slate-700">Título do modelo</span>
         <input
           {...register("titulo")}
           className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none ring-slate-200 transition focus:ring"
@@ -287,7 +287,7 @@ export function CreateNotificationTypeForm({
         </label>
         <p className="mt-1 text-xs text-slate-500">
           Texto livre exibido entre o motivo e o fechamento da carta, útil para
-          reforçar uma orientação específica deste tipo de notificação.
+          reforçar uma orientação específica deste modelo de notificação.
         </p>
         {usarTextoApoio ? (
           <label className="mt-3 block space-y-1 text-sm">
@@ -312,7 +312,7 @@ export function CreateNotificationTypeForm({
         disabled={isSubmitting}
         className="rounded-xl bg-slate-900 ml-2 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
       >
-        {isSubmitting ? "Salvando..." : "Inserir tipo de notificação"}
+        {isSubmitting ? "Salvando..." : "Inserir modelo de notificação"}
       </button>
     </form>
   );

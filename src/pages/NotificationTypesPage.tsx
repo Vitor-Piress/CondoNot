@@ -63,7 +63,7 @@ export function NotificationTypesPage({
         const message =
           loadError instanceof Error
             ? loadError.message
-            : "Não foi possível carregar os tipos de notificação.";
+            : "Não foi possível carregar os modelos de notificação.";
         setError(message);
       } finally {
         if (active) {
@@ -111,7 +111,7 @@ export function NotificationTypesPage({
         ? ` ${usageCount} notificação(ões) já registrada(s) continuará(ão) vinculada(s) a ele.`
         : "";
     const confirmed = window.confirm(
-      `Arquivar o tipo "${type.titulo ?? `Tipo ${type.id}`}"?${usageMessage} Ele deixará de aparecer em novas notificações.`,
+      `Arquivar o modelo "${type.titulo ?? `Modelo ${type.id}`}"?${usageMessage} Ele deixará de aparecer em novas notificações.`,
     );
     if (!confirmed) return;
 
@@ -121,12 +121,12 @@ export function NotificationTypesPage({
     try {
       await softDeleteNotificationType(type.id, activeCondominioId);
       setTypes((current) => current.filter((item) => item.id !== type.id));
-      setMessage("Tipo arquivado. O histórico de notificações foi preservado.");
+      setMessage("Modelo arquivado. O histórico de notificações foi preservado.");
     } catch (archiveError) {
       setError(
         archiveError instanceof Error
           ? archiveError.message
-          : "Não foi possível arquivar o tipo de notificação.",
+          : "Não foi possível arquivar o modelo de notificação.",
       );
     } finally {
       setArchivingTypeId(null);
@@ -135,15 +135,15 @@ export function NotificationTypesPage({
 
   return (
     <Panel
-      title="Relatório de tipos de notificação"
-      subtitle="Visualização dedicada dos tipos cadastrados e sua utilização"
+      title="Relatório de modelos de notificação"
+      subtitle="Visualização dedicada dos modelos cadastrados e sua utilização"
       action={
         <button
           type="button"
           onClick={() => onNavigate("/tipos-notificacao/novo")}
           className="rounded-xl bg-slate-900 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-slate-700"
         >
-          Inserir tipo de notificação
+          Inserir modelo de notificação
         </button>
       }
     >
@@ -179,8 +179,8 @@ export function NotificationTypesPage({
 
       {!loading && !error && filteredTypes.length === 0 ? (
         <EmptyState
-          title="Nenhum tipo encontrado"
-          description="Cadastre um tipo novo ou ajuste os filtros de busca."
+          title="Nenhum modelo encontrado"
+          description="Cadastre um modelo novo ou ajuste os filtros de busca."
         />
       ) : null}
 
@@ -197,7 +197,7 @@ export function NotificationTypesPage({
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
                       <h3 className="text-sm font-semibold text-slate-900">
-                        {type.titulo ?? `Tipo ${type.id}`}
+                        {type.titulo ?? `Modelo ${type.id}`}
                       </h3>
                       <p className="mt-1 text-xs text-slate-500">
                         {getRegimentoPreview(type.textoRegimento)}
@@ -222,8 +222,8 @@ export function NotificationTypesPage({
                   type="button"
                   onClick={() => void handleArchive(type)}
                   disabled={archivingTypeId !== null}
-                  aria-label={`Arquivar ${type.titulo ?? `Tipo ${type.id}`}`}
-                  title="Arquivar tipo"
+                  aria-label={`Arquivar ${type.titulo ?? `Modelo ${type.id}`}`}
+                  title="Arquivar modelo"
                   className="inline-flex size-11 shrink-0 self-center items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800 disabled:cursor-wait disabled:opacity-50"
                 >
                   <Archive aria-hidden="true" size={17} />

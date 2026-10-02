@@ -37,6 +37,13 @@ export function formatOnlyDateInFull(value: string): string {
   return dateFormat.charAt(0).toUpperCase() + dateFormat.slice(1);
 }
 
+export function formatCurrency(value: number): string {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(value);
+}
+
 export function includesQuery(value: string, query: string): boolean {
   return value.toLocaleLowerCase().includes(query.toLocaleLowerCase());
 }

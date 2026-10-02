@@ -12,6 +12,7 @@ export interface Condominio {
   name: string;
   location: string;
   logo_url: string | null;
+  valor_multa: number | null;
   regimento_pdf_path?: string | null;
   regimento_pdf_filename?: string | null;
   regimento_pdf_uploaded_at?: string | null;
@@ -38,6 +39,17 @@ export interface Notification {
   status: NotificationStatus;
   dataBaixa: string | null;
   motivoBaixa: string | null;
+}
+
+export interface NotificationAttachment {
+  id: string;
+  idCondominio: string;
+  idNotificacao: string;
+  storagePath: string;
+  fileName: string;
+  mimeType: string;
+  fileSizeBytes: number;
+  signedUrl: string;
 }
 
 export interface RegimentoParagrafo {

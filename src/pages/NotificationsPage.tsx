@@ -16,7 +16,7 @@ import {
   type NotificationType,
   type Unit,
 } from "../types/domain";
-import { formatDate } from "../utils/format";
+import { formatCurrency, formatDate } from "../utils/format";
 import { useCondominio } from "../contexts/useCondominio";
 
 interface NotificationsPageProps {
@@ -92,7 +92,9 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
 
   const typeMap = useMemo(
     () =>
-      new Map(types.map((type) => [type.id, type.titulo ?? `Tipo ${type.id}`])),
+      new Map(
+        types.map((type) => [type.id, type.titulo ?? `Modelo ${type.id}`]),
+      ),
     [types],
   );
 
@@ -138,7 +140,7 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
               }))
             }
             className="w-full rounded-xl border border-slate-300 py-2 pl-9 pr-3 text-sm outline-none ring-slate-200 transition focus:ring"
-            placeholder="Buscar por tipo, categoria ou motivo"
+            placeholder="Buscar por modelo, categoria ou motivo"
           />
         </label>
 
@@ -152,10 +154,10 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
           }
           className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none ring-slate-200 transition focus:ring"
         >
-          <option value="">Todos os tipos</option>
+          <option value="">Todos os modelos</option>
           {types.map((type) => (
             <option key={type.id} value={type.id}>
-              {type.titulo ?? `Tipo ${type.id}`}
+              {type.titulo ?? `Modelo ${type.id}`}
             </option>
           ))}
         </select>
@@ -227,11 +229,11 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
                 </div>
                 <div>
                   <p className="text-xs font-medium uppercase tracking-widest text-slate-400">
-                    Tipo de notificação
+                    Modelo de notificação
                   </p>
                   <p className="text-sm text-slate-700">
                     {typeMap.get(row.idTipoNotificacao) ??
-                      `Tipo ${row.idTipoNotificacao}`}
+                      `Modelo ${row.idTipoNotificacao}`}
                   </p>
                   <p className="text-xs text-slate-500">
                     {row.idUnidade
@@ -246,7 +248,7 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
                   <p className="text-xs uppercase tracking-widest text-slate-400">
                     {row.valorMulta === null
                       ? "Sem multa"
-                      : `Multa: ${row.valorMulta}`}
+                      : `Multa: ${formatCurrency(row.valorMulta)}`}
                   </p>
                 </div>
               </button>

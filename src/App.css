@@ -26,6 +26,16 @@
     min-height: 100vh !important;
   }
 
+  .notification-attachments-print {
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+
+  .notification-attachment-print-item {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
   .app-background {
     width: 100% !important;
     min-height: 100vh !important;

@@ -76,7 +76,9 @@ export function HomePage({ onNavigate }: HomePageProps) {
 
   const typeMap = useMemo(
     () =>
-      new Map(types.map((type) => [type.id, type.titulo ?? `Tipo ${type.id}`])),
+      new Map(
+        types.map((type) => [type.id, type.titulo ?? `Modelo ${type.id}`]),
+      ),
     [types],
   );
 
@@ -106,7 +108,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
             />
 
             <ActionCard
-              title="Inserir tipo de notificação"
+              title="Inserir modelo de notificação"
               description="Adicionar novos modelos de notificação"
               icon={Layers2}
               onClick={() => onNavigate("/tipos-notificacao/novo")}
@@ -181,7 +183,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
                     </p>
                     <p className="mt-2 text-xs font-medium text-slate-400">
                       {typeMap.get(row.idTipoNotificacao) ??
-                        `Tipo ${row.idTipoNotificacao}`}
+                        `Modelo ${row.idTipoNotificacao}`}
                     </p>
                   </div>
                   <span className="text-xs text-slate-500">

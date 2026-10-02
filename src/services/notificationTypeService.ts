@@ -61,7 +61,7 @@ export async function listNotificationTypes(
   }
 
   const { data, error } = await supabase
-    .from("tipos_notificacao")
+    .from("modelo_notificacao")
     .select("*")
     .eq("id_condominio", condominioId)
     .is("deleted_at", null)
@@ -87,7 +87,7 @@ export async function getNotificationTypeById(
   }
 
   const { data, error } = await supabase
-    .from("tipos_notificacao")
+    .from("modelo_notificacao")
     .select("*")
     .eq("id", id)
     .eq("id_condominio", condominioId)
@@ -123,7 +123,7 @@ export async function createNotificationType(input: {
   }
 
   const { data, error } = await supabase
-    .from("tipos_notificacao")
+    .from("modelo_notificacao")
     .insert([
       {
         id_condominio: input.idCondominio,
@@ -155,7 +155,7 @@ export async function softDeleteNotificationType(
         item.idCondominio === condominioId &&
         item.deletedAt === null,
     );
-    if (!type) throw new Error("Tipo não encontrado ou já arquivado.");
+    if (!type) throw new Error("Modelo não encontrado ou já arquivado.");
     fallbackTypes = fallbackTypes.map((item) =>
       item.id === id && item.idCondominio === condominioId
         ? { ...item, deletedAt }
@@ -165,7 +165,7 @@ export async function softDeleteNotificationType(
   }
 
   const { data, error } = await supabase
-    .from("tipos_notificacao")
+    .from("modelo_notificacao")
     .update({ deleted_at: deletedAt })
     .eq("id", id)
     .eq("id_condominio", condominioId)
@@ -174,5 +174,5 @@ export async function softDeleteNotificationType(
     .maybeSingle();
 
   if (error) throw new Error(error.message);
-  if (!data) throw new Error("Tipo não encontrado ou já arquivado.");
+  if (!data) throw new Error("Modelo não encontrado ou já arquivado.");
 }

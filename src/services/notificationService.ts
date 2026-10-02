@@ -1,8 +1,34 @@
 import { supabase } from "./supabase";
 import { includesQuery } from "../utils/format";
-import { parseNotification, type Notification } from "../types/domain";
+import {
+  parseNotification,
+  type Notification,
+  type NotificationAttachment,
+} from "../types/domain";
+import {
+  createNotificationAttachmentSignedUrl,
+  NOTIFICATION_ATTACHMENT_BUCKET,
+  uploadNotificationAttachment,
+  validateNotificationAttachmentContents,
+  validateNotificationAttachments,
+} from "./storageService";
 
 const NOTIFICATION_TABLE = "notificacao";
+const NOTIFICATION_ATTACHMENT_TABLE = "notificacao_anexo";
+
+export class NotificationAttachmentCreationError extends Error {
+  readonly notificationId: string;
+
+  constructor(
+    message: string,
+    notificationId: string,
+    cause: unknown,
+  ) {
+    super(message, { cause });
+    this.notificationId = notificationId;
+    this.name = "NotificationAttachmentCreationError";
+  }
+}
 
 export interface NotificationFilters {
   query: string;
@@ -191,6 +217,41 @@ export async function getNotificationById(
   return parseNotification(data);
 }
 
+export async function listNotificationAttachments(
+  notificationId: string,
+  condominioId: string,
+): Promise<NotificationAttachment[]> {
+  if (!supabase) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from(NOTIFICATION_ATTACHMENT_TABLE)
+    .select("*")
+    .eq("id_notificacao", notificationId)
+    .eq("id_condominio", condominioId)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return Promise.all(
+    (data ?? []).map(async (row) => ({
+      id: String(row.id),
+      idCondominio: String(row.id_condominio),
+      idNotificacao: String(row.id_notificacao),
+      storagePath: String(row.storage_path),
+      fileName: String(row.nome_arquivo),
+      mimeType: String(row.mime_type),
+      fileSizeBytes: Number(row.tamanho_bytes),
+      signedUrl: await createNotificationAttachmentSignedUrl(
+        String(row.storage_path),
+      ),
+    })),
+  );
+}
+
 export async function createNotification(input: {
   idCondominio: string;
   idTipoNotificacao: string;
@@ -199,8 +260,18 @@ export async function createNotification(input: {
   categoria: string;
   dataRetroativa: string | null;
   valorMulta: number | null;
+  attachments?: File[];
 }): Promise<Notification> {
+  const attachments = input.attachments ?? [];
+  validateNotificationAttachments(attachments);
+
   if (!supabase) {
+    if (attachments.length > 0) {
+      throw new Error(
+        "Configure o Supabase para salvar fotos anexadas à notificação.",
+      );
+    }
+
     return {
       id: crypto.randomUUID(),
       idCondominio: input.idCondominio,
@@ -217,6 +288,8 @@ export async function createNotification(input: {
       motivoBaixa: null,
     };
   }
+
+  await validateNotificationAttachmentContents(attachments);
 
   const { data, error } = await supabase
     .from(NOTIFICATION_TABLE)
@@ -238,7 +311,89 @@ export async function createNotification(input: {
     throw new Error(error.message);
   }
 
-  return parseNotification(data);
+  const created = parseNotification(data);
+  const uploadedPaths: string[] = [];
+
+  try {
+    for (const file of attachments) {
+      uploadedPaths.push(
+        await uploadNotificationAttachment(
+          input.idCondominio,
+          created.id,
+          file,
+        ),
+      );
+    }
+
+    if (attachments.length > 0) {
+      const { error: attachmentError } = await supabase
+        .from(NOTIFICATION_ATTACHMENT_TABLE)
+        .insert(
+          attachments.map((file, index) => ({
+            id_condominio: input.idCondominio,
+            id_notificacao: created.id,
+            storage_path: uploadedPaths[index],
+            nome_arquivo: file.name,
+            mime_type: file.type,
+            tamanho_bytes: file.size,
+          })),
+        );
+
+      if (attachmentError) {
+        throw new Error(attachmentError.message);
+      }
+    }
+
+    return created;
+  } catch (creationError) {
+    const cleanupResults = await Promise.allSettled([
+      supabase
+        .from(NOTIFICATION_ATTACHMENT_TABLE)
+        .delete()
+        .eq("id_notificacao", created.id)
+        .eq("id_condominio", input.idCondominio),
+      ...(uploadedPaths.length > 0
+        ? [
+            supabase.storage
+              .from(NOTIFICATION_ATTACHMENT_BUCKET)
+              .remove(uploadedPaths),
+          ]
+        : []),
+      supabase
+        .from(NOTIFICATION_TABLE)
+        .delete()
+        .eq("id", created.id)
+        .eq("id_condominio", input.idCondominio),
+    ]);
+    const cleanupErrors = cleanupResults.flatMap((result) => {
+      if (result.status === "rejected") {
+        return [
+          result.reason instanceof Error
+            ? result.reason.message
+            : String(result.reason),
+        ];
+      }
+
+      return result.value.error ? [result.value.error.message] : [];
+    });
+    const originalMessage =
+      creationError instanceof Error
+        ? creationError.message
+        : String(creationError);
+
+    if (cleanupErrors.length > 0) {
+      throw new NotificationAttachmentCreationError(
+        `Não foi possível salvar as fotos (${originalMessage}). A notificação #${created.id} pode ter permanecido salva. Falha ao limpar dados: ${cleanupErrors.join("; ")}`,
+        created.id,
+        creationError,
+      );
+    }
+
+    throw new Error(
+      `Não foi possível salvar as fotos (${originalMessage}). A notificação foi removida; tente novamente.`,
+      { cause: creationError },
+    );
+  }
 }
 
 export async function inactivateNotification(

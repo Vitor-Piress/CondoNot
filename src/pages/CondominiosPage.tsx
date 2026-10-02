@@ -1,5 +1,12 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
-import { Building2, ImageUp, Trash2 } from "lucide-react";
+import {
+  Building2,
+  Check,
+  ImageUp,
+  Pencil,
+  Trash2,
+  X,
+} from "lucide-react";
 import { Panel } from "../components/ui/Panel";
 import { useCondominio } from "../contexts/useCondominio";
 import {
@@ -20,6 +27,21 @@ function getFormValues(form: HTMLFormElement) {
   };
 }
 
+function getFineValue(value: string): number | null {
+  const rawFine = value.trim().replace(",", ".");
+  const parsedFine = rawFine === "" ? null : Number(rawFine);
+
+  if (parsedFine !== null && (!Number.isFinite(parsedFine) || parsedFine < 0)) {
+    throw new Error("Informe um valor de multa válido.");
+  }
+
+  if (parsedFine !== null && !/^\d+(?:[.,]\d{1,2})?$/.test(value.trim())) {
+    throw new Error("Informe o valor da multa com até duas casas decimais.");
+  }
+
+  return parsedFine;
+}
+
 export function CondominiosPage() {
   const {
     condominios,
@@ -33,6 +55,13 @@ export function CondominiosPage() {
   const [error, setError] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
+  const [editingFineCondominioId, setEditingFineCondominioId] = useState<
+    string | null
+  >(null);
+  const [fineValue, setFineValue] = useState("");
+  const isEditingFine =
+    editingFineCondominioId !== null &&
+    editingFineCondominioId === activeCondominioId;
 
   useEffect(() => {
     return () => {
@@ -54,7 +83,12 @@ export function CondominiosPage() {
     setError(null);
 
     try {
-      const created = await createCondominio(getFormValues(form));
+      const created = await createCondominio({
+        ...getFormValues(form),
+        valor_multa: getFineValue(
+          String(new FormData(form).get("valor_multa") ?? ""),
+        ),
+      });
       await reloadCondominios(created.id);
       form.reset();
       setMessage("Condomínio cadastrado e selecionado.");
@@ -123,6 +157,40 @@ export function CondominiosPage() {
     } finally {
       setSaving(false);
     }
+  }
+
+  async function handleSaveFine() {
+    if (!activeCondominioId) return;
+
+    setSaving(true);
+    setMessage(null);
+    setError(null);
+
+    try {
+      const valor_multa = getFineValue(fineValue);
+      await updateCondominio(activeCondominioId, { valor_multa });
+      await reloadCondominios(activeCondominioId);
+      setEditingFineCondominioId(null);
+      setMessage("Valor da multa atualizado.");
+    } catch (saveError) {
+      setError(
+        saveError instanceof Error
+          ? saveError.message
+          : "Não foi possível atualizar o valor da multa.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleCancelFineEdit() {
+    setFineValue(
+      activeCondominio?.valor_multa === null ||
+        activeCondominio?.valor_multa === undefined
+        ? ""
+        : String(activeCondominio.valor_multa),
+    );
+    setEditingFineCondominioId(null);
   }
 
   async function handleRemoveLogo() {
@@ -227,6 +295,80 @@ export function CondominiosPage() {
             </label>
             <label className="block space-y-1 text-sm">
               <span className="font-medium text-slate-700">
+                Valor da multa do condomínio (R$)
+              </span>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={
+                    isEditingFine
+                      ? fineValue
+                      : (activeCondominio.valor_multa === null
+                          ? ""
+                          : String(activeCondominio.valor_multa))
+                  }
+                  onChange={(event) => setFineValue(event.target.value)}
+                  readOnly={!isEditingFine}
+                  disabled={saving}
+                  aria-label="Valor da multa do condomínio"
+                  className={`min-w-0 flex-1 rounded-xl border px-3 py-2 outline-none ring-slate-200 transition focus:ring disabled:bg-slate-100 ${
+                    isEditingFine
+                      ? "border-slate-300 bg-white"
+                      : "border-slate-200 bg-slate-100 text-slate-600"
+                  }`}
+                  placeholder="Não definido"
+                />
+                {isEditingFine ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => void handleSaveFine()}
+                      disabled={saving}
+                      aria-label="Salvar valor da multa"
+                      title="Salvar valor da multa"
+                      className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-emerald-200 text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-wait disabled:opacity-50"
+                    >
+                      <Check aria-hidden="true" size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancelFineEdit}
+                      disabled={saving}
+                      aria-label="Cancelar edição do valor da multa"
+                      title="Cancelar edição"
+                      className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-100 disabled:cursor-wait disabled:opacity-50"
+                    >
+                      <X aria-hidden="true" size={18} />
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFineValue(
+                        activeCondominio.valor_multa === null
+                          ? ""
+                          : String(activeCondominio.valor_multa),
+                      );
+                      setEditingFineCondominioId(activeCondominio.id);
+                    }}
+                    disabled={saving}
+                    aria-label="Editar valor da multa"
+                    title="Editar valor da multa"
+                    className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-100 disabled:cursor-wait disabled:opacity-50"
+                  >
+                    <Pencil aria-hidden="true" size={17} />
+                  </button>
+                )}
+              </div>
+              <span className="block text-xs text-slate-500">
+                Este valor será usado nas novas notificações de multa. Deixe em
+                branco se ainda não estiver definido.
+              </span>
+            </label>
+            <label className="block space-y-1 text-sm">
+              <span className="font-medium text-slate-700">
                 Logo do condomínio
               </span>
               {logoPreviewUrl || activeCondominio.logo_url ? (
@@ -255,7 +397,7 @@ export function CondominiosPage() {
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="submit"
-                disabled={saving}
+                disabled={saving || isEditingFine}
                 className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <ImageUp aria-hidden="true" size={16} />
@@ -303,6 +445,21 @@ export function CondominiosPage() {
               required
               className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none ring-slate-200 transition focus:ring"
             />
+          </label>
+          <label className="block space-y-1 text-sm">
+            <span className="font-medium text-slate-700">
+              Valor da multa do condomínio (R$)
+            </span>
+            <input
+              name="valor_multa"
+              type="text"
+              inputMode="decimal"
+              className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none ring-slate-200 transition focus:ring"
+              placeholder="Ex.: 162.10"
+            />
+            <span className="block text-xs text-slate-500">
+              Pode ser configurado agora ou editado depois.
+            </span>
           </label>
           <button
             type="submit"

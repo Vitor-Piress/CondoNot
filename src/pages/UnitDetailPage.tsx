@@ -20,7 +20,7 @@ import {
   type Notification,
   type Unit,
 } from "../types/domain";
-import { formatDate } from "../utils/format";
+import { formatCurrency, formatDate } from "../utils/format";
 import { useCondominio } from "../contexts/useCondominio";
 
 function getNotificationBadgeClass(category: string | null): string {
@@ -352,10 +352,7 @@ export function UnitDetailPage({ unitId, onNavigate }: UnitDetailPageProps) {
                         />
                         {notification.valorMulta === null
                           ? "Sem multa"
-                          : new Intl.NumberFormat("pt-BR", {
-                              style: "currency",
-                              currency: "BRL",
-                            }).format(notification.valorMulta)}
+                          : formatCurrency(notification.valorMulta)}
                       </span>
                     </span>
                     <ChevronRight

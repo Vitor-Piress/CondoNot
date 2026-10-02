@@ -109,7 +109,7 @@ export function AppLayout({
         </div>
       </header>
 
-      <div className="mx-auto grid w-full max-w-7xl flex-1 grid-cols-1 gap-6 px-4 py-6 print:mx-0 print:block print:max-w-none print:px-0 print:py-0 lg:grid-cols-[240px_minmax(0,1fr)] lg:px-6">
+      <div className="mx-auto grid w-full max-w-7xl flex-1 grid-cols-1 gap-6 px-4 py-6 print:mx-0 print:block print:max-w-none print:px-0 print:py-0 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-6">
         <div className="print:hidden">
           <SidebarNav currentPath={currentPath} onNavigate={onNavigate} />
         </div>

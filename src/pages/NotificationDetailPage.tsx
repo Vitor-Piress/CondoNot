@@ -7,6 +7,7 @@ import { RegimentoView } from "../components/ui/RegimentoView";
 import {
   getNotificationById,
   inactivateNotification,
+  listNotificationAttachments,
 } from "../services/notificationService";
 import { getNotificationTypeById } from "../services/notificationTypeService";
 import { getCondominioById } from "../services/condominioService";
@@ -15,11 +16,16 @@ import {
   getNotificationCategoryLabel,
   getUnitLabel,
   type Notification,
+  type NotificationAttachment,
   type NotificationType,
   type Unit,
   type Condominio,
 } from "../types/domain";
-import { formatDate, formatOnlyDateInFull } from "../utils/format";
+import {
+  formatCurrency,
+  formatDate,
+  formatOnlyDateInFull,
+} from "../utils/format";
 import { useCondominio } from "../contexts/useCondominio";
 
 interface NotificationDetailPageProps {
@@ -38,6 +44,37 @@ function getSourceUnitId(state: unknown): string | null {
     : null;
 }
 
+type NotificationPrintKind = "warning" | "guidance" | "fine";
+
+function getNotificationPrintCopy(category: string | null): {
+  kind: NotificationPrintKind;
+  title: string | null;
+} {
+  const normalizedCategory = category
+    ?.normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLocaleLowerCase("pt-BR");
+
+  if (normalizedCategory === "multa") {
+    return { kind: "fine", title: "AVISO DE MULTA" };
+  }
+
+  if (normalizedCategory === "orientacao") {
+    return { kind: "guidance", title: "CARTA DE ORIENTAÇÃO" };
+  }
+
+  if (normalizedCategory === "advertencia") {
+    return { kind: "warning", title: "CARTA DE ADVERTÊNCIA" };
+  }
+
+  return {
+    kind: "warning",
+    title: category
+      ? `CARTA DE ${(getNotificationCategoryLabel(category) ?? category).toUpperCase()}`
+      : null,
+  };
+}
+
 export function NotificationDetailPage({
   notificationId,
   onNavigate,
@@ -51,6 +88,8 @@ export function NotificationDetailPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [condominio, setCondominio] = useState<Condominio | null>(null);
+  const [attachments, setAttachments] = useState<NotificationAttachment[]>([]);
+  const [attachmentsError, setAttachmentsError] = useState<string | null>(null);
   const [isBaixaModalOpen, setIsBaixaModalOpen] = useState(false);
   const [motivoBaixaInput, setMotivoBaixaInput] = useState("");
   const [baixaError, setBaixaError] = useState<string | null>(null);
@@ -98,6 +137,24 @@ export function NotificationDetailPage({
         setType(typeRow);
         setUnit(unitRow);
         setCondominio(condominioRow);
+
+        try {
+          const attachmentRows = await listNotificationAttachments(
+            notification.id,
+            notification.idCondominio,
+          );
+          if (active) {
+            setAttachments(attachmentRows);
+          }
+        } catch (attachmentLoadError) {
+          if (active) {
+            setAttachmentsError(
+              attachmentLoadError instanceof Error
+                ? attachmentLoadError.message
+                : "Não foi possível carregar as fotos anexas.",
+            );
+          }
+        }
       } catch (loadError) {
         if (!active) {
           return;
@@ -156,7 +213,12 @@ export function NotificationDetailPage({
     }
   }
 
-  const typeTitle = type?.titulo ?? `Tipo ${row?.idTipoNotificacao ?? ""}`;
+  const typeTitle = type?.titulo ?? `Modelo ${row?.idTipoNotificacao ?? ""}`;
+  const printCopy = getNotificationPrintCopy(row?.categoria ?? null);
+  const formattedFine =
+    row?.valorMulta === null || row?.valorMulta === undefined
+      ? "valor não informado"
+      : formatCurrency(row.valorMulta);
 
   return (
     <>
@@ -196,9 +258,14 @@ export function NotificationDetailPage({
             <button
               type="button"
               onClick={() => window.print()}
+              disabled={loading || Boolean(attachmentsError)}
               aria-label="Imprimir notificação"
-              title="Imprimir notificação"
-              className="inline-flex size-9 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+              title={
+                attachmentsError
+                  ? "Não foi possível carregar as fotos anexas"
+                  : "Imprimir notificação"
+              }
+              className="inline-flex size-9 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Printer aria-hidden="true" size={18} />
             </button>
@@ -259,7 +326,7 @@ export function NotificationDetailPage({
             <div className="grid gap-4 md:grid-cols-3">
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
-                  Tipo de notificação
+                  Modelo de notificação
                 </p>
                 <button
                   type="button"
@@ -318,7 +385,7 @@ export function NotificationDetailPage({
             {type?.textoApoio ? (
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
-                  Texto de apoio do tipo
+                  Texto de apoio do modelo
                 </p>
                 <p className="mt-1 whitespace-pre-wrap text-sm leading-7 text-slate-700">
                   {type.textoApoio}
@@ -331,21 +398,55 @@ export function NotificationDetailPage({
                 Valor da multa
               </p>
               <p className="mt-1 text-sm text-slate-700">
-                {row.valorMulta === null ? "Não informado" : row.valorMulta}
+                {row.valorMulta === null
+                  ? "Não informado"
+                  : formatCurrency(row.valorMulta)}
               </p>
             </div>
 
             <div>
               <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
-                Texto do regimento do tipo
+                Texto do regimento do modelo
               </p>
               <RegimentoView textoRegimento={type?.textoRegimento ?? null} />
             </div>
           </article>
         ) : null}
       </Panel>
-      {/* <ImageUpload></ImageUpload> */}
-      {/* Página para impressão: */}
+      {!loading && !error && row && attachmentsError ? (
+        <p
+          role="alert"
+          className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700"
+        >
+          Não foi possível carregar as fotos anexas: {attachmentsError}
+        </p>
+      ) : null}
+
+      {!loading && !error && row && attachments.length > 0 ? (
+        <Panel title="Fotos anexas" subtitle={`${attachments.length} foto(s)`}>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {attachments.map((attachment) => (
+              <a
+                key={attachment.id}
+                href={attachment.signedUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="overflow-hidden rounded-xl border border-slate-200"
+              >
+                <img
+                  src={attachment.signedUrl}
+                  alt={attachment.fileName}
+                  className="h-56 w-full bg-slate-50 object-contain"
+                />
+                <span className="block truncate px-3 py-2 text-sm text-slate-600">
+                  {attachment.fileName}
+                </span>
+              </a>
+            ))}
+          </div>
+        </Panel>
+      ) : null}
+
       {!loading && !error && row ? (
         <div className="hidden w-full print:block print:px-[8mm] print:py-[8mm] text-base leading-relaxed font-serif">
           <div className="w-full text-justify">
@@ -358,9 +459,7 @@ export function NotificationDetailPage({
                 />
               ) : null}
               <h3 className="mb-5 border-b border-slate-400 pb-1 text-center text-xl font-bold text-slate-900">
-                {row.categoria
-                  ? `CARTA DE ${(getNotificationCategoryLabel(row.categoria) ?? row.categoria).toUpperCase()}`
-                  : `Notificação #${row.id}`}
+                {printCopy.title ?? `Notificação #${row.id}`}
               </h3>
               {row.status === "baixada" ? (
                 <p className="mb-4 text-center text-3xl font-bold tracking-[0.2em] text-rose-700">
@@ -389,13 +488,31 @@ export function NotificationDetailPage({
             <main className="mt-5 space-y-4">
               <header className="main-header">
                 <p className="mb-2">Prezado(a) Senhor(a),</p>
-                <p>
-                  Na qualidade de Síndica deste Condomínio, venho{" "}
-                  <span className="font-bold">adverti-lo</span> por desrespeito
-                  às normas do{" "}
-                  <span className="font-bold">Regimento Interno</span>, como
-                  segue:
-                </p>
+                {printCopy.kind === "fine" ? (
+                  <p>
+                    Na qualidade de Síndica deste Condomínio venho por meio
+                    deste, avisá-lo que em seu próximo boleto de condomínio,
+                    será aplicada uma{" "}
+                    <span className="font-bold">
+                      MULTA REGIMENTAL no valor de {formattedFine}
+                    </span>{" "}
+                    por desrespeito às normas do{" "}
+                    <span className="font-bold underline">
+                      Regulamento Interno
+                    </span>
+                    , conforme segue:
+                  </p>
+                ) : (
+                  <p>
+                    Na qualidade de Síndica deste Condomínio, venho{" "}
+                    <span className="font-bold">
+                      {printCopy.kind === "guidance" ? "orientá-lo" : "adverti-lo"}
+                    </span>{" "}
+                    por desrespeito às normas do{" "}
+                    <span className="font-bold">Regimento Interno</span>, como
+                    segue:
+                  </p>
+                )}
               </header>
               <section className="statute">
                 <RegimentoView textoRegimento={type?.textoRegimento ?? null} />
@@ -416,13 +533,35 @@ export function NotificationDetailPage({
                 </section>
               ) : null}
             </main>
-            <p className="mt-3">
-              Sendo assim, solicitamos sua intervenção e orientação aos
-              moradores de seu apartamento para que esse fato{" "}
-              <span className="font-bold underline">não</span> mais se repita,
-              sob pena de <span className="font-bold underline">multa</span> por
-              desrespeito aos estatutos deste Condomínio.
-            </p>
+            {printCopy.kind === "fine" ? (
+              <p className="mt-3">
+                Sendo assim, solicitamos sua intervenção e orientação aos
+                moradores de seu apartamento para que esse fato{" "}
+                <span className="font-bold">não</span> mais se repita, sob pena
+                de <span className="font-bold">multa diária</span> por
+                desrespeito aos estatutos deste Condomínio.
+              </p>
+            ) : printCopy.kind === "guidance" ? (
+              <p className="mt-3">
+                Sendo assim, solicitamos sua intervenção e orientação aos
+                moradores de seu apartamento para que esse fato{" "}
+                <span className="font-bold underline">não</span> mais se
+                repita, sob pena de{" "}
+                <span className="font-bold underline">advertência</span> e
+                posterior <span className="font-bold underline">multa</span>{" "}
+                (em caso de reincidência) por desrespeito aos estatutos deste
+                Condomínio.
+              </p>
+            ) : (
+              <p className="mt-3">
+                Sendo assim, solicitamos sua intervenção e orientação aos
+                moradores de seu apartamento para que esse fato{" "}
+                <span className="font-bold underline">não</span> mais se
+                repita, sob pena de{" "}
+                <span className="font-bold underline">multa</span> por
+                desrespeito aos estatutos deste Condomínio.
+              </p>
+            )}
             <footer className="mx-auto mt-[16mm] flex flex-col items-center print:break-inside-avoid">
               <div className="w-64 border-t border-slate-500 pt-2 text-center">
                 <p>Ana Paula Palmezan</p>
@@ -431,6 +570,31 @@ export function NotificationDetailPage({
             </footer>
           </div>
         </div>
+      ) : null}
+
+      {!loading && !error && row && attachments.length > 0 ? (
+        <section className="notification-attachments-print hidden w-full print:block print:px-[8mm] print:py-[8mm] font-serif">
+          <h2 className="mb-6 border-b border-slate-400 pb-2 text-center text-xl font-bold">
+            Anexos da notificação #{row.id}
+          </h2>
+          <div className="grid grid-cols-2 gap-5">
+            {attachments.map((attachment, index) => (
+              <figure
+                key={attachment.id}
+                className="notification-attachment-print-item min-w-0 text-center"
+              >
+                <img
+                  src={attachment.signedUrl}
+                  alt={`Anexo ${index + 1}: ${attachment.fileName}`}
+                  className="mx-auto max-h-[105mm] max-w-full object-contain"
+                />
+                <figcaption className="mt-2 break-all text-xs text-slate-700">
+                  Foto {index + 1} — {attachment.fileName}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
       ) : null}
 
       {isBaixaModalOpen ? (

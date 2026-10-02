@@ -46,7 +46,7 @@ export function NotificationTypeDetailPage({
         const message =
           loadError instanceof Error
             ? loadError.message
-            : "Não foi possível carregar o tipo de notificação.";
+            : "Não foi possível carregar o modelo de notificação.";
         setError(message);
       } finally {
         if (active) {
@@ -64,8 +64,8 @@ export function NotificationTypeDetailPage({
 
   return (
     <Panel
-      title="Tipo de notificação individual"
-      subtitle="Visualização somente leitura do tipo cadastrado"
+      title="Modelo de notificação individual"
+      subtitle="Visualização somente leitura do modelo cadastrado"
       leftAction={
         <button
           type="button"
@@ -80,7 +80,7 @@ export function NotificationTypeDetailPage({
     >
       {loading ? (
         <p className="text-sm text-slate-500">
-          Carregando tipo de notificação...
+          Carregando modelo de notificação...
         </p>
       ) : null}
 
@@ -92,7 +92,7 @@ export function NotificationTypeDetailPage({
 
       {!loading && !error && !type ? (
         <EmptyState
-          title="Tipo não encontrado"
+          title="Modelo não encontrado"
           description="Este registro pode ter sido removido ou ainda não existe."
         />
       ) : null}
@@ -101,10 +101,10 @@ export function NotificationTypeDetailPage({
         <article className="space-y-4 rounded-2xl border border-slate-200 p-5">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
-              Título do tipo
+              Título do modelo
             </p>
             <h3 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
-              {type.titulo ?? `Tipo ${type.id}`}
+              {type.titulo ?? `Modelo ${type.id}`}
             </h3>
           </div>
 
@@ -115,7 +115,7 @@ export function NotificationTypeDetailPage({
 
           {type.deletedAt ? (
             <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">
-              Tipo arquivado em {formatDate(type.deletedAt)}. Este registro
+              Modelo arquivado em {formatDate(type.deletedAt)}. Este registro
               continua disponível para consulta do histórico.
             </p>
           ) : null}

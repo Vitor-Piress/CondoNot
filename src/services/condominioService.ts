@@ -14,6 +14,12 @@ function parseCondominio(row: Record<string, unknown>): Condominio {
     name: String(row.name ?? ""),
     location: String(row.location ?? ""),
     logo_url: typeof row.logo_url === "string" ? row.logo_url : null,
+    valor_multa:
+      row.valor_multa === null || row.valor_multa === undefined
+        ? null
+        : Number.isFinite(Number(row.valor_multa))
+          ? Number(row.valor_multa)
+          : null,
     regimento_pdf_path:
       typeof row.regimento_pdf_path === "string"
         ? row.regimento_pdf_path
@@ -40,6 +46,7 @@ let fallbackCondominios: Condominio[] = [
     name: "Condomínio Goiabinha",
     location: "R. Goiabada",
     logo_url: null,
+    valor_multa: null,
   },
   {
     id: "2",
@@ -47,6 +54,7 @@ let fallbackCondominios: Condominio[] = [
     name: "Condomínio Laranjinha",
     location: "R. Laranjinha",
     logo_url: null,
+    valor_multa: null,
   },
   {
     id: "3",
@@ -54,6 +62,7 @@ let fallbackCondominios: Condominio[] = [
     name: "Condomínio Fanta Uva",
     location: "R. Fanta Uva",
     logo_url: null,
+    valor_multa: null,
   },
 ];
 
@@ -106,6 +115,7 @@ export async function createCondominio(
       name: condominioData.name,
       location: condominioData.location,
       logo_url: condominioData.logo_url,
+      valor_multa: condominioData.valor_multa,
     };
     fallbackCondominios = [...fallbackCondominios, created];
     return created;

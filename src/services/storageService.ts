@@ -1,5 +1,14 @@
 import { supabase } from "./supabase";
 
+export const NOTIFICATION_ATTACHMENT_BUCKET = "notificacoes-anexos";
+export const MAX_NOTIFICATION_ATTACHMENTS = 5;
+export const MAX_NOTIFICATION_ATTACHMENT_SIZE_BYTES = 5 * 1024 * 1024;
+export const NOTIFICATION_ATTACHMENT_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+] as const;
+
 // 1. INSERT: Faz o upload (insere) a imagem no bucket e retorna a URL
 export async function uploadImageToStorage(
   file: File,
@@ -20,6 +29,94 @@ export async function uploadImageToStorage(
 
   const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
   return data.publicUrl;
+}
+
+export function validateNotificationAttachments(files: File[]): void {
+  if (files.length > MAX_NOTIFICATION_ATTACHMENTS) {
+    throw new Error(
+      `Anexe no máximo ${MAX_NOTIFICATION_ATTACHMENTS} fotos por notificação.`,
+    );
+  }
+
+  for (const file of files) {
+    if (!NOTIFICATION_ATTACHMENT_MIME_TYPES.some((type) => type === file.type)) {
+      throw new Error(`${file.name}: use uma imagem JPEG, PNG ou WebP.`);
+    }
+
+    if (file.size === 0) {
+      throw new Error(`${file.name}: o arquivo está vazio.`);
+    }
+
+    if (file.size > MAX_NOTIFICATION_ATTACHMENT_SIZE_BYTES) {
+      throw new Error(`${file.name}: cada foto deve ter no máximo 5 MB.`);
+    }
+  }
+}
+
+export async function validateNotificationAttachmentContents(
+  files: File[],
+): Promise<void> {
+  for (const file of files) {
+    const header = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+    const isJpeg =
+      header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff;
+    const isPng =
+      header[0] === 0x89 &&
+      header[1] === 0x50 &&
+      header[2] === 0x4e &&
+      header[3] === 0x47 &&
+      header[4] === 0x0d &&
+      header[5] === 0x0a &&
+      header[6] === 0x1a &&
+      header[7] === 0x0a;
+    const isWebp =
+      String.fromCharCode(...header.slice(0, 4)) === "RIFF" &&
+      String.fromCharCode(...header.slice(8, 12)) === "WEBP";
+
+    if (
+      (file.type === "image/jpeg" && !isJpeg) ||
+      (file.type === "image/png" && !isPng) ||
+      (file.type === "image/webp" && !isWebp)
+    ) {
+      throw new Error(`${file.name}: o conteúdo não corresponde ao formato informado.`);
+    }
+  }
+}
+
+export async function uploadNotificationAttachment(
+  condominioId: string,
+  notificationId: string,
+  file: File,
+): Promise<string> {
+  if (!supabase) {
+    throw new Error("O Supabase não está configurado.");
+  }
+
+  const path = `condominios/${condominioId}/notificacoes/${notificationId}/${crypto.randomUUID()}`;
+  const { error } = await supabase.storage
+    .from(NOTIFICATION_ATTACHMENT_BUCKET)
+    .upload(path, file, {
+      contentType: file.type,
+      upsert: false,
+    });
+
+  if (error) throw error;
+  return path;
+}
+
+export async function createNotificationAttachmentSignedUrl(
+  path: string,
+): Promise<string> {
+  if (!supabase) {
+    throw new Error("O Supabase não está configurado.");
+  }
+
+  const { data, error } = await supabase.storage
+    .from(NOTIFICATION_ATTACHMENT_BUCKET)
+    .createSignedUrl(path, 60 * 60);
+
+  if (error) throw error;
+  return data.signedUrl;
 }
 
 const CONDOMINIO_LOGO_BUCKET = "images-app";

@@ -29,7 +29,7 @@ const navItems: NavItem[] = [
     icon: House,
   },
   {
-    label: "Relatórios",
+    label: "Notificações",
     path: "/notificacoes",
     icon: ClipboardList,
   },
@@ -39,7 +39,7 @@ const navItems: NavItem[] = [
     icon: Building2,
   },
   {
-    label: "Tipos de notificação",
+    label: "Modelo de notificação",
     path: "/tipos-notificacao",
     icon: Tags,
   },
@@ -82,10 +82,12 @@ export function SidebarNav({ currentPath, onNavigate }: SidebarNavProps) {
                 active
                   ? "bg-slate-900 text-white"
                   : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-              }`}
+              } text-left`}
             >
               <Icon className="h-4 w-4" aria-hidden="true" />
-              {item.label}
+              <span className="min-w-0 flex-1 whitespace-nowrap">
+                {item.label}
+              </span>
             </button>
           );
         })}

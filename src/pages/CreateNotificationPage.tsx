@@ -11,7 +11,7 @@ export function CreateNotificationPage({
   return (
     <Panel
       title="Inserir notificação"
-      subtitle="Registre uma notificação completa e direcione para unidade e tipo"
+      subtitle="Registre uma notificação completa e direcione para uma unidade e um modelo"
       action={
         <button
           type="button"
