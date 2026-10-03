@@ -291,7 +291,7 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
               key={name}
               className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 px-3 py-2 print:border-slate-400"
             >
-              <span className="min-w-0 break-words">{name}</span>
+              <span className="min-w-0 wrap-break-word">{name}</span>
               <span className="font-semibold">{count}</span>
             </li>
           ))}
