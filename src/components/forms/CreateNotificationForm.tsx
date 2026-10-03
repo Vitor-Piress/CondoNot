@@ -334,33 +334,33 @@ export function CreateNotificationForm({
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="block space-y-1 text-sm">
-          <span className="font-medium text-slate-700">
+          <span className="block font-medium text-slate-700">
             Data retroativa (opcional)
           </span>
           <input
             type="date"
             {...register("dataRetroativa")}
-            className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none ring-slate-200 transition focus:ring"
+            className="block h-10 w-full rounded-xl border border-slate-300 px-3 py-2 outline-none ring-slate-200 transition focus:ring"
           />
         </label>
 
-        {selectedCategory === "Multa" ? (
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
-            <p className="font-medium text-slate-700">
-              Valor configurado para o condomínio
-            </p>
-            <p className="mt-1 text-slate-600">
+        <div className="space-y-1 text-sm">
+          <span className="block font-medium text-slate-700">
+            Valor da multa
+          </span>
+          {selectedCategory === "Multa" ? (
+            <div className="flex h-10 w-full items-center rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-slate-700">
               {activeCondominio?.valor_multa === null ||
-                activeCondominio?.valor_multa === undefined
+              activeCondominio?.valor_multa === undefined
                 ? "Ainda não definido"
                 : formatCurrency(activeCondominio.valor_multa)}
-            </p>
-          </div>
-        ) : (
-          <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-500">
-            O valor da multa aparece apenas quando a categoria for Multa.
-          </div>
-        )}
+            </div>
+          ) : (
+            <div className="flex h-10 w-full items-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-slate-500">
+              Aplicável apenas à categoria Multa.
+            </div>
+          )}
+        </div>
       </div>
 
       <section className="space-y-2">

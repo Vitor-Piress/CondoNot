@@ -9,6 +9,7 @@ interface UnitComboboxProps {
   placeholder?: string;
   disabled?: boolean;
   emptyOptionLabel?: string;
+  inputClassName?: string;
 }
 
 export function UnitCombobox({
@@ -18,6 +19,7 @@ export function UnitCombobox({
   placeholder = "Digite para buscar a unidade",
   disabled = false,
   emptyOptionLabel,
+  inputClassName,
 }: UnitComboboxProps) {
   const selectedUnit = useMemo(
     () => units.find((unit) => unit.id === value) ?? null,
@@ -79,7 +81,10 @@ export function UnitCombobox({
             setQuery(selectedUnit ? getUnitLabel(selectedUnit) : "");
           }, 120);
         }}
-        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none ring-slate-200 transition focus:ring disabled:bg-slate-100"
+        className={
+          inputClassName ??
+          "w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none ring-slate-200 transition focus:ring disabled:bg-slate-100"
+        }
         placeholder={placeholder}
       />
 

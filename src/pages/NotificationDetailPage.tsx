@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Printer, ShieldOff } from "lucide-react";
+import { ArchiveX, ArrowLeft, Printer } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Panel } from "../components/ui/Panel";
@@ -252,7 +252,7 @@ export function NotificationDetailPage({
                 title="Dar baixa na notificação"
                 className="inline-flex size-9 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-rose-50 hover:text-rose-700"
               >
-                <ShieldOff aria-hidden="true" size={18} />
+                <ArchiveX aria-hidden="true" size={18} />
               </button>
             ) : null}
             <button
@@ -393,16 +393,18 @@ export function NotificationDetailPage({
               </div>
             ) : null}
 
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
-                Valor da multa
-              </p>
-              <p className="mt-1 text-sm text-slate-700">
-                {row.valorMulta === null
-                  ? "Não informado"
-                  : formatCurrency(row.valorMulta)}
-              </p>
-            </div>
+            {printCopy.kind === "fine" ? (
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                  Valor da multa
+                </p>
+                <p className="mt-1 text-sm font-bold text-slate-700">
+                  {row.valorMulta === null
+                    ? "Não informado"
+                    : formatCurrency(row.valorMulta)}
+                </p>
+              </div>
+            ) : null}
 
             <div>
               <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
@@ -506,7 +508,9 @@ export function NotificationDetailPage({
                   <p>
                     Na qualidade de Síndica deste Condomínio, venho{" "}
                     <span className="font-bold">
-                      {printCopy.kind === "guidance" ? "orientá-lo" : "adverti-lo"}
+                      {printCopy.kind === "guidance"
+                        ? "orientá-lo"
+                        : "adverti-lo"}
                     </span>{" "}
                     por desrespeito às normas do{" "}
                     <span className="font-bold">Regimento Interno</span>, como
@@ -545,21 +549,20 @@ export function NotificationDetailPage({
               <p className="mt-3">
                 Sendo assim, solicitamos sua intervenção e orientação aos
                 moradores de seu apartamento para que esse fato{" "}
-                <span className="font-bold underline">não</span> mais se
-                repita, sob pena de{" "}
+                <span className="font-bold underline">não</span> mais se repita,
+                sob pena de{" "}
                 <span className="font-bold underline">advertência</span> e
-                posterior <span className="font-bold underline">multa</span>{" "}
-                (em caso de reincidência) por desrespeito aos estatutos deste
+                posterior <span className="font-bold underline">multa</span> (em
+                caso de reincidência) por desrespeito aos estatutos deste
                 Condomínio.
               </p>
             ) : (
               <p className="mt-3">
                 Sendo assim, solicitamos sua intervenção e orientação aos
                 moradores de seu apartamento para que esse fato{" "}
-                <span className="font-bold underline">não</span> mais se
-                repita, sob pena de{" "}
-                <span className="font-bold underline">multa</span> por
-                desrespeito aos estatutos deste Condomínio.
+                <span className="font-bold underline">não</span> mais se repita,
+                sob pena de <span className="font-bold underline">multa</span>{" "}
+                por desrespeito aos estatutos deste Condomínio.
               </p>
             )}
             <footer className="mx-auto mt-[16mm] flex flex-col items-center print:break-inside-avoid">

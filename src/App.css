@@ -36,6 +36,27 @@
     page-break-inside: avoid;
   }
 
+  .notification-report-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .notification-report-table th,
+  .notification-report-table td {
+    border: 1px solid #94a3b8;
+    padding: 6px;
+    vertical-align: top;
+  }
+
+  .notification-report-table thead {
+    display: table-header-group;
+  }
+
+  .notification-report-table tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
   .app-background {
     width: 100% !important;
     min-height: 100vh !important;

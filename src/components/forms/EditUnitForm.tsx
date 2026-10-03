@@ -9,14 +9,23 @@ import {
   getPersonPhone,
   type ResidentInfo,
 } from "../../types/domain";
+import { formatPhone } from "../../utils/format";
 import { getUnitById, updateUnit } from "../../services/unitService";
+
+const phoneSchema = z
+  .string()
+  .trim()
+  .refine(
+    (value) => value === "" || /^\d{11}$/.test(value.replace(/\D/g, "")),
+    "Informe o telefone no formato (00) 0 0000-0000.",
+  );
 
 const editUnitSchema = z.object({
   bloco: z.string().trim().min(1, "Informe o bloco."),
   apartamento: z.string().trim().min(1, "Informe o apartamento."),
   alugado: z.enum(["sim", "nao", "nao_informado"]),
   proprietarioNome: z.string().trim().min(2, "Informe o nome do proprietário."),
-  proprietarioContatoTelefone: z.string().trim(),
+  proprietarioContatoTelefone: phoneSchema,
   proprietarioContatoEmail: z
     .string()
     .trim()
@@ -25,7 +34,7 @@ const editUnitSchema = z.object({
       "Informe um e-mail válido.",
     ),
   inquilinoNome: z.string().trim(),
-  inquilinoContatoTelefone: z.string().trim(),
+  inquilinoContatoTelefone: phoneSchema,
   inquilinoContatoEmail: z
     .string()
     .trim()
@@ -143,14 +152,16 @@ export function EditUnitForm({ unitId, onSuccess }: EditUnitFormProps) {
                 ? "sim"
                 : "nao",
           proprietarioNome: toFormValue(getPersonName(unit.proprietario)),
-          proprietarioContatoTelefone: toFormValue(
-            getPersonPhone(unit.proprietario),
+          proprietarioContatoTelefone: formatPhone(
+            toFormValue(getPersonPhone(unit.proprietario)),
           ),
           proprietarioContatoEmail: toFormValue(
             getPersonEmail(unit.proprietario),
           ),
           inquilinoNome: toFormValue(getPersonName(unit.inquilino)),
-          inquilinoContatoTelefone: toFormValue(getPersonPhone(unit.inquilino)),
+          inquilinoContatoTelefone: formatPhone(
+            toFormValue(getPersonPhone(unit.inquilino)),
+          ),
           inquilinoContatoEmail: toFormValue(getPersonEmail(unit.inquilino)),
         });
       } catch (error) {
@@ -288,9 +299,15 @@ export function EditUnitForm({ unitId, onSuccess }: EditUnitFormProps) {
               Contato por telefone
             </span>
             <input
-              {...register("proprietarioContatoTelefone")}
+              {...register("proprietarioContatoTelefone", {
+                onChange: (event) => {
+                  event.target.value = formatPhone(event.target.value);
+                },
+              })}
+              inputMode="tel"
+              maxLength={16}
               className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none ring-slate-200 transition focus:ring"
-              placeholder="(11) 99999-9999"
+              placeholder="(00) 0 0000-0000"
             />
           </label>
 
@@ -333,9 +350,15 @@ export function EditUnitForm({ unitId, onSuccess }: EditUnitFormProps) {
                 Contato por telefone
               </span>
               <input
-                {...register("inquilinoContatoTelefone")}
+                {...register("inquilinoContatoTelefone", {
+                  onChange: (event) => {
+                    event.target.value = formatPhone(event.target.value);
+                  },
+                })}
+                inputMode="tel"
+                maxLength={16}
                 className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none ring-slate-200 transition focus:ring"
-                placeholder="(11) 99999-9999"
+                placeholder="(00) 0 0000-0000"
               />
             </label>
 

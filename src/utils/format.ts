@@ -47,3 +47,14 @@ export function formatCurrency(value: number): string {
 export function includesQuery(value: string, query: string): boolean {
   return value.toLocaleLowerCase().includes(query.toLocaleLowerCase());
 }
+
+export function formatPhone(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 2) return digits ? `(${digits}` : "";
+  const ddd = `(${digits.slice(0, 2)}) `;
+  if (digits.length <= 6) return `${ddd}${digits.slice(2)}`;
+  if (digits.length <= 10) {
+    return `${ddd}${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+  return `${ddd}${digits.slice(2, 3)} ${digits.slice(3, 7)}-${digits.slice(7)}`;
+}
