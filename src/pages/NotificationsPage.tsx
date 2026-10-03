@@ -259,7 +259,7 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
 
   const summaryContent = (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      <div className="rounded-xl border border-slate-200 p-3">
+      <div className="rounded-xl border border-slate-200 p-3 print:border-slate-400">
         <p className="text-xs font-medium uppercase tracking-widest text-slate-400">
           Total de notificações
         </p>
@@ -270,7 +270,7 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
           </p>
         ) : null}
       </div>
-      <div className="rounded-xl border border-slate-200 p-3">
+      <div className="rounded-xl border border-slate-200 p-3 print:border-slate-400">
         <p className="text-xs font-medium uppercase tracking-widest text-slate-400">
           Total em multas (ativas)
         </p>
@@ -281,7 +281,7 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
           {summary.fineCount} multa(s) aplicada(s)
         </p>
       </div>
-      <div className="rounded-xl border border-slate-200 p-3">
+      <div className="rounded-xl border border-slate-200 p-3 print:border-slate-400">
         <p className="text-xs font-medium uppercase tracking-widest text-slate-400">
           Por modelo de notificação
         </p>
