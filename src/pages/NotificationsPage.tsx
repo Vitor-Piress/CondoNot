@@ -258,7 +258,7 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
   }, [visibleRows, typeMap]);
 
   const summaryContent = (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-3 sm:grid-cols-2 print:grid-cols-2">
       <div className="rounded-xl border border-slate-200 p-3 print:border-slate-400">
         <p className="text-xs font-medium uppercase tracking-widest text-slate-400">
           Total de notificações
@@ -281,14 +281,17 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
           {summary.fineCount} multa(s) aplicada(s)
         </p>
       </div>
-      <div className="rounded-xl border border-slate-200 p-3 print:border-slate-400">
-        <p className="text-xs font-medium uppercase tracking-widest text-slate-400">
+      <div className="rounded-xl border border-slate-200 p-3 print:border-slate-400 sm:col-span-2 print:col-span-2">
+        <p className="mb-3 text-xs font-medium uppercase tracking-widest text-slate-400">
           Por modelo de notificação
         </p>
-        <ul className="mt-1 space-y-0.5 text-sm text-slate-700">
+        <ul className="grid gap-2 text-sm text-slate-700 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {summary.byModel.map(([name, count]) => (
-            <li key={name} className="flex justify-between gap-2">
-              <span>{name}</span>
+            <li
+              key={name}
+              className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 px-3 py-2 print:border-slate-400"
+            >
+              <span className="min-w-0 break-words">{name}</span>
               <span className="font-semibold">{count}</span>
             </li>
           ))}
