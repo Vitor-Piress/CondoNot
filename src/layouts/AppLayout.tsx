@@ -152,6 +152,11 @@ export function AppLayout({
         reservados.
       </footer>
 
+      <footer className="fixed inset-x-0 bottom-[6mm] z-[9998] hidden text-center text-[8px] text-slate-400 print:block">
+        © {new Date().getFullYear()} Condonot. Vitor Pires. Todos os direitos
+        reservados.
+      </footer>
+
       {isSwitchingCondominio ? (
         <div className="print:hidden fixed inset-0 z-50 flex items-center justify-center bg-white/70 backdrop-blur-sm">
           <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-lg">
