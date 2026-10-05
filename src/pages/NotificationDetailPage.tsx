@@ -460,15 +460,15 @@ export function NotificationDetailPage({
                   alt={`Logo ${condominio.name}`}
                 />
               ) : null}
-              <h3 className="mb-5 border-b border-slate-400 pb-1 text-center text-xl font-bold text-slate-900">
+              <h3 className="my-4 border-b border-slate-400 pb-1 text-center text-2xl font-bold text-slate-900">
                 {printCopy.title ?? `Notificação #${row.id}`}
               </h3>
               {row.status === "baixada" ? (
-                <p className="mb-4 text-center text-3xl font-bold tracking-[0.2em] text-rose-700">
+                <p className="my-4 text-center text-3xl font-extrabold underline tracking-[0.2em] text-rose-700">
                   BAIXADA
                 </p>
               ) : null}
-              <section className="mb-4 flex w-full flex-col items-center gap-1 border-y border-slate-300 py-2 text-sm">
+              <section className="my-4 flex w-full flex-col items-center gap-1 border-y border-slate-300 py-2 text-sm">
                 <p className="min-w-0 whitespace-normal wrap-break-words text-center font-semibold leading-snug text-slate-900">
                   {typeTitle}
                 </p>
