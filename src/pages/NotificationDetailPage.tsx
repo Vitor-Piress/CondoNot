@@ -526,7 +526,7 @@ export function NotificationDetailPage({
                   Motivo da Notificação
                 </p>
                 <p className="whitespace-pre-wrap wrap-break-word">
-                  {row.motivo ?? "Sem motivo informado"}.
+                  {row.motivo ?? "Sem motivo informado."}
                 </p>
               </section>
               {type?.textoApoio ? (

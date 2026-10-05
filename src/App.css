@@ -68,7 +68,7 @@
 
   .app-background::after {
     content: "";
-    position: absolute;
+    position: fixed;
     inset: 0;
     z-index: 9999;
     border: 4px double #334155;
