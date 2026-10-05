@@ -476,7 +476,7 @@ export function NotificationDetailPage({
                   {formatOnlyDateInFull(row.createdAt)}
                 </p>
               </section>
-              <section className="w-full">
+              <section className="mt-5 w-full">
                 <p className="text-justify">
                   Ao condômino(a){" "}
                   <span className="font-bold underline">
