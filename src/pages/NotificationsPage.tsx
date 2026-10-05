@@ -58,6 +58,8 @@ const reportColumns: { key: ReportColumnKey; label: string }[] = [
   { key: "valor", label: "Valor da multa" },
 ];
 
+const pageSizeOptions = [10, 20, 30, 50, 100];
+
 const filterControlClass =
   "h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-normal text-slate-700 outline-none ring-slate-200 transition focus:ring";
 
@@ -121,8 +123,9 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
   const [rows, setRows] = useState<Notification[]>([]);
   const [types, setTypes] = useState<NotificationType[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
-  const [isFiltersOpen, setIsFiltersOpen] = useState(true);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [isColumnsOpen, setIsColumnsOpen] = useState(false);
+  const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -212,6 +215,11 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
       });
   }, [rows, statusFilter, categoryFilter, dateFrom, dateTo, sortOrder]);
 
+  const renderedRows = useMemo(
+    () => visibleRows.slice(0, pageSize),
+    [visibleRows, pageSize],
+  );
+
   const reportingPeriod = useMemo(() => {
     const timestamps = visibleRows
       .map(getOccurrenceTimestamp)
@@ -234,8 +242,13 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
     let fineTotal = 0;
     let fineCount = 0;
     let cancelledCount = 0;
+    const byCategory = { multa: 0, orientacao: 0, advertencia: 0 };
 
     for (const row of visibleRows) {
+      const category = normalizeCategory(row.categoria);
+      if (category in byCategory) {
+        byCategory[category as keyof typeof byCategory] += 1;
+      }
       const name =
         typeMap.get(row.idTipoNotificacao) ?? `Modelo ${row.idTipoNotificacao}`;
       byModel.set(name, (byModel.get(name) ?? 0) + 1);
@@ -249,6 +262,7 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
     return {
       total: visibleRows.length,
       cancelledCount,
+      byCategory,
       fineTotal,
       fineCount,
       byModel: [...byModel.entries()].sort(
@@ -260,26 +274,63 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
   const summaryContent = (
     <div className="grid gap-3 sm:grid-cols-2 print:grid-cols-2">
       <div className="rounded-xl border border-slate-200 p-3 print:border-slate-400">
-        <p className="text-xs font-medium uppercase tracking-widest text-slate-400">
-          Total de notificações
-        </p>
-        <p className="text-xl font-semibold text-slate-900">{summary.total}</p>
-        {summary.cancelledCount > 0 ? (
-          <p className="text-xs text-slate-500">
-            {summary.cancelledCount} baixada(s) incluída(s)
+        <div className="border-slate-200 p-3 print:border-slate-400">
+          <p className="text-xs font-medium uppercase tracking-widest text-slate-400">
+            Notificação mais recorrente
           </p>
-        ) : null}
+          <p className="text-xl font-semibold text-slate-900">
+            {summary.byModel[0]?.[0] ?? "—"}
+          </p>
+          <p className="text-xs text-slate-500">
+            {summary.byModel[0]?.[1] ?? 0} de {summary.total} ocorrência(s)
+          </p>
+          {summary.cancelledCount > 0 ? (
+            <p className="text-xs text-slate-500">
+              {summary.cancelledCount} baixada(s) incluída(s)
+            </p>
+          ) : null}
+        </div>
+        <div className="border-t border-slate-200 p-3 print:border-slate-400">
+          <p className="text-xs font-medium uppercase tracking-widest text-slate-400">
+            Total em multas (ativas)
+          </p>
+          <p className="text-xl font-semibold text-slate-900">
+            {formatCurrency(summary.fineTotal)}
+          </p>
+          <p className="text-xs text-slate-500">
+            {summary.fineCount} multa(s) aplicada(s)
+          </p>
+        </div>
       </div>
+
       <div className="rounded-xl border border-slate-200 p-3 print:border-slate-400">
-        <p className="text-xs font-medium uppercase tracking-widest text-slate-400">
-          Total em multas (ativas)
+        <p className="mb-2 text-xs font-medium uppercase tracking-widest text-slate-400">
+          Sumário
         </p>
-        <p className="text-xl font-semibold text-slate-900">
-          {formatCurrency(summary.fineTotal)}
-        </p>
-        <p className="text-xs text-slate-500">
-          {summary.fineCount} multa(s) aplicada(s)
-        </p>
+        <ul className="space-y-1 text-sm text-slate-700">
+          {categoryOptions.map((option) => (
+            <li
+              key={option.value}
+              className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 px-3 py-1 print:border-slate-400"
+            >
+              <span>{option.label}</span>
+              <span className="font-semibold">
+                {
+                  summary.byCategory[
+                    option.value as keyof typeof summary.byCategory
+                  ]
+                }
+              </span>
+            </li>
+          ))}
+          <li
+            key={"total"}
+            className="flex items-center justify-between gap-2 rounded-lg border bg-slate-50 border-slate-300 px-3 py-1 print:border-slate-400 font-bold"
+          >
+            <span>Total</span>
+            <span className="font-semibold">{summary.total}</span>
+          </li>
+        </ul>
       </div>
       <div className="rounded-xl border border-slate-200 p-3 print:border-slate-400 sm:col-span-2 print:col-span-2">
         <p className="mb-3 text-xs font-medium uppercase tracking-widest text-slate-400">
@@ -339,13 +390,33 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
         title="Relatórios e visualização de notificações"
         subtitle="Lista completa com filtros e acesso ao detalhe individual"
         action={
-          <button
-            type="button"
-            onClick={() => onNavigate("/notificacoes/nova")}
-            className="rounded-xl bg-slate-900 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-slate-700"
-          >
-            Inserir notificação
-          </button>
+          <div className="flex flex-wrap items-center w-full justify-start gap-2">
+            <button
+              type="button"
+              onClick={() => onNavigate("/notificacoes/nova")}
+              className="rounded-xl bg-slate-900 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-slate-700 cursor-pointer"
+            >
+              Inserir notificação
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setFilters(initialFilters);
+                setCategoryFilter("");
+                setDateFrom("");
+                setDateTo("");
+                setStatusFilter("ativa");
+                setSortOrder("newest");
+                setPageSize(10);
+                setSelectedReportColumns(
+                  reportColumns.map((column) => column.key),
+                );
+              }}
+              className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:bg-slate-100 cursor-pointer"
+            >
+              Limpar filtros
+            </button>
+          </div>
         }
       >
         <section className="mb-5 rounded-2xl border border-slate-200">
@@ -354,7 +425,7 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
             onClick={() => setIsFiltersOpen((open) => !open)}
             aria-expanded={isFiltersOpen}
             aria-controls="report-filters-panel"
-            className="flex w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left"
+            className="flex w-full items-center justify-between gap-3  cursor-pointer rounded-2xl px-4 py-3 text-left"
           >
             <span className="text-sm font-semibold text-slate-700">
               Filtros do relatório
@@ -497,48 +568,13 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
           </div>
         </section>
 
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-slate-500">
-            {visibleRows.length} notificaç
-            {visibleRows.length === 1 ? "ão" : "ões"}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setFilters(initialFilters);
-                setCategoryFilter("");
-                setDateFrom("");
-                setDateTo("");
-                setStatusFilter("ativa");
-                setSortOrder("newest");
-                setSelectedReportColumns(
-                  reportColumns.map((column) => column.key),
-                );
-              }}
-              className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-            >
-              Limpar filtros
-            </button>
-            <button
-              type="button"
-              onClick={() => window.print()}
-              disabled={loading || Boolean(error) || visibleRows.length === 0}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Printer aria-hidden="true" size={16} />
-              Imprimir relatório
-            </button>
-          </div>
-        </div>
-
         <section className="mb-5 rounded-2xl border border-slate-200">
           <button
             type="button"
             onClick={() => setIsColumnsOpen((open) => !open)}
             aria-expanded={isColumnsOpen}
             aria-controls="report-columns-panel"
-            className="flex w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left"
+            className="flex w-full items-center justify-between  cursor-pointer gap-3 rounded-2xl px-4 py-3 text-left"
           >
             <span className="text-sm font-semibold text-slate-700">
               Colunas do relatório impresso
@@ -589,6 +625,42 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
           ) : null}
         </section>
 
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-slate-500">
+            {renderedRows.length < visibleRows.length
+              ? `Exibindo ${renderedRows.length} de ${visibleRows.length}`
+              : visibleRows.length}{" "}
+            notificaç
+            {visibleRows.length === 1 ? "ão" : "ões"}
+          </p>
+          <div className="flex gap-2">
+            <label className="flex items-center gap-2 text-sm text-slate-500">
+              Itens por página
+              <select
+                value={pageSize}
+                onChange={(event) => setPageSize(Number(event.target.value))}
+                className="h-9 rounded-xl border border-slate-300 bg-white px-2 text-sm text-slate-700 outline-none cursor-pointer ring-slate-200 focus:ring"
+              >
+                {pageSizeOptions.map((size) => (
+                  <option key={size} value={size}>
+                    {size}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              disabled={loading || Boolean(error) || visibleRows.length === 0}
+              aria-label="Imprimir relatório"
+              title="Imprimir relatório"
+              className="inline-flex items-center rounded-xl border border-slate-300 px-3 py-2 text-slate-600 transition cursor-pointer hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Printer aria-hidden="true" size={16} />
+            </button>
+          </div>
+        </div>
+
         {loading ? (
           <p className="text-sm text-slate-500">Carregando...</p>
         ) : null}
@@ -612,18 +684,24 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
 
         {!loading && !error && visibleRows.length > 0 ? (
           <ul className="space-y-3">
-            {visibleRows.map((row) => (
+            {renderedRows.map((row) => (
               <li key={row.id}>
                 <button
                   type="button"
                   onClick={() => onNavigate(`/notificacoes/${row.id}`)}
-                  className="grid w-full gap-2 rounded-xl border border-slate-200 p-4 text-left transition hover:border-slate-300 hover:bg-slate-50 md:grid-cols-[minmax(0,1fr)_220px_160px] md:items-center"
+                  className="grid w-full gap-2 rounded-xl border border-slate-200 p-4 text-left transition hover:border-slate-300 hover:bg-slate-50 md:grid-cols-[minmax(0,1fr)_220px_160px] md:items-center cursor-pointer"
                 >
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-semibold text-slate-900">
-                        {getNotificationCategoryLabel(row.categoria) ??
-                          `Notificação #${row.id}`}
+                      <p className="text-lg font-bold text-slate-900">
+                        {row.idUnidade
+                          ? (unitMap.get(row.idUnidade) ?? row.idUnidade)
+                          : "Sem unidade"}
+                        <span className="font-semibold text-slate-600">
+                          {" • "}
+                          {getNotificationCategoryLabel(row.categoria) ??
+                            `Notificação #${row.id}`}
+                        </span>
                       </p>
                       {row.status === "baixada" ? (
                         <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-rose-700">
@@ -642,11 +720,6 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
                     <p className="text-sm text-slate-700">
                       {typeMap.get(row.idTipoNotificacao) ??
                         `Modelo ${row.idTipoNotificacao}`}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {row.idUnidade
-                        ? (unitMap.get(row.idUnidade) ?? ` ${row.idUnidade}`)
-                        : "Sem unidade"}
                     </p>
                   </div>
                   <div className="text-right">

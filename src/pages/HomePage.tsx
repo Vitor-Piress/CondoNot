@@ -162,7 +162,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
         ) : null}
 
         {!loading && !error && rows.length > 0 ? (
-          <ul className="space-y-3">
+          <ul className="max-h-96 space-y-3 overflow-y-auto pr-1">
             {rows.map((row) => (
               <li key={row.id}>
                 <button

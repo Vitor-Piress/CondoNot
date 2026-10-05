@@ -45,7 +45,7 @@ export function AppLayout({
           <img
             src="https://clkjgwxwjmymqctvnldf.supabase.co/storage/v1/object/public/images-app/uploads/condonot/Gemini_Generated_Image_4qszmx4qszmx4qsz-removebg-preview.png"
             alt="Condonot"
-            className="h-8 w-auto max-w-36 rounded-md bg-white p-1 object-contain"
+            className="h-8 w-auto max-w-36 rounded-xl bg-white p-1 object-contain"
           />
           <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             <label className="flex min-w-0 flex-1 items-center gap-2 text-xs font-medium text-slate-300 sm:flex-none">
@@ -152,7 +152,7 @@ export function AppLayout({
         reservados.
       </footer>
 
-      <footer className="fixed inset-x-0 bottom-[6mm] z-[9998] hidden text-center text-[8px] text-slate-400 print:block">
+      <footer className="fixed inset-x-0 bottom-[6mm] z-9998 hidden text-center text-[8px] text-slate-400 print:block">
         © {new Date().getFullYear()} Condonot. Vitor Pires. Todos os direitos
         reservados.
       </footer>

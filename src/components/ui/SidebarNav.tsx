@@ -78,7 +78,7 @@ export function SidebarNav({ currentPath, onNavigate }: SidebarNavProps) {
               key={item.path}
               type="button"
               onClick={() => onNavigate(item.path)}
-              className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition ${
+              className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition cursor-pointer ${
                 active
                   ? "bg-slate-900 text-white"
                   : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
