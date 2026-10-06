@@ -1,4 +1,4 @@
-# Condonoti
+# Condonot
 
 Dashboard web para apoiar a administração de condomínios. O sistema centraliza o acompanhamento de unidades, moradores e notificações, oferecendo uma visão operacional das ocorrências e dos comunicados registrados.
 
@@ -83,13 +83,13 @@ As variaveis com prefixo `VITE_` sao disponibilizadas pelo Vite durante o build 
 
 O codigo espera as seguintes tabelas no banco:
 
-| Tabela              | Uso                                                              |
-| ------------------- | ---------------------------------------------------------------- |
-| `unidades`          | Consulta e atualização das unidades, proprietários e inquilinos. |
-| `notificacao`       | Consulta, filtros, detalhes e cadastro de notificações.          |
-| `modelo_notificacao` | Consulta e cadastro dos modelos de notificação.                   |
-| `notificacao_anexo` | Metadados dos anexos de cada notificação.                         |
-| `condominio`        | Dados do condomínio e valor vigente da multa.                     |
+| Tabela               | Uso                                                              |
+| -------------------- | ---------------------------------------------------------------- |
+| `unidades`           | Consulta e atualização das unidades, proprietários e inquilinos. |
+| `notificacao`        | Consulta, filtros, detalhes e cadastro de notificações.          |
+| `modelo_notificacao` | Consulta e cadastro dos modelos de notificação.                  |
+| `notificacao_anexo`  | Metadados dos anexos de cada notificação.                        |
+| `condominio`         | Dados do condomínio e valor vigente da multa.                    |
 
 O campo `condominio.valor_multa` guarda o valor vigente definido por cada
 condomínio. O sistema copia esse valor para `notificacao.valor_multa` ao emitir
