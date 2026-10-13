@@ -214,12 +214,12 @@ export function HomePage({ onNavigate }: HomePageProps) {
           </ul>
         ) : null}
       </Panel>
-      <button
+      {/* <button
         className="bg-slate-300 cursor-pointer p-4"
         onClick={sendNotificationEmail}
       >
         enviar email
-      </button>
+      </button> */}
     </div>
   );
 }
