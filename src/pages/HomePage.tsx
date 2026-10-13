@@ -15,6 +15,7 @@ import { ActionCard } from "../components/ui/ActionCard";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Panel } from "../components/ui/Panel";
 import { useCondominio } from "../contexts/useCondominio";
+import { supabase } from "../services/supabase";
 
 interface HomePageProps {
   onNavigate: (to: string) => void;
@@ -90,6 +91,24 @@ export function HomePage({ onNavigate }: HomePageProps) {
   function formatHomeUnitLabel(label: string): string {
     return label.replace(/^Unidade\s+/i, "");
   }
+
+  const sendNotificationEmail = async () => {
+    if (supabase != null) {
+      const { data, error } = await supabase.functions.invoke("send-email", {
+        body: {
+          to: "vitorspires25@gmail.com",
+          subject: "Email enviado via CondoNot!",
+          html: "<h1>Funcionou!</h1><p>Meu app React + Supabase enviou um e-mail sozinho via Resend.</p>",
+        },
+      });
+
+      if (error) {
+        console.error("Erro ao enviar e-mail:", error);
+      } else {
+        console.log("E-mail enviado com sucesso:", data);
+      }
+    }
+  };
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
@@ -195,6 +214,12 @@ export function HomePage({ onNavigate }: HomePageProps) {
           </ul>
         ) : null}
       </Panel>
+      <button
+        className="bg-slate-300 cursor-pointer p-4"
+        onClick={sendNotificationEmail}
+      >
+        enviar email
+      </button>
     </div>
   );
 }
