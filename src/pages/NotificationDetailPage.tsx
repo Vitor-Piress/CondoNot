@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Printer, ShieldOff } from "lucide-react";
+import { ArrowLeft, Bell, Printer, ShieldOff } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Panel } from "../components/ui/Panel";
 import { RegimentoView } from "../components/ui/RegimentoView";
 import {
   getNotificationById,
+  getEmailCooldownRemainingMs,
   inactivateNotification,
+  sendNotificationEmail,
   listNotificationAttachments,
 } from "../services/notificationService";
 import { getNotificationTypeById } from "../services/notificationTypeService";
@@ -27,6 +29,7 @@ import {
   formatOnlyDateInFull,
 } from "../utils/format";
 import { useCondominio } from "../contexts/useCondominio";
+import { getNotificationPrintCopy } from "../utils/notificationPrint";
 
 interface NotificationDetailPageProps {
   notificationId: string;
@@ -42,37 +45,6 @@ function getSourceUnitId(state: unknown): string | null {
   return typeof sourceUnitId === "string" && sourceUnitId.length > 0
     ? sourceUnitId
     : null;
-}
-
-type NotificationPrintKind = "warning" | "guidance" | "fine";
-
-function getNotificationPrintCopy(category: string | null): {
-  kind: NotificationPrintKind;
-  title: string | null;
-} {
-  const normalizedCategory = category
-    ?.normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLocaleLowerCase("pt-BR");
-
-  if (normalizedCategory === "multa") {
-    return { kind: "fine", title: "AVISO DE MULTA" };
-  }
-
-  if (normalizedCategory === "orientacao") {
-    return { kind: "guidance", title: "CARTA DE ORIENTAÇÃO" };
-  }
-
-  if (normalizedCategory === "advertencia") {
-    return { kind: "warning", title: "CARTA DE ADVERTÊNCIA" };
-  }
-
-  return {
-    kind: "warning",
-    title: category
-      ? `CARTA DE ${(getNotificationCategoryLabel(category) ?? category).toUpperCase()}`
-      : null,
-  };
 }
 
 export function NotificationDetailPage({
@@ -94,6 +66,12 @@ export function NotificationDetailPage({
   const [motivoBaixaInput, setMotivoBaixaInput] = useState("");
   const [baixaError, setBaixaError] = useState<string | null>(null);
   const [isSubmittingBaixa, setIsSubmittingBaixa] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [emailFeedback, setEmailFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     let active = true;
@@ -213,6 +191,53 @@ export function NotificationDetailPage({
     }
   }
 
+  const emailCooldownMs = row ? getEmailCooldownRemainingMs(row, now) : 0;
+
+  useEffect(() => {
+    if (emailCooldownMs <= 0) {
+      return;
+    }
+    const timer = window.setTimeout(
+      () => setNow(Date.now()),
+      Math.min(emailCooldownMs, 30000) + 50,
+    );
+    return () => window.clearTimeout(timer);
+  }, [emailCooldownMs, now]);
+
+  async function handleSendEmail() {
+    if (!row || !unit) {
+      return;
+    }
+    setIsSendingEmail(true);
+    setEmailFeedback(null);
+    try {
+      const updated = await sendNotificationEmail(
+        row,
+        unit,
+        type?.titulo ?? `Tipo ${row.idTipoNotificacao}`,
+        type,
+        condominio,
+        attachments,
+      );
+      setRow(updated);
+      setNow(Date.now());
+      setEmailFeedback({
+        type: "success",
+        message: `E-mail enviado para ${updated.emailEnviadoPara}.`,
+      });
+    } catch (sendError) {
+      setEmailFeedback({
+        type: "error",
+        message:
+          sendError instanceof Error
+            ? sendError.message
+            : "Não foi possível enviar o e-mail.",
+      });
+    } finally {
+      setIsSendingEmail(false);
+    }
+  }
+
   const typeTitle = type?.titulo ?? `Tipo ${row?.idTipoNotificacao ?? ""}`;
   const printCopy = getNotificationPrintCopy(row?.categoria ?? null);
   const formattedFine =
@@ -244,6 +269,33 @@ export function NotificationDetailPage({
         }
         action={
           <div className="flex items-center gap-2">
+            {row ? (
+              <button
+                type="button"
+                onClick={handleSendEmail}
+                disabled={
+                  isSendingEmail ||
+                  !unit ||
+                  Boolean(attachmentsError) ||
+                  emailCooldownMs > 0
+                }
+                aria-label="Enviar e-mail de notificação"
+                title={
+                  emailCooldownMs > 0
+                    ? `Reenvio disponível em ${Math.ceil(emailCooldownMs / 60000)} min`
+                    : row.emailNotificacao
+                      ? "Reenviar e-mail de notificação"
+                      : "Enviar e-mail de notificação"
+                }
+                className={`inline-flex size-9 items-center justify-center rounded-lg border transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                  row.emailNotificacao
+                    ? "border-emerald-300 text-emerald-600 hover:bg-emerald-50"
+                    : "border-slate-300 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                }`}
+              >
+                <Bell aria-hidden="true" size={18} />
+              </button>
+            ) : null}
             {row && row.status === "ativa" ? (
               <button
                 type="button"
@@ -274,6 +326,19 @@ export function NotificationDetailPage({
       >
         {loading ? (
           <p className="text-sm text-slate-500">Carregando notificação...</p>
+        ) : null}
+
+        {emailFeedback ? (
+          <p
+            role="status"
+            className={`print:hidden mb-4 rounded-xl border px-3 py-2 text-sm font-medium ${
+              emailFeedback.type === "success"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                : "border-rose-200 bg-rose-50 text-rose-700"
+            }`}
+          >
+            {emailFeedback.message}
+          </p>
         ) : null}
 
         {error ? (

@@ -39,6 +39,16 @@ export interface Notification {
   status: NotificationStatus;
   dataBaixa: string | null;
   motivoBaixa: string | null;
+  emailNotificacao: boolean;
+  emailEnviadoEm: string | null;
+  emailEnviadoPara: string | null;
+  emailResendId: string | null;
+  emailEntregueEm: string | null;
+  emailAbertoEm: string | null;
+  emailFalhaEm: string | null;
+  emailFalhaMotivo: string | null;
+  cienciaToken: string | null;
+  cienciaEm: string | null;
 }
 
 export interface NotificationAttachment {
@@ -279,6 +289,16 @@ export function parseNotification(row: UnknownRow): Notification {
     status: toNotificationStatus(row.status),
     dataBaixa: toNullableString(row.data_baixa ?? row.dataBaixa),
     motivoBaixa: toNullableString(row.motivo_baixa ?? row.motivoBaixa),
+    emailNotificacao: row.email_notificacao === true,
+    emailEnviadoEm: toNullableString(row.email_enviado_em),
+    emailEnviadoPara: toNullableString(row.email_enviado_para),
+    emailResendId: toNullableString(row.email_resend_id),
+    emailEntregueEm: toNullableString(row.email_entregue_em),
+    emailAbertoEm: toNullableString(row.email_aberto_em),
+    emailFalhaEm: toNullableString(row.email_falha_em),
+    emailFalhaMotivo: toNullableString(row.email_falha_motivo),
+    cienciaToken: toNullableString(row.ciencia_token),
+    cienciaEm: toNullableString(row.ciencia_em),
   };
 }
 

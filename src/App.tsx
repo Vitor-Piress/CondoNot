@@ -20,6 +20,11 @@ import { UnitDetailPage } from "./pages/UnitDetailPage";
 import { UnitsPage } from "./pages/UnitsPage";
 import { supabaseConfigError } from "./services/supabase";
 import { CondominioProvider } from "./contexts/CondominioProvider";
+import { AuthProvider } from "./contexts/AuthProvider";
+import { useAuth } from "./contexts/useAuth";
+import { LoginPage } from "./pages/LoginPage";
+import { supabase } from "./services/supabase";
+import { CienciaPage } from "./pages/CienciaPage";
 import { CondominiosPage } from "./pages/CondominiosPage";
 import { RegimentoInternoPage } from "./pages/RegimentoInternoPage";
 
@@ -66,7 +71,7 @@ function EditUnitRoute({ onNavigate }: RoutedPageProps) {
   );
 }
 
-export default function App() {
+function AdminApp() {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -125,5 +130,28 @@ export default function App() {
         </Routes>
       </AppLayout>
     </CondominioProvider>
+  );
+}
+
+function ProtectedApp() {
+  const { session, loading } = useAuth();
+
+  if (!supabase) {
+    return <AdminApp />;
+  }
+  if (loading) {
+    return null;
+  }
+  return session ? <AdminApp /> : <LoginPage />;
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <Routes>
+        <Route path="/ciencia/:token" element={<CienciaPage />} />
+        <Route path="*" element={<ProtectedApp />} />
+      </Routes>
+    </AuthProvider>
   );
 }

@@ -1,8 +1,14 @@
+import { createElement, type ReactElement } from "react";
+import type { DocumentProps } from "@react-pdf/renderer";
 import { supabase } from "./supabase";
 import { includesQuery } from "../utils/format";
+import { buildNotificationEmail } from "../utils/notificationEmail";
 import {
   parseNotification,
   type Notification,
+  type Unit,
+  type NotificationType,
+  type Condominio,
   type NotificationAttachment,
 } from "../types/domain";
 import {
@@ -51,6 +57,16 @@ const fallbackNotifications: Notification[] = [
     status: "ativa",
     dataBaixa: null,
     motivoBaixa: null,
+    emailNotificacao: false,
+    emailEnviadoEm: null,
+    emailEnviadoPara: null,
+    emailResendId: null,
+    emailEntregueEm: null,
+    emailAbertoEm: null,
+    emailFalhaEm: null,
+    emailFalhaMotivo: null,
+    cienciaToken: null,
+    cienciaEm: null,
   },
   {
     id: "402",
@@ -66,6 +82,16 @@ const fallbackNotifications: Notification[] = [
     status: "ativa",
     dataBaixa: null,
     motivoBaixa: null,
+    emailNotificacao: false,
+    emailEnviadoEm: null,
+    emailEnviadoPara: null,
+    emailResendId: null,
+    emailEntregueEm: null,
+    emailAbertoEm: null,
+    emailFalhaEm: null,
+    emailFalhaMotivo: null,
+    cienciaToken: null,
+    cienciaEm: null,
   },
   {
     id: "403",
@@ -81,6 +107,16 @@ const fallbackNotifications: Notification[] = [
     status: "ativa",
     dataBaixa: null,
     motivoBaixa: null,
+    emailNotificacao: false,
+    emailEnviadoEm: null,
+    emailEnviadoPara: null,
+    emailResendId: null,
+    emailEntregueEm: null,
+    emailAbertoEm: null,
+    emailFalhaEm: null,
+    emailFalhaMotivo: null,
+    cienciaToken: null,
+    cienciaEm: null,
   },
 ];
 
@@ -286,6 +322,16 @@ export async function createNotification(input: {
       status: "ativa",
       dataBaixa: null,
       motivoBaixa: null,
+      emailNotificacao: false,
+      emailEnviadoEm: null,
+      emailEnviadoPara: null,
+      emailResendId: null,
+      emailEntregueEm: null,
+      emailAbertoEm: null,
+      emailFalhaEm: null,
+      emailFalhaMotivo: null,
+      cienciaToken: null,
+      cienciaEm: null,
     };
   }
 
@@ -431,4 +477,181 @@ export async function inactivateNotification(
   }
 
   return parseNotification(data);
+}
+
+export const EMAIL_RESEND_COOLDOWN_MS = 10 * 60 * 1000;
+
+export function getEmailCooldownRemainingMs(
+  notification: Notification,
+  now = Date.now(),
+): number {
+  if (!notification.emailEnviadoEm) {
+    return 0;
+  }
+  const sentAt = new Date(notification.emailEnviadoEm).getTime();
+  if (Number.isNaN(sentAt)) {
+    return 0;
+  }
+  return Math.max(0, sentAt + EMAIL_RESEND_COOLDOWN_MS - now);
+}
+
+export function getNotificationEmailRecipient(unit: Unit): string | null {
+  const tenant = unit.inquilino?.contatoEmail?.trim();
+  if (tenant) {
+    return tenant;
+  }
+  return unit.proprietario?.contatoEmail?.trim() || null;
+}
+
+async function buildNotificationPdfBase64(input: {
+  notification: Notification;
+  unit: Unit;
+  typeTitle: string;
+  type: NotificationType | null;
+  condominio: Condominio | null;
+  attachments: NotificationAttachment[];
+}): Promise<string> {
+  // Carregado sob demanda para não pesar o bundle inicial.
+  const [{ pdf }, { NotificationPdf }, images] = await Promise.all([
+    import("@react-pdf/renderer"),
+    import("../components/pdf/NotificationPdf"),
+    import("./pdfImageService"),
+  ]);
+
+  const [logoDataUrl, photos] = await Promise.all([
+    input.condominio?.logo_url
+      ? images
+          .fetchImageAsJpegDataUrl(input.condominio.logo_url, 600)
+          .catch(() => null)
+      : null,
+    Promise.all(
+      input.attachments.map(async (attachment) => ({
+        dataUrl: await images.fetchImageAsJpegDataUrl(attachment.signedUrl),
+        fileName: attachment.fileName,
+      })),
+    ),
+  ]);
+
+  const blob = await pdf(
+    createElement(NotificationPdf, {
+      notification: input.notification,
+      type: input.type,
+      unit: input.unit,
+      condominio: input.condominio,
+      typeTitle: input.typeTitle,
+      logoDataUrl,
+      photos,
+    }) as ReactElement<DocumentProps>,
+  ).toBlob();
+
+  return images.blobToBase64(blob);
+}
+
+export async function sendNotificationEmail(
+  notification: Notification,
+  unit: Unit,
+  typeTitle: string,
+  type: NotificationType | null,
+  condominio: Condominio | null,
+  attachments: NotificationAttachment[],
+): Promise<Notification> {
+  if (!supabase) {
+    throw new Error("Supabase não configurado.");
+  }
+
+  if (getEmailCooldownRemainingMs(notification) > 0) {
+    throw new Error("Aguarde alguns minutos antes de reenviar o e-mail.");
+  }
+
+  const recipient = getNotificationEmailRecipient(unit);
+  if (!recipient) {
+    throw new Error(
+      "Nenhum e-mail cadastrado para o inquilino ou proprietário da unidade.",
+    );
+  }
+
+  const pdfBase64 = await buildNotificationPdfBase64({
+    notification,
+    unit,
+    typeTitle,
+    type,
+    condominio,
+    attachments,
+  });
+
+  if (!notification.cienciaToken) {
+    throw new Error("Notificação sem token de ciência.");
+  }
+
+  const emailContent = buildNotificationEmail({
+    notification,
+    unit,
+    condominio,
+    typeTitle,
+    cienciaUrl: `${window.location.origin}/ciencia/${notification.cienciaToken}`,
+  });
+
+  const { data, error } = await supabase.functions.invoke("send-email", {
+    body: {
+      to: recipient,
+      notificacao_id: notification.id,
+      attachments: [
+        {
+          filename: `condonot-${unit.bloco}${unit.apartamento ?? ""}-notification-${notification.id}.pdf`.replace(
+            /[^\w.-]+/g,
+            "",
+          ),
+          content: pdfBase64,
+        },
+      ],
+      tags: [{ name: "notificacao_id", value: String(notification.id) }],
+      subject: emailContent.subject,
+      html: emailContent.html,
+    },
+  });
+
+  if (error || (data && typeof data === "object" && "error" in data)) {
+    throw new Error("Não foi possível enviar o e-mail.");
+  }
+
+  const resendId =
+    data && typeof data === "object" && "id" in data ? String(data.id) : null;
+
+  // Um novo envio zera os eventos do envio anterior; se o webhook já gravou
+  // este id, nada é apagado.
+  if (resendId) {
+    await supabase
+      .from(NOTIFICATION_TABLE)
+      .update({
+        email_resend_id: resendId,
+        email_entregue_em: null,
+        email_aberto_em: null,
+        email_falha_em: null,
+        email_falha_motivo: null,
+      })
+      .eq("id", notification.id)
+      .eq("id_condominio", notification.idCondominio)
+      .or(`email_resend_id.is.null,email_resend_id.neq.${resendId}`);
+  }
+
+  const { data: updated, error: updateError } = await supabase
+    .from(NOTIFICATION_TABLE)
+    .update({
+      email_notificacao: true,
+      email_enviado_em: new Date().toISOString(),
+      email_enviado_para: recipient,
+    })
+    .eq("id", notification.id)
+    .eq("id_condominio", notification.idCondominio)
+    .select("*")
+    .single();
+
+  if (updateError) {
+    throw new Error(
+      "E-mail enviado, mas não foi possível registrar o envio: " +
+        updateError.message,
+    );
+  }
+
+  return parseNotification(updated);
 }

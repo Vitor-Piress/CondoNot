@@ -1,8 +1,9 @@
-import { BellRing, Building2, Loader2 } from "lucide-react";
+import { BellRing, Building2, Loader2, LogOut } from "lucide-react";
 import { useState } from "react";
 import type { PropsWithChildren } from "react";
 import { SidebarNav } from "../components/ui/SidebarNav";
 import { useCondominio } from "../contexts/useCondominio";
+import { useAuth } from "../contexts/useAuth";
 
 const CONDOMINIO_SWITCH_FEEDBACK_MS = 600;
 
@@ -26,6 +27,7 @@ export function AppLayout({
     condominioError,
     setActiveCondominioId,
   } = useCondominio();
+  const { session, signOut } = useAuth();
   const [isSwitchingCondominio, setIsSwitchingCondominio] = useState(false);
 
   function handleCondominioChange(id: string) {
@@ -105,6 +107,17 @@ export function AppLayout({
                 Dashboard
               </span>
             </button>
+            {session ? (
+              <button
+                type="button"
+                onClick={() => void signOut()}
+                aria-label="Sair"
+                title="Sair"
+                className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-slate-700 text-slate-100 transition hover:bg-slate-800"
+              >
+                <LogOut aria-hidden="true" size={17} />
+              </button>
+            ) : null}
           </div>
         </div>
       </header>
