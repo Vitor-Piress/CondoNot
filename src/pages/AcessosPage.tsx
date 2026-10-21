@@ -489,7 +489,7 @@ export function AcessosPage({ onNavigate }: AcessosPageProps) {
 
       <Panel
         title="Acessos por Condomínio"
-        subtitle="Defina quais condomínios cada usuário criado no Supabase pode acessar e operar"
+        subtitle="Defina quais condomínios cada usuário criado pode acessar e operar"
         action={
           <button
             type="button"
