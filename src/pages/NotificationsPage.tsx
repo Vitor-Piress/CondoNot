@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { EmptyState } from "../components/ui/EmptyState";
+import { NotificationTypeCombobox } from "../components/ui/NotificationTypeCombobox";
 import { Panel } from "../components/ui/Panel";
 import { UnitCombobox } from "../components/ui/UnitCombobox";
 import {
@@ -657,24 +658,20 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
 
               <label className="block space-y-1.5 text-xs font-medium text-slate-600">
                 Modelo
-                <select
+                <NotificationTypeCombobox
+                  types={types}
                   value={filters.typeId}
-                  onChange={(event) => {
+                  onChange={(typeId) => {
                     setFilters((previous) => ({
                       ...previous,
-                      typeId: event.target.value,
+                      typeId,
                     }));
                     setCurrentPage(1);
                   }}
-                  className={filterControlClass}
-                >
-                  <option value="">Todos os modelos</option>
-                  {types.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.titulo ?? `Modelo ${type.id}`}
-                    </option>
-                  ))}
-                </select>
+                  emptyOptionLabel="Todos os modelos"
+                  placeholder="Buscar modelo"
+                  inputClassName={filterControlClass}
+                />
               </label>
 
               <label className="block space-y-1.5 text-xs font-medium text-slate-600">

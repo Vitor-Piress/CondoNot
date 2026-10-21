@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Route,
   Routes,
@@ -74,6 +75,10 @@ function EditUnitRoute({ onNavigate }: RoutedPageProps) {
 function AdminApp() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [draftNotificationSelection, setDraftNotificationSelection] = useState<{
+    unitId: string;
+    typeId: string;
+  }>({ unitId: "", typeId: "" });
 
   return (
     <CondominioProvider>
@@ -81,6 +86,7 @@ function AdminApp() {
         currentPath={location.pathname}
         onNavigate={navigate}
         supabaseConfigError={supabaseConfigError}
+        draftNotificationSelection={draftNotificationSelection}
       >
         <Routes>
           <Route path="/" element={<HomePage onNavigate={navigate} />} />
@@ -96,7 +102,12 @@ function AdminApp() {
           />
           <Route
             path="/notificacoes/nova"
-            element={<CreateNotificationPage onNavigate={navigate} />}
+            element={
+              <CreateNotificationPage
+                onNavigate={navigate}
+                onSelectionChange={setDraftNotificationSelection}
+              />
+            }
           />
           <Route
             path="/notificacoes/:notificationId"

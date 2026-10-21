@@ -1,6 +1,8 @@
 import { BellRing, Building2, Loader2, LogOut } from "lucide-react";
 import { useState } from "react";
 import type { PropsWithChildren } from "react";
+import { useMatch } from "react-router-dom";
+import { NotificationUnitSidebarCard } from "../components/ui/NotificationUnitSidebarCard";
 import { SidebarNav } from "../components/ui/SidebarNav";
 import { useCondominio } from "../contexts/useCondominio";
 import { useAuth } from "../contexts/useAuth";
@@ -11,12 +13,14 @@ interface AppLayoutProps extends PropsWithChildren {
   currentPath: string;
   onNavigate: (to: string) => void;
   supabaseConfigError: string | null;
+  draftNotificationSelection?: { unitId: string; typeId: string };
 }
 
 export function AppLayout({
   currentPath,
   onNavigate,
   supabaseConfigError,
+  draftNotificationSelection,
   children,
 }: AppLayoutProps) {
   const {
@@ -29,6 +33,12 @@ export function AppLayout({
   } = useCondominio();
   const { session, signOut } = useAuth();
   const [isSwitchingCondominio, setIsSwitchingCondominio] = useState(false);
+  const notificationDetailMatch = useMatch("/notificacoes/:notificationId");
+  const activeNotificationId =
+    notificationDetailMatch?.params.notificationId &&
+    notificationDetailMatch.params.notificationId !== "nova"
+      ? notificationDetailMatch.params.notificationId
+      : null;
 
   function handleCondominioChange(id: string) {
     setActiveCondominioId(id);
@@ -123,8 +133,25 @@ export function AppLayout({
       </header>
 
       <div className="mx-auto grid w-full max-w-7xl flex-1 grid-cols-1 gap-6 px-4 py-6 print:mx-0 print:block print:max-w-none print:px-0 print:py-0 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-6">
-        <div className="print:hidden">
+        <div className="print:hidden space-y-4 lg:sticky lg:top-6 lg:self-start">
           <SidebarNav currentPath={currentPath} onNavigate={onNavigate} />
+          {activeNotificationId && activeCondominioId ? (
+            <NotificationUnitSidebarCard
+              notificationId={activeNotificationId}
+              condominioId={activeCondominioId}
+              onNavigate={onNavigate}
+            />
+          ) : currentPath === "/notificacoes/nova" &&
+            draftNotificationSelection?.unitId &&
+            activeCondominioId ? (
+            <NotificationUnitSidebarCard
+              unitId={draftNotificationSelection.unitId}
+              typeId={draftNotificationSelection.typeId}
+              isDraft
+              condominioId={activeCondominioId}
+              onNavigate={onNavigate}
+            />
+          ) : null}
         </div>
 
         <main className="min-w-0 space-y-6 print:w-full print:space-y-0">

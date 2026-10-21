@@ -3,10 +3,12 @@ import { Panel } from "../components/ui/Panel";
 
 interface CreateNotificationPageProps {
   onNavigate: (to: string) => void;
+  onSelectionChange?: (selection: { unitId: string; typeId: string }) => void;
 }
 
 export function CreateNotificationPage({
   onNavigate,
+  onSelectionChange,
 }: CreateNotificationPageProps) {
   return (
     <Panel
@@ -23,6 +25,7 @@ export function CreateNotificationPage({
       }
     >
       <CreateNotificationForm
+        onSelectionChange={onSelectionChange}
         onSuccess={(notificationId) =>
           onNavigate(`/notificacoes/${notificationId}`)
         }

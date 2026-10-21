@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { useCondominio } from "../../contexts/useCondominio";
+import { NotificationTypeCombobox } from "../ui/NotificationTypeCombobox";
 import { UnitCombobox } from "../ui/UnitCombobox";
 import {
   createNotification,
@@ -37,6 +38,7 @@ type CreateNotificationValues = z.infer<typeof createNotificationSchema>;
 
 interface CreateNotificationFormProps {
   onSuccess: (notificationId: string) => void;
+  onSelectionChange?: (selection: { unitId: string; typeId: string }) => void;
 }
 
 function toNullableDate(value: string): string | null {
@@ -101,6 +103,7 @@ function AttachmentPreview({
 
 export function CreateNotificationForm({
   onSuccess,
+  onSelectionChange,
 }: CreateNotificationFormProps) {
   const { activeCondominioId, activeCondominio } = useCondominio();
   const [types, setTypes] = useState<NotificationType[]>([]);
@@ -177,6 +180,27 @@ export function CreateNotificationForm({
     control,
     name: "categoria",
   });
+  const selectedUnitId = useWatch({
+    control,
+    name: "idUnidade",
+  });
+  const selectedTypeId = useWatch({
+    control,
+    name: "idTipoNotificacao",
+  });
+
+  useEffect(() => {
+    onSelectionChange?.({
+      unitId: selectedUnitId ?? "",
+      typeId: selectedTypeId ?? "",
+    });
+  }, [selectedUnitId, selectedTypeId, onSelectionChange]);
+
+  useEffect(() => {
+    return () => {
+      onSelectionChange?.({ unitId: "", typeId: "" });
+    };
+  }, [onSelectionChange]);
 
   function handleAttachmentChange(files: FileList | null) {
     const nextFiles = [...attachmentFiles, ...Array.from(files ?? [])];
@@ -251,21 +275,22 @@ export function CreateNotificationForm({
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
         <label className="block space-y-1 text-sm">
-          <span className="font-medium text-slate-700">
+          <span className="block font-medium text-slate-700">
             Modelo de notificação
           </span>
-          <select
-            {...register("idTipoNotificacao")}
-            disabled={loadingOptions}
-            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none ring-slate-200 transition focus:ring disabled:bg-slate-100"
-          >
-            <option value="">Selecione</option>
-            {types.map((type) => (
-              <option key={type.id} value={type.id}>
-                {type.titulo ?? `Modelo ${type.id}`}
-              </option>
-            ))}
-          </select>
+          <Controller
+            control={control}
+            name="idTipoNotificacao"
+            render={({ field }) => (
+              <NotificationTypeCombobox
+                types={types}
+                value={field.value}
+                onChange={field.onChange}
+                disabled={loadingOptions}
+                placeholder="Digite para buscar o modelo"
+              />
+            )}
+          />
           {errors.idTipoNotificacao ? (
             <p className="text-xs font-medium text-rose-600">
               {errors.idTipoNotificacao.message}
@@ -274,7 +299,7 @@ export function CreateNotificationForm({
         </label>
 
         <label className="block space-y-1 text-sm">
-          <span className="font-medium text-slate-700">Unidade</span>
+          <span className="block font-medium text-slate-700">Unidade</span>
           <Controller
             control={control}
             name="idUnidade"
@@ -298,10 +323,10 @@ export function CreateNotificationForm({
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="block space-y-1 text-sm">
-          <span className="font-medium text-slate-700">Categoria</span>
+          <span className="block font-medium text-slate-700">Categoria</span>
           <select
             {...register("categoria")}
-            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none ring-slate-200 transition focus:ring"
+            className="block h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-normal text-slate-700 outline-none ring-slate-200 transition focus:ring"
           >
             {categoryOptions.map((option) => (
               <option key={option.value} value={option.value}>
