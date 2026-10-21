@@ -254,9 +254,38 @@ GRANT EXECUTE ON FUNCTION public.atualizar_acesso_usuario(uuid, text, boolean, b
 
 -- 4. Registro de quem criou cada notificação
 ALTER TABLE public.notificacao
-  ADD COLUMN IF NOT EXISTS criado_por uuid REFERENCES auth.users (id) ON DELETE SET NULL DEFAULT auth.uid(),
+  ADD COLUMN IF NOT EXISTS criado_por uuid REFERENCES auth.users (id) ON DELETE RESTRICT DEFAULT auth.uid(),
   ADD COLUMN IF NOT EXISTS criado_por_email text,
   ADD COLUMN IF NOT EXISTS criado_por_nome text;
+
+-- Preenche notificações existentes (caso haja) com o usuário administrador
+WITH meu_usuario AS (
+  SELECT
+    u.id AS user_id,
+    u.email::text AS email,
+    COALESCE(
+      NULLIF(TRIM(p.nome), ''),
+      NULLIF(TRIM(COALESCE(u.raw_user_meta_data->>'name', u.raw_user_meta_data->>'full_name', '')), ''),
+      'Vitor Pires'
+    ) AS nome
+  FROM auth.users u
+  LEFT JOIN public.perfil_usuario p ON p.user_id = u.id
+  ORDER BY COALESCE(p.is_admin, false) DESC, u.created_at ASC
+  LIMIT 1
+)
+UPDATE public.notificacao n
+SET
+  criado_por = m.user_id,
+  criado_por_email = m.email,
+  criado_por_nome = m.nome
+FROM meu_usuario m
+WHERE n.criado_por IS NULL
+   OR n.criado_por_email IS NULL;
+
+-- Torna obrigatório o rastreio do autor (id e e-mail)
+ALTER TABLE public.notificacao
+  ALTER COLUMN criado_por SET NOT NULL,
+  ALTER COLUMN criado_por_email SET NOT NULL;
 
 CREATE OR REPLACE FUNCTION public.notificacao_preencher_autor()
 RETURNS trigger
@@ -289,10 +318,14 @@ BEGIN
       NEW.criado_por_nome := COALESCE(v_nome, NEW.criado_por_nome);
     END IF;
   ELSIF TG_OP = 'UPDATE' THEN
-    -- Preserva o autor original da notificação em qualquer atualização posterior
-    NEW.criado_por := OLD.criado_por;
-    NEW.criado_por_email := OLD.criado_por_email;
-    NEW.criado_por_nome := OLD.criado_por_nome;
+    -- Preserva o autor original caso já tenha sido preenchido
+    NEW.criado_por := COALESCE(OLD.criado_por, NEW.criado_por);
+    NEW.criado_por_email := COALESCE(OLD.criado_por_email, NEW.criado_por_email);
+    NEW.criado_por_nome := COALESCE(OLD.criado_por_nome, NEW.criado_por_nome);
+  END IF;
+
+  IF NEW.criado_por IS NULL OR NEW.criado_por_email IS NULL OR btrim(NEW.criado_por_email) = '' THEN
+    RAISE EXCEPTION 'O autor da notificação é obrigatório para fins de rastreio.';
   END IF;
 
   RETURN NEW;

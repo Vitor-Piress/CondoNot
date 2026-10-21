@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Building2,
   Check,
+  ChevronDown,
   RefreshCw,
   Search,
   Shield,
@@ -52,6 +53,7 @@ function UserAccessCard({
     isAdmin: user.isAdmin,
     condominioIds: user.condominioIds,
   }));
+  const [isOpen, setIsOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
@@ -113,8 +115,13 @@ function UserAccessCard({
   const selectedCount = draft.condominioIds.length;
 
   return (
-    <li className="animate-slide-down rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4">
+    <li className="animate-slide-down rounded-2xl border border-slate-200 bg-white shadow-xs">
+      <button
+        type="button"
+        onClick={() => setIsOpen((open) => !open)}
+        aria-expanded={isOpen}
+        className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-2xl p-5 text-left transition hover:bg-slate-50/70"
+      >
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <p className="truncate text-base font-semibold text-slate-900">
@@ -148,6 +155,11 @@ function UserAccessCard({
                     : `Acesso a ${selectedCount} condomínios`}
               </span>
             )}
+            {isDirty ? (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-800">
+                Não salvo
+              </span>
+            ) : null}
           </div>
           <p className="mt-1 text-xs text-slate-500">
             Criado em {formatDate(user.createdAt)} ·{" "}
@@ -156,195 +168,206 @@ function UserAccessCard({
               : "Nunca realizou login"}
           </p>
         </div>
-      </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <label className="block space-y-1 text-sm">
-          <span className="font-medium text-slate-700">
-            Nome / Identificação do acesso
-          </span>
-          <input
-            type="text"
-            value={draft.nome}
-            onChange={(event) => {
-              setFeedback(null);
-              setDraft((prev) => ({ ...prev, nome: event.target.value }));
-            }}
-            disabled={saving}
-            placeholder="Ex.: Portaria Goiabinha, Síndico João..."
-            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-slate-200 transition focus:ring disabled:bg-slate-100"
-          />
-          <span className="block text-xs text-slate-500">
-            Nome gravado nas notificações emitidas por este acesso.
-          </span>
-        </label>
+        <ChevronDown
+          aria-hidden="true"
+          className={`size-4 shrink-0 text-slate-500 transition-transform duration-200 ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
+      </button>
 
-        <div className="space-y-1 text-sm">
-          <span className="block font-medium text-slate-700">
-            Tipo de permissão no sistema
-          </span>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              disabled={saving || isCurrentUser}
-              onClick={() => {
-                setFeedback(null);
-                setDraft((prev) => ({ ...prev, isAdmin: false }));
-              }}
-              className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                !draft.isAdmin
-                  ? "border-slate-900 bg-slate-900 text-white"
-                  : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-              }`}
-            >
-              <Building2 aria-hidden="true" size={15} />
-              Operador por condomínio
-            </button>
-            <button
-              type="button"
-              disabled={saving}
-              onClick={() => {
-                setFeedback(null);
-                setDraft((prev) => ({ ...prev, isAdmin: true }));
-              }}
-              className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                draft.isAdmin
-                  ? "border-slate-900 bg-slate-900 text-white"
-                  : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-              }`}
-            >
-              <Shield aria-hidden="true" size={15} />
-              Administrador total
-            </button>
-          </div>
-          <span className="block text-xs text-slate-500">
-            {isCurrentUser
-              ? "Seu próprio perfil de administrador permanece ativo por segurança."
-              : draft.isAdmin
-                ? "Acessa todos os condomínios e gerencia cadastros e permissões."
-                : "Opera apenas os condomínios selecionados abaixo (sem gerenciar condomínios)."}
-          </span>
-        </div>
-      </div>
-
-      <div className="mt-4">
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <span className="text-sm font-medium text-slate-700">
-            Condomínios liberados para este acesso
-          </span>
-          {!draft.isAdmin && condominios.length > 0 ? (
-            <div className="flex items-center gap-2 text-xs">
-              <button
-                type="button"
-                disabled={saving}
-                onClick={() => {
+      {isOpen ? (
+        <div className="animate-slide-down border-t border-slate-100 px-5 pb-5 pt-4">
+          <div className="grid gap-4 lg:grid-cols-2">
+            <label className="block space-y-1 text-sm">
+              <span className="font-medium text-slate-700">
+                Nome / Identificação do acesso
+              </span>
+              <input
+                type="text"
+                value={draft.nome}
+                onChange={(event) => {
                   setFeedback(null);
-                  setDraft((prev) => ({
-                    ...prev,
-                    condominioIds: condominios.map((c) => c.id),
-                  }));
+                  setDraft((prev) => ({ ...prev, nome: event.target.value }));
                 }}
-                className="cursor-pointer font-semibold text-slate-600 underline decoration-slate-300 underline-offset-2 hover:text-slate-900"
-              >
-                Marcar todos
-              </button>
-              <span className="text-slate-300">•</span>
-              <button
-                type="button"
                 disabled={saving}
-                onClick={() => {
-                  setFeedback(null);
-                  setDraft((prev) => ({
-                    ...prev,
-                    condominioIds: [],
-                  }));
-                }}
-                className="cursor-pointer font-semibold text-slate-600 underline decoration-slate-300 underline-offset-2 hover:text-slate-900"
-              >
-                Desmarcar todos
-              </button>
-            </div>
-          ) : null}
-        </div>
+                placeholder="Ex.: Portaria Goiabinha, Síndico João..."
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-slate-200 transition focus:ring disabled:bg-slate-100"
+              />
+              <span className="block text-xs text-slate-500">
+                Nome gravado nas notificações emitidas por este acesso.
+              </span>
+            </label>
 
-        {draft.isAdmin ? (
-          <div className="rounded-xl border border-amber-200 bg-amber-50/70 px-3.5 py-2.5 text-xs text-amber-900">
-            Como <strong>Administrador total</strong>, este usuário possui
-            acesso automático a todos os {condominios.length} condomínio(s)
-            cadastrados.
-          </div>
-        ) : condominios.length === 0 ? (
-          <p className="text-xs text-slate-500">
-            Nenhum condomínio cadastrado ainda.
-          </p>
-        ) : (
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {condominios.map((condominio) => {
-              const checked = draft.condominioIds.includes(condominio.id);
-              return (
-                <label
-                  key={condominio.id}
-                  className={`flex cursor-pointer items-start gap-2.5 rounded-xl border p-3 text-sm transition ${
-                    checked
-                      ? "border-slate-900 bg-slate-900/5 text-slate-900"
-                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+            <div className="space-y-1 text-sm">
+              <span className="block font-medium text-slate-700">
+                Tipo de permissão no sistema
+              </span>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  disabled={saving || isCurrentUser}
+                  onClick={() => {
+                    setFeedback(null);
+                    setDraft((prev) => ({ ...prev, isAdmin: false }));
+                  }}
+                  className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                    !draft.isAdmin
+                      ? "border-slate-900 bg-slate-900 text-white"
+                      : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
                   }`}
                 >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    disabled={saving}
-                    onChange={() => toggleCondominio(condominio.id)}
-                    className="mt-0.5 size-4 shrink-0 accent-slate-900"
-                  />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate font-semibold">
-                      {condominio.name}
-                    </span>
-                    <span className="block truncate text-xs text-slate-500">
-                      {condominio.location}
-                    </span>
-                  </span>
-                </label>
-              );
-            })}
+                  <Building2 aria-hidden="true" size={15} />
+                  Operador por condomínio
+                </button>
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => {
+                    setFeedback(null);
+                    setDraft((prev) => ({ ...prev, isAdmin: true }));
+                  }}
+                  className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                    draft.isAdmin
+                      ? "border-slate-900 bg-slate-900 text-white"
+                      : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  <Shield aria-hidden="true" size={15} />
+                  Administrador total
+                </button>
+              </div>
+              <span className="block text-xs text-slate-500">
+                {isCurrentUser
+                  ? "Seu próprio perfil de administrador permanece ativo por segurança."
+                  : draft.isAdmin
+                    ? "Acessa todos os condomínios e gerencia cadastros e permissões."
+                    : "Opera apenas os condomínios selecionados abaixo (sem gerenciar condomínios)."}
+              </span>
+            </div>
           </div>
-        )}
-      </div>
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
-        <div>
-          {feedback ? (
-            <p
-              className={`text-xs font-medium ${
-                feedback.type === "success"
-                  ? "text-emerald-700"
-                  : "text-rose-700"
-              }`}
+          <div className="mt-4">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <span className="text-sm font-medium text-slate-700">
+                Condomínios liberados para este acesso
+              </span>
+              {!draft.isAdmin && condominios.length > 0 ? (
+                <div className="flex items-center gap-2 text-xs">
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => {
+                      setFeedback(null);
+                      setDraft((prev) => ({
+                        ...prev,
+                        condominioIds: condominios.map((c) => c.id),
+                      }));
+                    }}
+                    className="cursor-pointer font-semibold text-slate-600 underline decoration-slate-300 underline-offset-2 hover:text-slate-900"
+                  >
+                    Marcar todos
+                  </button>
+                  <span className="text-slate-300">•</span>
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => {
+                      setFeedback(null);
+                      setDraft((prev) => ({
+                        ...prev,
+                        condominioIds: [],
+                      }));
+                    }}
+                    className="cursor-pointer font-semibold text-slate-600 underline decoration-slate-300 underline-offset-2 hover:text-slate-900"
+                  >
+                    Desmarcar todos
+                  </button>
+                </div>
+              ) : null}
+            </div>
+
+            {draft.isAdmin ? (
+              <div className="rounded-xl border border-amber-200 bg-amber-50/70 px-3.5 py-2.5 text-xs text-amber-900">
+                Como <strong>Administrador total</strong>, este usuário possui
+                acesso automático a todos os {condominios.length} condomínio(s)
+                cadastrados.
+              </div>
+            ) : condominios.length === 0 ? (
+              <p className="text-xs text-slate-500">
+                Nenhum condomínio cadastrado ainda.
+              </p>
+            ) : (
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {condominios.map((condominio) => {
+                  const checked = draft.condominioIds.includes(condominio.id);
+                  return (
+                    <label
+                      key={condominio.id}
+                      className={`flex cursor-pointer items-start gap-2.5 rounded-xl border p-3 text-sm transition ${
+                        checked
+                          ? "border-slate-900 bg-slate-900/5 text-slate-900"
+                          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        disabled={saving}
+                        onChange={() => toggleCondominio(condominio.id)}
+                        className="mt-0.5 size-4 shrink-0 accent-slate-900"
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-semibold">
+                          {condominio.name}
+                        </span>
+                        <span className="block truncate text-xs text-slate-500">
+                          {condominio.location}
+                        </span>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
+            <div>
+              {feedback ? (
+                <p
+                  className={`text-xs font-medium ${
+                    feedback.type === "success"
+                      ? "text-emerald-700"
+                      : "text-rose-700"
+                  }`}
+                >
+                  {feedback.message}
+                </p>
+              ) : isDirty ? (
+                <p className="text-xs font-medium text-amber-700">
+                  Alterações não salvas para este usuário.
+                </p>
+              ) : (
+                <span className="text-xs text-slate-400">
+                  Permissões sincronizadas.
+                </span>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => void handleSave()}
+              disabled={saving || !isDirty}
+              className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              {feedback.message}
-            </p>
-          ) : isDirty ? (
-            <p className="text-xs font-medium text-amber-700">
-              Alterações não salvas para este usuário.
-            </p>
-          ) : (
-            <span className="text-xs text-slate-400">
-              Permissões sincronizadas.
-            </span>
-          )}
+              <Check aria-hidden="true" size={15} />
+              {saving ? "Salvando..." : "Salvar acesso"}
+            </button>
+          </div>
         </div>
-
-        <button
-          type="button"
-          onClick={() => void handleSave()}
-          disabled={saving || !isDirty}
-          className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          <Check aria-hidden="true" size={15} />
-          {saving ? "Salvando..." : "Salvar acesso"}
-        </button>
-      </div>
+      ) : null}
     </li>
   );
 }

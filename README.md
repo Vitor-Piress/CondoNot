@@ -16,8 +16,9 @@ O projeto está em desenvolvimento e foi estruturado para funcionar tanto conect
 - Acompanhamento do e-mail: envio, entrega, falha e abertura, via webhook do Resend.
 - Confirmação de ciência pelo destinatário, em página pública acessada por link único no e-mail.
 - Login com Supabase Auth e acesso isolado por condomínio (RLS).
+- Gestão de acessos e permissões por condomínio (`/acessos`), com perfis de **Administrador** (acesso total) e **Operador** (acesso exclusivo a 1 ou mais condomínios vinculados).
 - Gestão de condomínios, com logo e regimento interno em PDF.
-- Cadastro de novas notificações com motivo, categoria, data retroativa e valor de multa.
+- Cadastro de novas notificações com motivo, categoria, data retroativa, valor de multa e registro automático e obrigatório do autor (`Criada por`).
 - Inclusão de até cinco fotos JPEG, PNG ou WebP em cada notificação.
 - Listagem e cadastro de modelos de notificação com título e texto padrão.
 - Navegacao responsiva por menu lateral e rotas baseadas no caminho da URL.
@@ -93,10 +94,12 @@ O codigo espera as seguintes tabelas no banco:
 | Tabela               | Uso                                                              |
 | -------------------- | ---------------------------------------------------------------- |
 | `unidades`           | Consulta e atualização das unidades, proprietários e inquilinos. |
-| `notificacao`        | Consulta, filtros, detalhes e cadastro de notificações.          |
+| `notificacao`        | Consulta, filtros, detalhes, autoria e cadastro de notificações. |
 | `modelo_notificacao` | Consulta e cadastro dos modelos de notificação.                  |
 | `notificacao_anexo`  | Metadados dos anexos de cada notificação.                        |
 | `condominio`         | Dados do condomínio e valor vigente da multa.                    |
+| `condominio_membro`  | Vínculo N:N entre usuários e os condomínios que podem acessar.   |
+| `perfil_usuario`     | Perfil de acesso do usuário (`is_admin` e `nome` de exibição).   |
 
 O campo `condominio.valor_multa` guarda o valor vigente definido por cada
 condomínio. O sistema copia esse valor para `notificacao.valor_multa` ao emitir
@@ -123,24 +126,30 @@ Os campos utilizados pela aplicação incluem, entre outros, `created_at`, `bloc
 
 Depois de criar o arquivo `.env`, reinicie o servidor de desenvolvimento para que o Vite carregue as variáveis.
 
-## Autenticação e segurança (RLS)
+## Autenticação, gestão de acessos e segurança (RLS)
 
-O acesso exige login com e-mail e senha do Supabase Auth. Não há cadastro pelo
-app: os usuários são criados pelo painel do Supabase, com o cadastro público
-desativado. Cada usuário só acessa os condomínios aos quais está vinculado na
-tabela `condominio_membro`, e quem cria um condomínio é vinculado a ele
-automaticamente. Para dar acesso a outra pessoa, insira uma linha em
-`condominio_membro` pelo painel.
+O acesso exige login com e-mail e senha do Supabase Auth. Os logins são criados
+pelo painel do Supabase (**Authentication > Users**), com o cadastro público
+desativado.
+
+Dentro do próprio sistema, usuários com perfil de **Administrador** contam com a
+página **Acessos por Condomínio** (`/acessos`), onde é possível:
+- Definir o **Nome / Identificação** de cada acesso (gravado automaticamente como autor ao emitir uma notificação).
+- Definir o tipo de permissão: **Operador por condomínio** ou **Administrador total**.
+- Vincular exatamente a quais condomínios (`1`, `2` ou `N`) cada operador terá acesso. Operadores com apenas 1 condomínio vinculado visualizam o seletor travado naquele condomínio e não têm acesso às telas administrativas de condomínios/acessos.
+
+Todas as notificações possuem rastreio obrigatório de autoria (`criado_por` e `criado_por_email` `NOT NULL`, além de `criado_por_nome`), preenchido e protegido via trigger no banco de dados.
 
 As migrations devem ser aplicadas nesta ordem:
 
-| Migration                                  | Descrição                                                                 |
-| ------------------------------------------ | ------------------------------------------------------------------------- |
-| `20261002160000_notification_attachments`  | Tabela de anexos e bucket `notificacoes-anexos`.                          |
-| `20261002203000_condominium_fine_amount`   | Valor vigente da multa por condomínio.                                    |
-| `20261013210000_notification_email_tracking` | Colunas de envio, entrega, abertura e ciência na `notificacao`.         |
-| `20261013220000_membership_structure`      | `condominio_membro`, `is_membro()` e vínculo automático do criador.       |
-| `20261013230000_rls_policies`              | Ativa o RLS por membro e remove o acesso `anon` (inclui o Storage).       |
+| Migration                                                   | Descrição                                                                                 |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `20261002160000_notification_attachments`                   | Tabela de anexos e bucket `notificacoes-anexos`.                                          |
+| `20261002203000_condominium_fine_amount`                    | Valor vigente da multa por condomínio.                                                    |
+| `20261013210000_notification_email_tracking`                | Colunas de envio, entrega, abertura e ciência na `notificacao`.                           |
+| `20261013220000_membership_structure`                       | `condominio_membro`, `is_membro()` e vínculo automático do criador.                       |
+| `20261013230000_rls_policies`                               | Ativa o RLS por membro e remove o acesso `anon` (inclui o Storage).                       |
+| `20261021180000_access_management_and_notification_author`  | `perfil_usuario`, `is_admin()`, RPCs de gestão de acessos e autoria obrigatória em `notificacao`. |
 
 Atenção: a última migration bloqueia o app até que exista um usuário, os
 condomínios existentes estejam vinculados a ele e o front com login esteja
