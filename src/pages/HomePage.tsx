@@ -1,4 +1,4 @@
-import { BellPlus, Building2, Eye, Layers2 } from "lucide-react";
+import { BellPlus, Building2, Eye, Layers2, Maximize2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { listRecentNotifications } from "../services/notificationService";
 import { listNotificationTypes } from "../services/notificationTypeService";
@@ -157,9 +157,11 @@ export function HomePage({ onNavigate }: HomePageProps) {
           <button
             type="button"
             onClick={() => onNavigate("/notificacoes")}
-            className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:bg-slate-100"
+            aria-label="Ver todas as notificações"
+            title="Ver todas as notificações"
+            className="ml-auto inline-flex size-9 shrink-0 items-center justify-center rounded-xl border border-slate-300 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 cursor-pointer"
           >
-            Ver tudo
+            <Maximize2 aria-hidden="true" size={16} />
           </button>
         }
       >
@@ -181,37 +183,51 @@ export function HomePage({ onNavigate }: HomePageProps) {
         ) : null}
 
         {!loading && !error && rows.length > 0 ? (
-          <ul className="max-h-96 space-y-3 overflow-y-auto pr-1">
-            {rows.map((row) => (
-              <li key={row.id}>
-                <button
-                  type="button"
-                  onClick={() => onNavigate(`/notificacoes/${row.id}`)}
-                  className="flex w-full items-start justify-between rounded-xl border border-slate-200 p-3 text-left transition hover:border-slate-300 hover:bg-slate-50"
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">
-                      {getNotificationCategoryLabel(row.categoria) ??
-                        `Notificação #${row.id}`}{" "}
-                      {row.idUnidade
-                        ? ` • ${formatHomeUnitLabel(unitMap.get(row.idUnidade) ?? row.idUnidade)}`
-                        : " • Sem unidade"}
-                    </p>
-                    <p className="mt-1 line-clamp-2 text-xs text-slate-500">
-                      {row.motivo ?? "Sem motivo informado"}
-                    </p>
-                    <p className="mt-2 text-xs font-medium text-slate-400">
-                      {typeMap.get(row.idTipoNotificacao) ??
-                        `Modelo ${row.idTipoNotificacao}`}
-                    </p>
-                  </div>
-                  <span className="text-xs text-slate-500">
-                    {formatOnlyDate(row.createdAt)}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
+          <div className="max-h-96 space-y-3 overflow-y-auto pr-1">
+            <ul className="space-y-3">
+              {rows.map((row) => (
+                <li key={row.id}>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate(`/notificacoes/${row.id}`)}
+                    className="flex w-full items-start justify-between rounded-xl border border-slate-200 p-3 text-left transition hover:border-slate-300 hover:bg-slate-50 cursor-pointer"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">
+                        {getNotificationCategoryLabel(row.categoria) ??
+                          `Notificação #${row.id}`}{" "}
+                        {row.idUnidade
+                          ? ` • ${formatHomeUnitLabel(unitMap.get(row.idUnidade) ?? row.idUnidade)}`
+                          : " • Sem unidade"}
+                      </p>
+                      <p className="mt-1 line-clamp-2 text-xs text-slate-500">
+                        {row.motivo ?? "Sem motivo informado"}
+                      </p>
+                      <p className="mt-2 text-xs font-medium text-slate-400">
+                        {typeMap.get(row.idTipoNotificacao) ??
+                          `Modelo ${row.idTipoNotificacao}`}
+                      </p>
+                    </div>
+                    <span className="text-xs text-slate-500">
+                      {formatOnlyDate(row.createdAt)}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+
+            <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-3 py-2.5 text-center text-xs text-slate-500">
+              Para ter acesso ao histórico completo,{" "}
+              <button
+                type="button"
+                onClick={() => onNavigate("/notificacoes")}
+                className="font-semibold text-slate-700 underline underline-offset-2 transition hover:text-slate-900 cursor-pointer"
+              >
+                visualize a página de notificações completa
+              </button>
+              .
+            </div>
+          </div>
         ) : null}
       </Panel>
       {/* <button

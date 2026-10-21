@@ -220,7 +220,7 @@ export async function listRecentNotifications(
     { query: "", typeId: "", unitId: "" },
     condominioId,
   );
-  return all.slice(0, limit);
+  return all.filter((row) => row.status === "ativa").slice(0, limit);
 }
 
 export async function getNotificationById(
