@@ -38,13 +38,27 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }
   }
 
+  async function updatePassword(newPassword: string) {
+    if (!supabase) {
+      throw new Error("Supabase não configurado.");
+    }
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+    if (error) {
+      throw new Error(error.message || "Não foi possível alterar a senha.");
+    }
+  }
+
   async function signOut() {
     await supabase?.auth.signOut();
     window.localStorage.removeItem("condonoti.activeCondominioId");
   }
 
   return (
-    <AuthContext.Provider value={{ session, loading, signIn, signOut }}>
+    <AuthContext.Provider
+      value={{ session, loading, signIn, updatePassword, signOut }}
+    >
       {children}
     </AuthContext.Provider>
   );
