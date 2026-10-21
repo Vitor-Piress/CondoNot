@@ -41,7 +41,7 @@ export function AppLayout({
   }
 
   return (
-    <div className="app-background flex min-h-screen w-full max-w-full flex-col overflow-x-hidden print:min-h-0 print:overflow-visible print:border-0 print:p-0">
+    <div className="app-background flex min-h-screen w-full max-w-full flex-col overflow-x-clip print:min-h-0 print:overflow-visible print:border-0 print:p-0">
       <header className="print:hidden border-b border-black/10 bg-slate-900 px-4 py-3 text-slate-100 sm:px-6">
         <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3">
           <img

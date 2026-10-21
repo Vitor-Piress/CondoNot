@@ -60,7 +60,7 @@ function isActive(pathname: string, itemPath: string): boolean {
 
 export function SidebarNav({ currentPath, onNavigate }: SidebarNavProps) {
   return (
-    <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:sticky lg:top-6">
       <div className="mb-5 flex items-center gap-2 px-2">
         <LayoutList className="h-4 w-4 text-slate-500" aria-hidden="true" />
         <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
