@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Bell, Printer, ShieldOff } from "lucide-react";
+import {
+  ArrowLeft,
+  Bell,
+  Link,
+  Printer,
+  ShieldOff,
+  X,
+} from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Panel } from "../components/ui/Panel";
@@ -63,6 +70,10 @@ export function NotificationDetailPage({
   const [condominio, setCondominio] = useState<Condominio | null>(null);
   const [attachments, setAttachments] = useState<NotificationAttachment[]>([]);
   const [attachmentsError, setAttachmentsError] = useState<string | null>(null);
+  const [expandedAttachment, setExpandedAttachment] =
+    useState<NotificationAttachment | null>(null);
+  const [isClosingExpandedAttachment, setIsClosingExpandedAttachment] =
+    useState(false);
   const [isBaixaModalOpen, setIsBaixaModalOpen] = useState(false);
   const [motivoBaixaInput, setMotivoBaixaInput] = useState("");
   const [baixaError, setBaixaError] = useState<string | null>(null);
@@ -73,6 +84,41 @@ export function NotificationDetailPage({
     message: string;
   } | null>(null);
   const [now, setNow] = useState(() => Date.now());
+
+  function openExpandedAttachment(attachment: NotificationAttachment) {
+    setIsClosingExpandedAttachment(false);
+    setExpandedAttachment(attachment);
+  }
+
+  function closeExpandedAttachment() {
+    if (isClosingExpandedAttachment) {
+      return;
+    }
+    setIsClosingExpandedAttachment(true);
+    window.setTimeout(() => {
+      setExpandedAttachment(null);
+      setIsClosingExpandedAttachment(false);
+    }, 180);
+  }
+
+  useEffect(() => {
+    if (!expandedAttachment || isClosingExpandedAttachment) {
+      return;
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsClosingExpandedAttachment(true);
+        window.setTimeout(() => {
+          setExpandedAttachment(null);
+          setIsClosingExpandedAttachment(false);
+        }, 180);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [expandedAttachment, isClosingExpandedAttachment]);
 
   useEffect(() => {
     let active = true;
@@ -499,22 +545,39 @@ export function NotificationDetailPage({
         <Panel title="Fotos anexas" subtitle={`${attachments.length} foto(s)`}>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {attachments.map((attachment) => (
-              <a
+              <div
                 key={attachment.id}
-                href={attachment.signedUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="animate-slide-down overflow-hidden rounded-xl border border-slate-200"
+                className="animate-slide-down overflow-hidden rounded-xl border border-slate-200 bg-white"
               >
-                <img
-                  src={attachment.signedUrl}
-                  alt={attachment.fileName}
-                  className="h-56 w-full bg-slate-50 object-contain"
-                />
-                <span className="block truncate px-3 py-2 text-sm text-slate-600">
-                  {attachment.fileName}
-                </span>
-              </a>
+                <button
+                  type="button"
+                  onClick={() => openExpandedAttachment(attachment)}
+                  aria-label={`Ampliar ${attachment.fileName}`}
+                  title="Clique para ampliar a imagem"
+                  className="block w-full cursor-zoom-in bg-slate-50 transition hover:opacity-95"
+                >
+                  <img
+                    src={attachment.signedUrl}
+                    alt={attachment.fileName}
+                    className="h-56 w-full object-contain"
+                  />
+                </button>
+                <div className="flex items-center justify-between gap-2 border-t border-slate-100 px-3 py-2">
+                  <span className="min-w-0 flex-1 truncate text-sm text-slate-600">
+                    {attachment.fileName}
+                  </span>
+                  <a
+                    href={attachment.signedUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={`Abrir ${attachment.fileName} em nova página`}
+                    title="Abrir em nova página"
+                    className="inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+                  >
+                    <Link aria-hidden="true" size={15} />
+                  </a>
+                </div>
+              </div>
             ))}
           </div>
         </Panel>
@@ -669,6 +732,63 @@ export function NotificationDetailPage({
             ))}
           </div>
         </section>
+      ) : null}
+      {expandedAttachment ? (
+        <div
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              closeExpandedAttachment();
+            }
+          }}
+          className={`print:hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/75 p-4 backdrop-blur-xs ${
+            isClosingExpandedAttachment
+              ? "animate-backdrop-out"
+              : "animate-backdrop-in"
+          }`}
+        >
+          <div
+            className={`flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ${
+              isClosingExpandedAttachment
+                ? "animate-zoom-out"
+                : "animate-zoom-in"
+            }`}
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+              <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800">
+                {expandedAttachment.fileName}
+              </span>
+              <div className="flex items-center gap-2">
+                <a
+                  href={expandedAttachment.signedUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Abrir imagem em nova página"
+                  title="Abrir em nova página"
+                  className="inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-slate-300 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-900"
+                >
+                  <Link aria-hidden="true" size={15} />
+                  <span>Abrir em nova página</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={closeExpandedAttachment}
+                  aria-label="Fechar visualização"
+                  title="Fechar (Esc)"
+                  className="inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+                >
+                  <X aria-hidden="true" size={17} />
+                </button>
+              </div>
+            </div>
+            <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto bg-slate-950/5 p-4">
+              <img
+                src={expandedAttachment.signedUrl}
+                alt={expandedAttachment.fileName}
+                className="max-h-[78vh] w-auto max-w-full rounded-lg object-contain"
+              />
+            </div>
+          </div>
+        </div>
       ) : null}
       {isBaixaModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
