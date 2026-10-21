@@ -1,4 +1,4 @@
-import { BellRing, Building2, Loader2, LogOut } from "lucide-react";
+import { BellRing, Building2, Loader2, LogOut, Users } from "lucide-react";
 import { useState } from "react";
 import type { PropsWithChildren } from "react";
 import { useMatch } from "react-router-dom";
@@ -27,6 +27,7 @@ export function AppLayout({
     condominios,
     activeCondominioId,
     activeCondominio,
+    isAdmin,
     loadingCondominios,
     condominioError,
     setActiveCondominioId,
@@ -64,12 +65,18 @@ export function AppLayout({
               <select
                 value={activeCondominioId ?? ""}
                 onChange={(event) => handleCondominioChange(event.target.value)}
-                disabled={loadingCondominios || condominios.length === 0}
+                disabled={
+                  loadingCondominios ||
+                  condominios.length === 0 ||
+                  (!isAdmin && condominios.length === 1)
+                }
                 aria-label="Selecionar condomínio"
-                className="w-full min-w-0 rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1.5 text-sm text-white outline-none focus:ring-2 focus:ring-slate-400 disabled:opacity-60 sm:w-auto sm:max-w-60"
+                className="w-full min-w-0 rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1.5 text-sm text-white outline-none focus:ring-2 focus:ring-slate-400 disabled:opacity-80 sm:w-auto sm:max-w-60"
               >
                 {loadingCondominios ? (
                   <option value="">Carregando...</option>
+                ) : condominios.length === 0 ? (
+                  <option value="">Sem condomínio</option>
                 ) : null}
                 {condominios.map((condominio) => (
                   <option key={condominio.id} value={condominio.id}>
@@ -96,15 +103,28 @@ export function AppLayout({
                 />
               )}
             </span>
-            <button
-              type="button"
-              onClick={() => onNavigate("/condominios")}
-              aria-label="Gerenciar condomínios"
-              title="Gerenciar condomínios"
-              className="inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-700 text-slate-100 transition hover:bg-slate-800"
-            >
-              <Building2 aria-hidden="true" size={17} />
-            </button>
+            {isAdmin ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => onNavigate("/condominios")}
+                  aria-label="Gerenciar condomínios"
+                  title="Gerenciar condomínios"
+                  className="inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-700 text-slate-100 transition hover:bg-slate-800"
+                >
+                  <Building2 aria-hidden="true" size={17} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onNavigate("/acessos")}
+                  aria-label="Gerenciar acessos por condomínio"
+                  title="Gerenciar acessos por condomínio"
+                  className="inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-700 text-slate-100 transition hover:bg-slate-800"
+                >
+                  <Users aria-hidden="true" size={17} />
+                </button>
+              </>
+            ) : null}
             <button
               type="button"
               onClick={() => onNavigate("/")}
@@ -166,20 +186,33 @@ export function AppLayout({
               enquanto o ambiente não é configurado.
             </section>
           ) : null}
-          {loadingCondominios && currentPath !== "/condominios" ? (
+          {loadingCondominios &&
+          currentPath !== "/condominios" &&
+          currentPath !== "/acessos" ? (
             <p className="text-sm text-slate-500">Carregando condomínios...</p>
-          ) : !activeCondominioId && currentPath !== "/condominios" ? (
+          ) : !activeCondominioId &&
+            currentPath !== "/condominios" &&
+            currentPath !== "/acessos" ? (
             <section className="animate-slide-down rounded-xl border border-slate-200 bg-white p-5">
-              <p className="text-sm text-slate-700">
-                Cadastre um condomínio para começar.
-              </p>
-              <button
-                type="button"
-                onClick={() => onNavigate("/condominios")}
-                className="mt-3 cursor-pointer rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
-              >
-                Gerenciar condomínios
-              </button>
+              {isAdmin ? (
+                <>
+                  <p className="text-sm text-slate-700">
+                    Cadastre um condomínio para começar.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate("/condominios")}
+                    className="mt-3 cursor-pointer rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+                  >
+                    Gerenciar condomínios
+                  </button>
+                </>
+              ) : (
+                <p className="text-sm text-slate-700">
+                  Seu usuário ainda não possui condomínios vinculados. Solicite
+                  a liberação de acesso ao administrador do sistema.
+                </p>
+              )}
             </section>
           ) : (
             children

@@ -17,6 +17,7 @@ import {
 import { listNotificationTypes } from "../services/notificationTypeService";
 import { listUnits } from "../services/unitService";
 import {
+  getNotificationAuthorLabel,
   getNotificationCategoryLabel,
   getUnitLabel,
   type Notification,
@@ -46,6 +47,7 @@ type ReportColumnKey =
   | "modelo"
   | "unidade"
   | "motivo"
+  | "criadoPor"
   | "status"
   | "dataBaixa"
   | "motivoBaixa"
@@ -59,6 +61,7 @@ const reportColumns: { key: ReportColumnKey; label: string }[] = [
   { key: "modelo", label: "Modelo" },
   { key: "unidade", label: "Unidade" },
   { key: "motivo", label: "Motivo" },
+  { key: "criadoPor", label: "Criada por" },
   { key: "status", label: "Status" },
   { key: "dataBaixa", label: "Data da baixa" },
   { key: "motivoBaixa", label: "Motivo da baixa" },
@@ -540,6 +543,8 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
         return unitMap.get(row.idUnidade) ?? row.idUnidade;
       case "motivo":
         return row.motivo ?? "Sem motivo informado";
+      case "criadoPor":
+        return getNotificationAuthorLabel(row);
       case "status":
         return row.status === "ativa" ? "Ativa" : "Baixada";
       case "dataBaixa":
@@ -900,6 +905,9 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
                       </div>
                       <p className="mt-1 text-xs text-slate-500">
                         {row.motivo ?? "Sem motivo informado"}
+                      </p>
+                      <p className="mt-1 text-[11px] font-medium text-slate-400">
+                        Criada por: {getNotificationAuthorLabel(row)}
                       </p>
                     </div>
                     <div>

@@ -5,8 +5,10 @@ import {
   ImageUp,
   Pencil,
   Trash2,
+  Users,
   X,
 } from "lucide-react";
+import { EmptyState } from "../components/ui/EmptyState";
 import { Panel } from "../components/ui/Panel";
 import { useCondominio } from "../contexts/useCondominio";
 import {
@@ -17,6 +19,10 @@ import {
   deleteCondominioLogoFromStorage,
   uploadCondominioLogo,
 } from "../services/storageService";
+
+interface CondominiosPageProps {
+  onNavigate?: (to: string) => void;
+}
 
 function getFormValues(form: HTMLFormElement) {
   const values = new FormData(form);
@@ -42,11 +48,12 @@ function getFineValue(value: string): number | null {
   return parsedFine;
 }
 
-export function CondominiosPage() {
+export function CondominiosPage({ onNavigate }: CondominiosPageProps) {
   const {
     condominios,
     activeCondominio,
     activeCondominioId,
+    isAdmin,
     loadingCondominios,
     reloadCondominios,
   } = useCondominio();
@@ -220,8 +227,54 @@ export function CondominiosPage() {
     }
   }
 
+  if (!loadingCondominios && !isAdmin) {
+    return (
+      <Panel
+        title="Acesso restrito"
+        subtitle="Gerenciamento exclusivo para administradores"
+      >
+        <EmptyState
+          title="Você não tem permissão para acessar esta página"
+          description="Este acesso é exclusivo para operação do(s) condomínio(s) vinculado(s)."
+        />
+        {onNavigate ? (
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={() => onNavigate("/")}
+              className="cursor-pointer rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+            >
+              Voltar ao início
+            </button>
+          </div>
+        ) : null}
+      </Panel>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {onNavigate ? (
+        <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-xs">
+          <button
+            type="button"
+            onClick={() => onNavigate("/condominios")}
+            className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition"
+          >
+            <Building2 aria-hidden="true" size={16} />
+            Condomínios
+          </button>
+          <button
+            type="button"
+            onClick={() => onNavigate("/acessos")}
+            className="inline-flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+          >
+            <Users aria-hidden="true" size={16} />
+            Acessos por Condomínio
+          </button>
+        </div>
+      ) : null}
+
       <Panel
         title="Condomínios"
         subtitle="Cadastre e mantenha os dados de cada condomínio"

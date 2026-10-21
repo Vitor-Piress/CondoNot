@@ -15,6 +15,7 @@ import { getNotificationTypeById } from "../services/notificationTypeService";
 import { getCondominioById } from "../services/condominioService";
 import { getUnitById } from "../services/unitService";
 import {
+  getNotificationAuthorLabel,
   getNotificationCategoryLabel,
   getUnitLabel,
   type Notification,
@@ -434,6 +435,14 @@ export function NotificationDetailPage({
                   {row.dataRetroativa
                     ? formatDate(row.dataRetroativa)
                     : "Não informada"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                  Criada por
+                </p>
+                <p className="mt-1 text-sm text-slate-700">
+                  {getNotificationAuthorLabel(row)}
                 </p>
               </div>
             </div>

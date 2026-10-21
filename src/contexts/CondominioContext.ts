@@ -5,6 +5,7 @@ export interface CondominioContextValue {
   condominios: Condominio[];
   activeCondominioId: string | null;
   activeCondominio: Condominio | null;
+  isAdmin: boolean;
   loadingCondominios: boolean;
   condominioError: string | null;
   setActiveCondominioId: (id: string) => void;

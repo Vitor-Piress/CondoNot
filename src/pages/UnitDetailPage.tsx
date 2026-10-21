@@ -12,6 +12,7 @@ import { Panel } from "../components/ui/Panel";
 import { listNotificationsByUnitId } from "../services/notificationService";
 import { getUnitById } from "../services/unitService";
 import {
+  getNotificationAuthorLabel,
   getNotificationCategoryLabel,
   getPersonEmail,
   getPersonName,
@@ -331,7 +332,8 @@ export function UnitDetailPage({ unitId, onNavigate }: UnitDetailPageProps) {
                           ) : null}
                         </span>
                         <span className="mt-1 block text-xs text-slate-500">
-                          Registro #{notification.id}
+                          Registro #{notification.id} · Criada por{" "}
+                          {getNotificationAuthorLabel(notification)}
                         </span>
                       </span>
                     </span>

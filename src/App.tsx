@@ -27,6 +27,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { supabase } from "./services/supabase";
 import { CienciaPage } from "./pages/CienciaPage";
 import { CondominiosPage } from "./pages/CondominiosPage";
+import { AcessosPage } from "./pages/AcessosPage";
 import { RegimentoInternoPage } from "./pages/RegimentoInternoPage";
 
 interface RoutedPageProps {
@@ -90,7 +91,14 @@ function AdminApp() {
       >
         <Routes>
           <Route path="/" element={<HomePage onNavigate={navigate} />} />
-          <Route path="/condominios" element={<CondominiosPage />} />
+          <Route
+            path="/condominios"
+            element={<CondominiosPage onNavigate={navigate} />}
+          />
+          <Route
+            path="/acessos"
+            element={<AcessosPage onNavigate={navigate} />}
+          />
           <Route path="/regimento-interno" element={<RegimentoInternoPage />} />
           <Route
             path="/notificacoes"

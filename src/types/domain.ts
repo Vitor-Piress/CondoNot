@@ -23,6 +23,16 @@ export type CondominioInsert = Omit<Condominio, "id" | "createdAt">;
 
 export type CondominioUpdate = Partial<CondominioInsert>;
 
+export interface UserAccess {
+  userId: string;
+  email: string;
+  nome: string | null;
+  isAdmin: boolean;
+  createdAt: string;
+  lastSignInAt: string | null;
+  condominioIds: string[];
+}
+
 export type NotificationStatus = "ativa" | "baixada";
 
 export interface Notification {
@@ -49,6 +59,9 @@ export interface Notification {
   emailFalhaMotivo: string | null;
   cienciaToken: string | null;
   cienciaEm: string | null;
+  criadoPor: string | null;
+  criadoPorEmail: string | null;
+  criadoPorNome: string | null;
 }
 
 export interface NotificationAttachment {
@@ -299,7 +312,28 @@ export function parseNotification(row: UnknownRow): Notification {
     emailFalhaMotivo: toNullableString(row.email_falha_motivo),
     cienciaToken: toNullableString(row.ciencia_token),
     cienciaEm: toNullableString(row.ciencia_em),
+    criadoPor: toNullableString(row.criado_por ?? row.criadoPor),
+    criadoPorEmail: toNullableString(
+      row.criado_por_email ?? row.criadoPorEmail,
+    ),
+    criadoPorNome: toNullableString(row.criado_por_nome ?? row.criadoPorNome),
   };
+}
+
+export function getNotificationAuthorLabel(notification: Notification): string {
+  const nome = notification.criadoPorNome?.trim() || null;
+  const email = notification.criadoPorEmail?.trim() || null;
+
+  if (nome && email) {
+    return `${nome} (${email})`;
+  }
+  if (nome) {
+    return nome;
+  }
+  if (email) {
+    return email;
+  }
+  return "Não identificado";
 }
 
 export function parseNotificationType(row: UnknownRow): NotificationType {

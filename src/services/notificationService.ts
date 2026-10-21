@@ -67,6 +67,9 @@ const fallbackNotifications: Notification[] = [
     emailFalhaMotivo: null,
     cienciaToken: null,
     cienciaEm: null,
+    criadoPor: "demo-admin-1",
+    criadoPorEmail: "admin@condonot.com.br",
+    criadoPorNome: "Administrador Geral",
   },
   {
     id: "402",
@@ -92,6 +95,9 @@ const fallbackNotifications: Notification[] = [
     emailFalhaMotivo: null,
     cienciaToken: null,
     cienciaEm: null,
+    criadoPor: "demo-user-2",
+    criadoPorEmail: "portaria.goiabinha@condonot.com.br",
+    criadoPorNome: "Portaria Goiabinha",
   },
   {
     id: "403",
@@ -117,6 +123,9 @@ const fallbackNotifications: Notification[] = [
     emailFalhaMotivo: null,
     cienciaToken: null,
     cienciaEm: null,
+    criadoPor: "demo-admin-1",
+    criadoPorEmail: "admin@condonot.com.br",
+    criadoPorNome: "Administrador Geral",
   },
 ];
 
@@ -137,7 +146,7 @@ function applyFilters(
     const queryMatch =
       filters.query.trim() === "" ||
       includesQuery(
-        `${row.tipo ?? ""} ${row.motivo ?? ""} ${row.categoria ?? ""}`,
+        `${row.tipo ?? ""} ${row.motivo ?? ""} ${row.categoria ?? ""} ${row.criadoPorNome ?? ""} ${row.criadoPorEmail ?? ""}`,
         filters.query,
       );
     const typeMatch =
@@ -332,6 +341,9 @@ export async function createNotification(input: {
       emailFalhaMotivo: null,
       cienciaToken: null,
       cienciaEm: null,
+      criadoPor: "demo-admin-1",
+      criadoPorEmail: "admin@condonot.com.br",
+      criadoPorNome: "Administrador Geral",
     };
   }
 
