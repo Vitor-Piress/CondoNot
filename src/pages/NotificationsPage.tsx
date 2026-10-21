@@ -1,4 +1,10 @@
-import { ChevronDown, Printer, Search } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  ChevronDown,
+  Printer,
+  Search,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Panel } from "../components/ui/Panel";
@@ -59,6 +65,43 @@ const reportColumns: { key: ReportColumnKey; label: string }[] = [
 ];
 
 const pageSizeOptions = [10, 20, 30, 50, 100];
+
+type PaginationItem = number | "ellipsis-start" | "ellipsis-end";
+
+function buildPaginationItems(
+  currentPage: number,
+  totalPages: number,
+): PaginationItem[] {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  if (currentPage <= 4) {
+    return [1, 2, 3, 4, 5, "ellipsis-end", totalPages];
+  }
+
+  if (currentPage >= totalPages - 3) {
+    return [
+      1,
+      "ellipsis-start",
+      totalPages - 4,
+      totalPages - 3,
+      totalPages - 2,
+      totalPages - 1,
+      totalPages,
+    ];
+  }
+
+  return [
+    1,
+    "ellipsis-start",
+    currentPage - 1,
+    currentPage,
+    currentPage + 1,
+    "ellipsis-end",
+    totalPages,
+  ];
+}
 
 const filterControlClass =
   "h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-normal text-slate-700 outline-none ring-slate-200 transition focus:ring";
@@ -126,8 +169,16 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [isColumnsOpen, setIsColumnsOpen] = useState(false);
   const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [previousCondominioId, setPreviousCondominioId] =
+    useState(activeCondominioId);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  if (previousCondominioId !== activeCondominioId) {
+    setPreviousCondominioId(activeCondominioId);
+    setCurrentPage(1);
+  }
 
   useEffect(() => {
     let active = true;
@@ -215,9 +266,124 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
       });
   }, [rows, statusFilter, categoryFilter, dateFrom, dateTo, sortOrder]);
 
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(visibleRows.length / pageSize)),
+    [visibleRows.length, pageSize],
+  );
+
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (safeCurrentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+
   const renderedRows = useMemo(
-    () => visibleRows.slice(0, pageSize),
-    [visibleRows, pageSize],
+    () => visibleRows.slice(startIndex, endIndex),
+    [visibleRows, startIndex, endIndex],
+  );
+
+  const paginationItems = useMemo(
+    () => buildPaginationItems(safeCurrentPage, totalPages),
+    [safeCurrentPage, totalPages],
+  );
+
+  const topPaginationControls = (
+    <nav
+      aria-label="Navegação rápida de páginas"
+      className="flex items-center gap-1.5"
+    >
+      <button
+        type="button"
+        onClick={() =>
+          setCurrentPage((page) => Math.max(1, Math.min(page, totalPages) - 1))
+        }
+        disabled={safeCurrentPage <= 1}
+        aria-label="Página anterior"
+        title="Página anterior"
+        className="inline-flex size-9 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-700 transition cursor-pointer hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white"
+      >
+        <ArrowLeft aria-hidden="true" size={16} />
+      </button>
+      <button
+        type="button"
+        onClick={() =>
+          setCurrentPage((page) =>
+            Math.min(totalPages, Math.min(page, totalPages) + 1),
+          )
+        }
+        disabled={safeCurrentPage >= totalPages}
+        aria-label="Próxima página"
+        title="Próxima página"
+        className="inline-flex size-9 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-700 transition cursor-pointer hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white"
+      >
+        <ArrowRight aria-hidden="true" size={16} />
+      </button>
+    </nav>
+  );
+
+  const paginationControls = (
+    <nav
+      aria-label="Paginação de notificações"
+      className="flex flex-wrap items-center justify-center gap-1.5"
+    >
+      <button
+        type="button"
+        onClick={() =>
+          setCurrentPage((page) => Math.max(1, Math.min(page, totalPages) - 1))
+        }
+        disabled={safeCurrentPage <= 1}
+        aria-label="Página anterior"
+        title="Página anterior"
+        className="inline-flex size-9 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-700 transition cursor-pointer hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white"
+      >
+        <ArrowLeft aria-hidden="true" size={16} />
+      </button>
+
+      {paginationItems.map((item) => {
+        if (typeof item !== "number") {
+          return (
+            <span
+              key={item}
+              aria-hidden="true"
+              className="inline-flex h-9 min-w-7 items-center justify-center px-1 text-xs font-semibold text-slate-400 select-none"
+            >
+              ...
+            </span>
+          );
+        }
+
+        const isActive = item === safeCurrentPage;
+        return (
+          <button
+            key={item}
+            type="button"
+            onClick={() => setCurrentPage(item)}
+            aria-label={`Ir para a página ${item}`}
+            aria-current={isActive ? "page" : undefined}
+            className={`inline-flex h-9 min-w-9 items-center justify-center rounded-xl border px-2.5 text-xs font-semibold transition cursor-pointer ${
+              isActive
+                ? "border-slate-900 bg-slate-900 text-white"
+                : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
+            }`}
+          >
+            {item}
+          </button>
+        );
+      })}
+
+      <button
+        type="button"
+        onClick={() =>
+          setCurrentPage((page) =>
+            Math.min(totalPages, Math.min(page, totalPages) + 1),
+          )
+        }
+        disabled={safeCurrentPage >= totalPages}
+        aria-label="Próxima página"
+        title="Próxima página"
+        className="inline-flex size-9 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-700 transition cursor-pointer hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white"
+      >
+        <ArrowRight aria-hidden="true" size={16} />
+      </button>
+    </nav>
   );
 
   const reportingPeriod = useMemo(() => {
@@ -390,35 +556,62 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
         title="Relatórios e visualização de notificações"
         subtitle="Lista completa com filtros e acesso ao detalhe individual"
         action={
-          <div className="flex flex-wrap items-center w-full justify-start gap-2">
+          <div className="flex w-full flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => onNavigate("/notificacoes/nova")}
+                className="rounded-xl bg-slate-900 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-slate-700 cursor-pointer"
+              >
+                Inserir notificação
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setFilters(initialFilters);
+                  setCategoryFilter("");
+                  setDateFrom("");
+                  setDateTo("");
+                  setStatusFilter("ativa");
+                  setSortOrder("newest");
+                  setPageSize(10);
+                  setCurrentPage(1);
+                  setSelectedReportColumns(
+                    reportColumns.map((column) => column.key),
+                  );
+                }}
+                className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:bg-slate-100 cursor-pointer"
+              >
+                Limpar filtros
+              </button>
+            </div>
             <button
               type="button"
-              onClick={() => onNavigate("/notificacoes/nova")}
-              className="rounded-xl bg-slate-900 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-slate-700 cursor-pointer"
+              onClick={() => window.print()}
+              disabled={loading || Boolean(error) || visibleRows.length === 0}
+              aria-label="Imprimir relatório"
+              title="Imprimir relatório"
+              className="ml-auto inline-flex h-9 items-center rounded-xl border border-slate-300 px-3 py-2 text-slate-600 transition cursor-pointer hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Inserir notificação
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setFilters(initialFilters);
-                setCategoryFilter("");
-                setDateFrom("");
-                setDateTo("");
-                setStatusFilter("ativa");
-                setSortOrder("newest");
-                setPageSize(10);
-                setSelectedReportColumns(
-                  reportColumns.map((column) => column.key),
-                );
-              }}
-              className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:bg-slate-100 cursor-pointer"
-            >
-              Limpar filtros
+              <Printer aria-hidden="true" size={16} />
             </button>
           </div>
         }
       >
+        {loading ? (
+          <p className="mb-5 text-sm text-slate-500">Carregando...</p>
+        ) : null}
+
+        {error ? (
+          <p className="mb-5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+            {error}
+          </p>
+        ) : null}
+
+        {!loading && !error && visibleRows.length > 0 ? (
+          <div className="mb-5">{summaryContent}</div>
+        ) : null}
+
         <section className="mb-5 rounded-2xl border border-slate-200">
           <button
             type="button"
@@ -449,12 +642,13 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
                   />
                   <input
                     value={filters.query}
-                    onChange={(event) =>
+                    onChange={(event) => {
                       setFilters((previous) => ({
                         ...previous,
                         query: event.target.value,
-                      }))
-                    }
+                      }));
+                      setCurrentPage(1);
+                    }}
                     className={`${filterControlClass} pl-9`}
                     placeholder="Modelo, categoria ou motivo"
                   />
@@ -465,12 +659,13 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
                 Modelo
                 <select
                   value={filters.typeId}
-                  onChange={(event) =>
+                  onChange={(event) => {
                     setFilters((previous) => ({
                       ...previous,
                       typeId: event.target.value,
-                    }))
-                  }
+                    }));
+                    setCurrentPage(1);
+                  }}
                   className={filterControlClass}
                 >
                   <option value="">Todos os modelos</option>
@@ -487,12 +682,13 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
                 <UnitCombobox
                   units={units}
                   value={filters.unitId}
-                  onChange={(unitId) =>
+                  onChange={(unitId) => {
                     setFilters((previous) => ({
                       ...previous,
                       unitId,
-                    }))
-                  }
+                    }));
+                    setCurrentPage(1);
+                  }}
                   emptyOptionLabel="Todas as unidades"
                   placeholder="Buscar unidade"
                   inputClassName={filterControlClass}
@@ -503,7 +699,10 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
                 Categoria
                 <select
                   value={categoryFilter}
-                  onChange={(event) => setCategoryFilter(event.target.value)}
+                  onChange={(event) => {
+                    setCategoryFilter(event.target.value);
+                    setCurrentPage(1);
+                  }}
                   className={filterControlClass}
                 >
                   <option value="">Todas as categorias</option>
@@ -519,9 +718,10 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
                 Status
                 <select
                   value={statusFilter}
-                  onChange={(event) =>
-                    setStatusFilter(event.target.value as StatusFilter)
-                  }
+                  onChange={(event) => {
+                    setStatusFilter(event.target.value as StatusFilter);
+                    setCurrentPage(1);
+                  }}
                   className={filterControlClass}
                 >
                   <option value="ativa">Somente ativas</option>
@@ -535,7 +735,10 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
                   type="date"
                   value={dateFrom}
                   max={dateTo || undefined}
-                  onChange={(event) => setDateFrom(event.target.value)}
+                  onChange={(event) => {
+                    setDateFrom(event.target.value);
+                    setCurrentPage(1);
+                  }}
                   className={filterControlClass}
                 />
               </label>
@@ -546,7 +749,10 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
                   type="date"
                   value={dateTo}
                   min={dateFrom || undefined}
-                  onChange={(event) => setDateTo(event.target.value)}
+                  onChange={(event) => {
+                    setDateTo(event.target.value);
+                    setCurrentPage(1);
+                  }}
                   className={filterControlClass}
                 />
               </label>
@@ -555,9 +761,10 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
                 Ordenação
                 <select
                   value={sortOrder}
-                  onChange={(event) =>
-                    setSortOrder(event.target.value as SortOrder)
-                  }
+                  onChange={(event) => {
+                    setSortOrder(event.target.value as SortOrder);
+                    setCurrentPage(1);
+                  }}
                   className={filterControlClass}
                 >
                   <option value="newest">Mais recentes primeiro</option>
@@ -625,56 +832,6 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
           ) : null}
         </section>
 
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-slate-500">
-            {renderedRows.length < visibleRows.length
-              ? `Exibindo ${renderedRows.length} de ${visibleRows.length}`
-              : visibleRows.length}{" "}
-            notificaç
-            {visibleRows.length === 1 ? "ão" : "ões"}
-          </p>
-          <div className="flex gap-2">
-            <label className="flex items-center gap-2 text-sm text-slate-500">
-              Itens por página
-              <select
-                value={pageSize}
-                onChange={(event) => setPageSize(Number(event.target.value))}
-                className="h-9 rounded-xl border border-slate-300 bg-white px-2 text-sm text-slate-700 outline-none cursor-pointer ring-slate-200 focus:ring"
-              >
-                {pageSizeOptions.map((size) => (
-                  <option key={size} value={size}>
-                    {size}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button
-              type="button"
-              onClick={() => window.print()}
-              disabled={loading || Boolean(error) || visibleRows.length === 0}
-              aria-label="Imprimir relatório"
-              title="Imprimir relatório"
-              className="inline-flex items-center rounded-xl border border-slate-300 px-3 py-2 text-slate-600 transition cursor-pointer hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Printer aria-hidden="true" size={16} />
-            </button>
-          </div>
-        </div>
-
-        {loading ? (
-          <p className="text-sm text-slate-500">Carregando...</p>
-        ) : null}
-
-        {error ? (
-          <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
-            {error}
-          </p>
-        ) : null}
-
-        {!loading && !error && visibleRows.length > 0 ? (
-          <div className="mb-5">{summaryContent}</div>
-        ) : null}
-
         {!loading && !error && visibleRows.length === 0 ? (
           <EmptyState
             title="Nenhum resultado"
@@ -683,59 +840,98 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
         ) : null}
 
         {!loading && !error && visibleRows.length > 0 ? (
-          <ul className="space-y-3">
-            {renderedRows.map((row) => (
-              <li key={row.id}>
-                <button
-                  type="button"
-                  onClick={() => onNavigate(`/notificacoes/${row.id}`)}
-                  className="grid w-full gap-2 rounded-xl border border-slate-200 p-4 text-left transition hover:border-slate-300 hover:bg-slate-50 md:grid-cols-[minmax(0,1fr)_220px_160px] md:items-center cursor-pointer"
-                >
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-lg font-bold text-slate-900">
-                        {row.idUnidade
-                          ? (unitMap.get(row.idUnidade) ?? row.idUnidade)
-                          : "Sem unidade"}
-                        <span className="font-semibold text-slate-600">
-                          {" • "}
-                          {getNotificationCategoryLabel(row.categoria) ??
-                            `Notificação #${row.id}`}
-                        </span>
+          <>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm text-slate-500">
+                {renderedRows.length < visibleRows.length
+                  ? `Exibindo ${startIndex + 1}–${startIndex + renderedRows.length} de ${visibleRows.length}`
+                  : visibleRows.length}{" "}
+                notificaç
+                {visibleRows.length === 1 ? "ão" : "ões"}
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="flex items-center gap-2 text-sm text-slate-500">
+                  Itens por página
+                  <select
+                    value={pageSize}
+                    onChange={(event) => {
+                      setPageSize(Number(event.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="h-9 rounded-xl border border-slate-300 bg-white px-2 text-sm text-slate-700 outline-none cursor-pointer ring-slate-200 focus:ring"
+                  >
+                    {pageSizeOptions.map((size) => (
+                      <option key={size} value={size}>
+                        {size}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {topPaginationControls}
+              </div>
+            </div>
+
+            <ul className="space-y-3">
+              {renderedRows.map((row) => (
+                <li key={row.id}>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate(`/notificacoes/${row.id}`)}
+                    className="grid w-full gap-2 rounded-xl border border-slate-200 p-4 text-left transition hover:border-slate-300 hover:bg-slate-50 md:grid-cols-[minmax(0,1fr)_220px_160px] md:items-center cursor-pointer"
+                  >
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-lg font-bold text-slate-900">
+                          {row.idUnidade
+                            ? (unitMap.get(row.idUnidade) ?? row.idUnidade)
+                            : "Sem unidade"}
+                          <span className="font-semibold text-slate-600">
+                            {" • "}
+                            {getNotificationCategoryLabel(row.categoria) ??
+                              `Notificação #${row.id}`}
+                          </span>
+                        </p>
+                        {row.status === "baixada" ? (
+                          <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-rose-700">
+                            Baixada
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {row.motivo ?? "Sem motivo informado"}
                       </p>
-                      {row.status === "baixada" ? (
-                        <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-rose-700">
-                          Baixada
-                        </span>
-                      ) : null}
                     </div>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {row.motivo ?? "Sem motivo informado"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-widest text-slate-400">
-                      Modelo de notificação
-                    </p>
-                    <p className="text-sm text-slate-700">
-                      {typeMap.get(row.idTipoNotificacao) ??
-                        `Modelo ${row.idTipoNotificacao}`}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-slate-700">
-                      {formatDate(row.createdAt)}
-                    </p>
-                    <p className="text-xs uppercase tracking-widest text-slate-400">
-                      {row.valorMulta === null
-                        ? "Sem multa"
-                        : `Multa: ${formatCurrency(row.valorMulta)}`}
-                    </p>
-                  </div>
-                </button>
-              </li>
-            ))}
-          </ul>
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-widest text-slate-400">
+                        Modelo de notificação
+                      </p>
+                      <p className="text-sm text-slate-700">
+                        {typeMap.get(row.idTipoNotificacao) ??
+                          `Modelo ${row.idTipoNotificacao}`}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-slate-700">
+                        {formatDate(row.createdAt)}
+                      </p>
+                      <p className="text-xs uppercase tracking-widest text-slate-400">
+                        {row.valorMulta === null
+                          ? "Sem multa"
+                          : `Multa: ${formatCurrency(row.valorMulta)}`}
+                      </p>
+                    </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
+              <p className="text-xs text-slate-500">
+                Página {safeCurrentPage} de {totalPages}
+              </p>
+              {paginationControls}
+            </div>
+          </>
         ) : null}
       </Panel>
 
