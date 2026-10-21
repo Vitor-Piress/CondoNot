@@ -19,7 +19,7 @@ export function ActionCard({
     <button
       type="button"
       onClick={onClick}
-      className={`group rounded-2xl border p-5 text-left transition duration-200 ${
+      className={`animate-slide-down group cursor-pointer rounded-2xl border p-5 text-left transition duration-200 ${
         highlight
           ? "border-slate-900 bg-slate-900 text-white shadow-lg shadow-slate-900/20"
           : "border-slate-200 bg-white text-slate-900 hover:-translate-y-0.5 hover:border-slate-300"

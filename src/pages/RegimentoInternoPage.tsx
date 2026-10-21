@@ -175,7 +175,7 @@ export function RegimentoInternoPage() {
             </span>
           </label>
           {file ? (
-            <p className="mt-2 flex items-center gap-2 text-xs text-slate-600">
+            <p className="animate-slide-down mt-2 flex items-center gap-2 text-xs text-slate-600">
               <FileText aria-hidden="true" size={15} />
               {file.name} · {formatFileSize(file.size)}
             </p>
@@ -185,7 +185,7 @@ export function RegimentoInternoPage() {
               type="button"
               onClick={() => void handleUpload()}
               disabled={saving || !file || !activeCondominioId}
-              className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Upload aria-hidden="true" size={16} />
               {saving ? "Salvando..." : "Enviar regimento"}
@@ -195,7 +195,7 @@ export function RegimentoInternoPage() {
                 type="button"
                 onClick={() => void handleRemove()}
                 disabled={saving}
-                className="inline-flex items-center gap-2 rounded-lg border border-rose-200 px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-rose-200 px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Trash2 aria-hidden="true" size={16} />
                 Remover PDF
@@ -203,14 +203,17 @@ export function RegimentoInternoPage() {
             ) : null}
           </div>
           {error ? (
-            <p role="alert" className="mt-3 text-sm font-medium text-rose-700">
+            <p
+              role="alert"
+              className="animate-slide-down mt-3 text-sm font-medium text-rose-700"
+            >
               {error}
             </p>
           ) : null}
           {message ? (
             <p
               role="status"
-              className="mt-3 text-sm font-medium text-emerald-700"
+              className="animate-slide-down mt-3 text-sm font-medium text-emerald-700"
             >
               {message}
             </p>
@@ -246,7 +249,7 @@ export function RegimentoInternoPage() {
                   href={previewUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                  className="animate-slide-down inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
                 >
                   <ExternalLink aria-hidden="true" size={16} />
                   Abrir em nova aba
@@ -254,7 +257,10 @@ export function RegimentoInternoPage() {
               ) : null}
             </div>
             {currentPreviewError ? (
-              <p role="alert" className="text-sm text-rose-700">
+              <p
+                role="alert"
+                className="animate-slide-down text-sm text-rose-700"
+              >
                 {currentPreviewError}
               </p>
             ) : previewUrl ? (

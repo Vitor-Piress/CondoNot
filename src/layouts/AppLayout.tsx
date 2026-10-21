@@ -101,7 +101,7 @@ export function AppLayout({
               onClick={() => onNavigate("/condominios")}
               aria-label="Gerenciar condomínios"
               title="Gerenciar condomínios"
-              className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-slate-700 text-slate-100 transition hover:bg-slate-800"
+              className="inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-700 text-slate-100 transition hover:bg-slate-800"
             >
               <Building2 aria-hidden="true" size={17} />
             </button>
@@ -110,7 +110,7 @@ export function AppLayout({
               onClick={() => onNavigate("/")}
               aria-label="Ir para o dashboard"
               title="Dashboard"
-              className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-slate-700 text-slate-100 transition hover:bg-slate-800 sm:size-auto sm:gap-2 sm:px-3 sm:py-1.5"
+              className="inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-700 text-slate-100 transition hover:bg-slate-800 sm:size-auto sm:gap-2 sm:px-3 sm:py-1.5"
             >
               <BellRing className="h-3.5 w-3.5" aria-hidden="true" />
               <span className="hidden text-xs font-semibold uppercase tracking-[0.15em] sm:inline">
@@ -123,7 +123,7 @@ export function AppLayout({
                 onClick={() => void signOut()}
                 aria-label="Sair"
                 title="Sair"
-                className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-slate-700 text-slate-100 transition hover:bg-slate-800"
+                className="inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-700 text-slate-100 transition hover:bg-slate-800"
               >
                 <LogOut aria-hidden="true" size={17} />
               </button>
@@ -156,12 +156,12 @@ export function AppLayout({
 
         <main className="min-w-0 space-y-6 print:w-full print:space-y-0">
           {condominioError ? (
-            <section className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+            <section className="animate-slide-down rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
               {condominioError}
             </section>
           ) : null}
           {supabaseConfigError ? (
-            <section className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+            <section className="animate-slide-down rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
               {supabaseConfigError}. O sistema segue com dados de demonstração
               enquanto o ambiente não é configurado.
             </section>
@@ -169,14 +169,14 @@ export function AppLayout({
           {loadingCondominios && currentPath !== "/condominios" ? (
             <p className="text-sm text-slate-500">Carregando condomínios...</p>
           ) : !activeCondominioId && currentPath !== "/condominios" ? (
-            <section className="rounded-xl border border-slate-200 bg-white p-5">
+            <section className="animate-slide-down rounded-xl border border-slate-200 bg-white p-5">
               <p className="text-sm text-slate-700">
                 Cadastre um condomínio para começar.
               </p>
               <button
                 type="button"
                 onClick={() => onNavigate("/condominios")}
-                className="mt-3 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+                className="mt-3 cursor-pointer rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
               >
                 Gerenciar condomínios
               </button>

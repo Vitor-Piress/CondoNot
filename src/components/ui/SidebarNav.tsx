@@ -59,6 +59,10 @@ function isActive(pathname: string, itemPath: string): boolean {
 }
 
 export function SidebarNav({ currentPath, onNavigate }: SidebarNavProps) {
+  const activeIndex = navItems.findIndex((item) =>
+    isActive(currentPath, item.path),
+  );
+
   return (
     <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="mb-5 flex items-center gap-2 px-2">
@@ -68,7 +72,16 @@ export function SidebarNav({ currentPath, onNavigate }: SidebarNavProps) {
         </h2>
       </div>
 
-      <nav className="space-y-1">
+      <nav className="relative flex flex-col gap-1">
+        <span
+          aria-hidden="true"
+          style={{
+            transform: `translateY(calc(${Math.max(activeIndex, 0)} * 2.5rem))`,
+          }}
+          className={`pointer-events-none absolute inset-x-0 top-0 h-9 rounded-xl bg-slate-900 transition-[transform,opacity] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none ${
+            activeIndex >= 0 ? "opacity-100" : "opacity-0"
+          }`}
+        />
         {navItems.map((item) => {
           const active = isActive(currentPath, item.path);
           const Icon = item.icon;
@@ -78,13 +91,13 @@ export function SidebarNav({ currentPath, onNavigate }: SidebarNavProps) {
               key={item.path}
               type="button"
               onClick={() => onNavigate(item.path)}
-              className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition cursor-pointer ${
+              className={`relative z-10 flex h-9 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-medium transition-colors duration-200 cursor-pointer ${
                 active
-                  ? "bg-slate-900 text-white"
+                  ? "text-white"
                   : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-              } text-left`}
+              }`}
             >
-              <Icon className="h-4 w-4" aria-hidden="true" />
+              <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
               <span className="min-w-0 flex-1 whitespace-nowrap">
                 {item.label}
               </span>

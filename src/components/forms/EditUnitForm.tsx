@@ -330,7 +330,7 @@ export function EditUnitForm({ unitId, onSuccess }: EditUnitFormProps) {
       </section>
 
       {rentedState === "sim" ? (
-        <section className="rounded-xl border border-slate-200 p-4">
+        <section className="animate-slide-down rounded-xl border border-slate-200 p-4">
           <h3 className="text-sm font-semibold text-slate-800">Inquilino</h3>
           <p className="mt-1 text-xs text-slate-500">
             Como o imóvel está alugado, preencha os dados do inquilino.
@@ -382,7 +382,7 @@ export function EditUnitForm({ unitId, onSuccess }: EditUnitFormProps) {
       ) : null}
 
       {serverMessage ? (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+        <p className="animate-slide-down rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
           {serverMessage}
         </p>
       ) : null}
@@ -390,7 +390,7 @@ export function EditUnitForm({ unitId, onSuccess }: EditUnitFormProps) {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+        className="cursor-pointer rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
       >
         {isSubmitting ? "Salvando..." : "Salvar unidade"}
       </button>

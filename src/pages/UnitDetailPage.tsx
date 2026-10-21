@@ -142,7 +142,7 @@ export function UnitDetailPage({ unitId, onNavigate }: UnitDetailPageProps) {
           onClick={() => onNavigate("/unidades")}
           aria-label="Voltar para lista de unidades"
           title="Voltar para lista de unidades"
-          className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+          className="inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
         >
           <ArrowLeft aria-hidden="true" size={18} />
         </button>
@@ -152,7 +152,7 @@ export function UnitDetailPage({ unitId, onNavigate }: UnitDetailPageProps) {
           <button
             type="button"
             onClick={() => onNavigate(`/unidades/${unitId}/editar`)}
-            className="rounded-xl bg-slate-900 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-slate-700"
+            className="cursor-pointer rounded-xl bg-slate-900 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-slate-700"
           >
             Editar unidade
           </button>
@@ -164,7 +164,7 @@ export function UnitDetailPage({ unitId, onNavigate }: UnitDetailPageProps) {
       ) : null}
 
       {error ? (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+        <p className="animate-slide-down rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
           {error}
         </p>
       ) : null}
@@ -177,7 +177,7 @@ export function UnitDetailPage({ unitId, onNavigate }: UnitDetailPageProps) {
       ) : null}
 
       {!loading && !error && unit ? (
-        <article className="space-y-4 rounded-2xl border border-slate-200 p-5">
+        <article className="animate-slide-down space-y-4 rounded-2xl border border-slate-200 p-5">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
               Unidade
@@ -278,7 +278,7 @@ export function UnitDetailPage({ unitId, onNavigate }: UnitDetailPageProps) {
           ) : null}
 
           {notificationsError ? (
-            <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+            <p className="animate-slide-down rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
               {notificationsError}
             </p>
           ) : null}
@@ -305,7 +305,7 @@ export function UnitDetailPage({ unitId, onNavigate }: UnitDetailPageProps) {
                         state: { fromUnitId: unitId },
                       })
                     }
-                    className="group grid w-full grid-cols-1 gap-y-2.5 rounded-lg border border-slate-200 bg-white p-3.5 text-left transition hover:border-teal-300 hover:bg-teal-50/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 sm:grid-cols-[minmax(0,1fr)_auto_1rem] sm:items-center sm:gap-x-5 sm:gap-y-0 sm:p-4"
+                    className="animate-slide-down group grid w-full cursor-pointer grid-cols-1 gap-y-2.5 rounded-lg border border-slate-200 bg-white p-3.5 text-left transition hover:border-teal-300 hover:bg-teal-50/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 sm:grid-cols-[minmax(0,1fr)_auto_1rem] sm:items-center sm:gap-x-5 sm:gap-y-0 sm:p-4"
                   >
                     <span className="col-start-1 row-start-1 flex min-w-0 items-start gap-3">
                       <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500 transition group-hover:bg-teal-100 group-hover:text-teal-800">

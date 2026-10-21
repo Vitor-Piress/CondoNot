@@ -42,7 +42,7 @@ function ResidentBlock({
   resident: ResidentInfo | null;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+    <div className="animate-slide-down rounded-xl border border-slate-200 bg-slate-50/60 p-3">
       <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
         {title}
       </p>
@@ -174,7 +174,7 @@ export function NotificationUnitSidebarCard({
 
   if (loading && (!data?.unit || (unitId && data.unit.id !== unitId))) {
     return (
-      <aside className="animate-slide-down h-fit rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <p className="text-xs text-slate-500">Carregando dados da unidade...</p>
       </aside>
     );
@@ -195,9 +195,8 @@ export function NotificationUnitSidebarCard({
 
   return (
     <aside
-      key={unit.id}
       aria-label="Informações da unidade"
-      className="animate-slide-down h-fit space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+      className="h-fit space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
     >
       <div className="flex items-center justify-between gap-2 px-1">
         <div className="flex items-center gap-2">
@@ -221,7 +220,10 @@ export function NotificationUnitSidebarCard({
         </span>
       </div>
 
-      <div className="rounded-xl border border-slate-200 px-3 py-2.5">
+      <div
+        key={`unit-${unit.id}`}
+        className="animate-slide-down rounded-xl border border-slate-200 px-3 py-2.5"
+      >
         <button
           type="button"
           onClick={() => onNavigate(`/unidades/${unit.id}`)}
@@ -243,7 +245,7 @@ export function NotificationUnitSidebarCard({
 
       {hasTypeSelected ? (
         <div
-          key={type?.id ?? "selected-type"}
+          key={`type-${unit.id}-${type?.id ?? "selected-type"}`}
           className="animate-slide-down rounded-xl border border-slate-200 bg-slate-50/60 p-3"
         >
           <div className="flex items-center justify-between gap-2">
@@ -300,10 +302,18 @@ export function NotificationUnitSidebarCard({
         </div>
       ) : null}
 
-      <ResidentBlock title="Proprietário" resident={unit.proprietario} />
+      <ResidentBlock
+        key={`prop-${unit.id}`}
+        title="Proprietário"
+        resident={unit.proprietario}
+      />
 
       {unit.alugado ? (
-        <ResidentBlock title="Inquilino" resident={unit.inquilino} />
+        <ResidentBlock
+          key={`inq-${unit.id}`}
+          title="Inquilino"
+          resident={unit.inquilino}
+        />
       ) : null}
     </aside>
   );

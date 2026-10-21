@@ -72,7 +72,7 @@ export function UnitsPage({ onNavigate }: UnitsPageProps) {
           <button
             type="button"
             onClick={() => setViewMode("list")}
-            className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] ${
+            className={`inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] ${
               viewMode === "list"
                 ? "bg-slate-900 text-white"
                 : "text-slate-600 hover:bg-slate-100"
@@ -84,7 +84,7 @@ export function UnitsPage({ onNavigate }: UnitsPageProps) {
           <button
             type="button"
             onClick={() => setViewMode("grid")}
-            className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] ${
+            className={`inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] ${
               viewMode === "grid"
                 ? "bg-slate-900 text-white"
                 : "text-slate-600 hover:bg-slate-100"
@@ -106,7 +106,7 @@ export function UnitsPage({ onNavigate }: UnitsPageProps) {
       {loading ? <p className="text-sm text-slate-500">Carregando...</p> : null}
 
       {error ? (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+        <p className="animate-slide-down rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
           {error}
         </p>
       ) : null}
@@ -125,7 +125,7 @@ export function UnitsPage({ onNavigate }: UnitsPageProps) {
               <button
                 type="button"
                 onClick={() => onNavigate(`/unidades/${unit.id}`)}
-                className="grid w-full gap-2 rounded-xl border border-slate-200 p-4 text-left transition hover:border-slate-300 hover:bg-slate-50 md:grid-cols-[minmax(0,1fr)_180px_180px] md:items-center"
+                className="animate-slide-down grid w-full cursor-pointer gap-2 rounded-xl border border-slate-200 p-4 text-left transition hover:border-slate-300 hover:bg-slate-50 md:grid-cols-[minmax(0,1fr)_180px_180px] md:items-center"
               >
                 <p className="text-sm font-semibold text-slate-900">
                   {getUnitLabel(unit)}
@@ -153,7 +153,7 @@ export function UnitsPage({ onNavigate }: UnitsPageProps) {
               key={unit.id}
               type="button"
               onClick={() => onNavigate(`/unidades/${unit.id}`)}
-              className="rounded-xl border border-slate-200 p-4 text-left transition hover:border-slate-300 hover:bg-slate-50"
+              className="animate-slide-down cursor-pointer rounded-xl border border-slate-200 p-4 text-left transition hover:border-slate-300 hover:bg-slate-50"
             >
               <p className="text-sm font-semibold text-slate-900">
                 {getUnitLabel(unit)}

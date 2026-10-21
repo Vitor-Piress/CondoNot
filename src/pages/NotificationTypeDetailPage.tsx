@@ -72,7 +72,7 @@ export function NotificationTypeDetailPage({
           onClick={() => onNavigate("/tipos-notificacao")}
           aria-label="Voltar para lista"
           title="Voltar para lista"
-          className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+          className="inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
         >
           <ArrowLeft aria-hidden="true" size={18} />
         </button>
@@ -85,7 +85,7 @@ export function NotificationTypeDetailPage({
       ) : null}
 
       {error ? (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+        <p className="animate-slide-down rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
           {error}
         </p>
       ) : null}
@@ -98,7 +98,7 @@ export function NotificationTypeDetailPage({
       ) : null}
 
       {!loading && !error && type ? (
-        <article className="space-y-4 rounded-2xl border border-slate-200 p-5">
+        <article className="animate-slide-down space-y-4 rounded-2xl border border-slate-200 p-5">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
               Título do modelo

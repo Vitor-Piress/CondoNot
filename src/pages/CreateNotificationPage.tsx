@@ -18,7 +18,7 @@ export function CreateNotificationPage({
         <button
           type="button"
           onClick={() => onNavigate("/notificacoes")}
-          className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:bg-slate-100"
+          className="cursor-pointer rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:bg-slate-100"
         >
           Abrir lista completa
         </button>

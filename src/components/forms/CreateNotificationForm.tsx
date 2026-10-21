@@ -80,7 +80,7 @@ function AttachmentPreview({
   }, [file]);
 
   return (
-    <li className="overflow-hidden rounded-xl border border-slate-200">
+    <li className="animate-slide-down overflow-hidden rounded-xl border border-slate-200">
       <img
         ref={imageRef}
         alt={`Prévia de ${file.name}`}
@@ -92,7 +92,7 @@ function AttachmentPreview({
           type="button"
           onClick={() => onRemove(index)}
           disabled={disabled}
-          className="shrink-0 text-xs font-semibold text-rose-700 hover:underline"
+          className="shrink-0 cursor-pointer text-xs font-semibold text-rose-700 hover:underline disabled:cursor-not-allowed"
         >
           Remover
         </button>
@@ -426,13 +426,13 @@ export function CreateNotificationForm({
       </section>
 
       {serverMessage ? (
-        <div className="space-y-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+        <div className="animate-slide-down space-y-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
           <p>{serverMessage}</p>
           {partialNotificationId ? (
             <button
               type="button"
               onClick={() => onSuccess(partialNotificationId)}
-              className="underline"
+              className="cursor-pointer underline"
             >
               Abrir notificação #{partialNotificationId}
             </button>
@@ -443,7 +443,7 @@ export function CreateNotificationForm({
       <button
         type="submit"
         disabled={isSubmitting || Boolean(partialNotificationId)}
-        className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+        className="cursor-pointer rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
       >
         {isSubmitting ? "Salvando..." : "Inserir notificação"}
       </button>

@@ -262,7 +262,7 @@ export function NotificationDetailPage({
               sourceUnitId ? "Voltar para unidade" : "Voltar para lista"
             }
             title={sourceUnitId ? "Voltar para unidade" : "Voltar para lista"}
-            className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+            className="inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
           >
             <ArrowLeft aria-hidden="true" size={18} />
           </button>
@@ -287,7 +287,7 @@ export function NotificationDetailPage({
                       ? "Reenviar e-mail de notificação"
                       : "Enviar e-mail de notificação"
                 }
-                className={`inline-flex size-9 items-center justify-center rounded-lg border transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                className={`animate-slide-down inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border transition disabled:cursor-not-allowed disabled:opacity-50 ${
                   row.emailNotificacao
                     ? "border-emerald-300 text-emerald-600 hover:bg-emerald-50"
                     : "border-slate-300 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
@@ -302,7 +302,7 @@ export function NotificationDetailPage({
                 onClick={() => setIsBaixaModalOpen(true)}
                 aria-label="Dar baixa na notificação"
                 title="Dar baixa na notificação"
-                className="inline-flex size-9 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-rose-50 hover:text-rose-700"
+                className="animate-slide-down inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-rose-50 hover:text-rose-700"
               >
                 <ShieldOff aria-hidden="true" size={18} />
               </button>
@@ -317,7 +317,7 @@ export function NotificationDetailPage({
                   ? "Não foi possível carregar as fotos anexas"
                   : "Imprimir notificação"
               }
-              className="inline-flex size-9 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Printer aria-hidden="true" size={18} />
             </button>
@@ -331,7 +331,7 @@ export function NotificationDetailPage({
         {emailFeedback ? (
           <p
             role="status"
-            className={`print:hidden mb-4 rounded-xl border px-3 py-2 text-sm font-medium ${
+            className={`animate-slide-down print:hidden mb-4 rounded-xl border px-3 py-2 text-sm font-medium ${
               emailFeedback.type === "success"
                 ? "border-emerald-200 bg-emerald-50 text-emerald-700"
                 : "border-rose-200 bg-rose-50 text-rose-700"
@@ -342,7 +342,7 @@ export function NotificationDetailPage({
         ) : null}
 
         {error ? (
-          <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+          <p className="animate-slide-down rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
             {error}
           </p>
         ) : null}
@@ -355,7 +355,7 @@ export function NotificationDetailPage({
         ) : null}
 
         {!loading && !error && row ? (
-          <article className="space-y-4 rounded-2xl print:border-none border border-slate-200 p-5">
+          <article className="animate-slide-down space-y-4 rounded-2xl print:border-none border border-slate-200 p-5">
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <p className="print:hidden text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
@@ -495,7 +495,7 @@ export function NotificationDetailPage({
                 href={attachment.signedUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="overflow-hidden rounded-xl border border-slate-200"
+                className="animate-slide-down overflow-hidden rounded-xl border border-slate-200"
               >
                 <img
                   src={attachment.signedUrl}
@@ -663,7 +663,7 @@ export function NotificationDetailPage({
       ) : null}
       {isBaixaModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
+          <div className="animate-slide-down w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
             <h3 className="text-lg font-semibold text-slate-900">
               Dar baixa na notificação
             </h3>
@@ -682,7 +682,7 @@ export function NotificationDetailPage({
               />
             </label>
             {baixaError ? (
-              <p className="mt-2 text-sm font-medium text-rose-600">
+              <p className="animate-slide-down mt-2 text-sm font-medium text-rose-600">
                 {baixaError}
               </p>
             ) : null}
@@ -695,7 +695,7 @@ export function NotificationDetailPage({
                   setBaixaError(null);
                 }}
                 disabled={isSubmittingBaixa}
-                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 disabled:opacity-60"
+                className="cursor-pointer rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Cancelar
               </button>
@@ -703,7 +703,7 @@ export function NotificationDetailPage({
                 type="button"
                 onClick={() => void handleConfirmBaixa()}
                 disabled={isSubmittingBaixa}
-                className="rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-rose-500 disabled:opacity-60"
+                className="cursor-pointer rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSubmittingBaixa ? "Dando baixa..." : "Confirmar baixa"}
               </button>

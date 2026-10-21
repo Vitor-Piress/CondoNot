@@ -237,7 +237,7 @@ export function CondominiosPage() {
             {condominios.map((condominio) => (
               <li
                 key={condominio.id}
-                className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"
+                className="animate-slide-down flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <Building2
@@ -327,7 +327,7 @@ export function CondominiosPage() {
                       disabled={saving}
                       aria-label="Salvar valor da multa"
                       title="Salvar valor da multa"
-                      className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-emerald-200 text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-wait disabled:opacity-50"
+                      className="inline-flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-emerald-200 text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-wait disabled:opacity-50"
                     >
                       <Check aria-hidden="true" size={18} />
                     </button>
@@ -337,7 +337,7 @@ export function CondominiosPage() {
                       disabled={saving}
                       aria-label="Cancelar edição do valor da multa"
                       title="Cancelar edição"
-                      className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-100 disabled:cursor-wait disabled:opacity-50"
+                      className="inline-flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-100 disabled:cursor-wait disabled:opacity-50"
                     >
                       <X aria-hidden="true" size={18} />
                     </button>
@@ -356,7 +356,7 @@ export function CondominiosPage() {
                     disabled={saving}
                     aria-label="Editar valor da multa"
                     title="Editar valor da multa"
-                    className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-100 disabled:cursor-wait disabled:opacity-50"
+                    className="inline-flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-100 disabled:cursor-wait disabled:opacity-50"
                   >
                     <Pencil aria-hidden="true" size={17} />
                   </button>
@@ -398,7 +398,7 @@ export function CondominiosPage() {
               <button
                 type="submit"
                 disabled={saving || isEditingFine}
-                className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <ImageUp aria-hidden="true" size={16} />
                 {saving
@@ -414,7 +414,7 @@ export function CondominiosPage() {
                   type="button"
                   onClick={() => void handleRemoveLogo()}
                   disabled={saving}
-                  className="inline-flex items-center gap-2 rounded-lg border border-rose-200 px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-rose-200 px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Trash2 aria-hidden="true" size={16} />
                   Remover logo
@@ -464,7 +464,7 @@ export function CondominiosPage() {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="cursor-pointer rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Cadastrar condomínio
           </button>
@@ -472,12 +472,12 @@ export function CondominiosPage() {
       </Panel>
 
       {message ? (
-        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700">
+        <p className="animate-slide-down rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700">
           {message}
         </p>
       ) : null}
       {error ? (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+        <p className="animate-slide-down rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
           {error}
         </p>
       ) : null}

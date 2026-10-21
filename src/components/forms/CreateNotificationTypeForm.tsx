@@ -85,7 +85,7 @@ function EscopoFields({
   const escopoErrors = errors.escopos?.[escopoIndex];
 
   return (
-    <div className="space-y-4 rounded-xl border border-slate-200 p-4">
+    <div className="animate-slide-down space-y-4 rounded-xl border border-slate-200 p-4">
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
           Escopo {escopoIndex + 1}
@@ -94,7 +94,7 @@ function EscopoFields({
           <button
             type="button"
             onClick={onRemoveEscopo}
-            className="text-xs font-semibold text-rose-600 hover:underline"
+            className="cursor-pointer text-xs font-semibold text-rose-600 hover:underline"
           >
             Remover escopo
           </button>
@@ -122,7 +122,7 @@ function EscopoFields({
           return (
             <div
               key={field.id}
-              className="space-y-2 rounded-xl border border-dashed border-slate-300 p-3"
+              className="animate-slide-down space-y-2 rounded-xl border border-dashed border-slate-300 p-3"
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
@@ -132,7 +132,7 @@ function EscopoFields({
                   <button
                     type="button"
                     onClick={() => removeParagrafo(paragrafoIndex)}
-                    className="text-xs font-semibold text-rose-600 hover:underline"
+                    className="cursor-pointer text-xs font-semibold text-rose-600 hover:underline"
                   >
                     Remover parágrafo
                   </button>
@@ -180,7 +180,7 @@ function EscopoFields({
         <button
           type="button"
           onClick={() => appendParagrafo(emptyParagrafo())}
-          className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:bg-slate-100"
+          className="cursor-pointer rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:bg-slate-100"
         >
           Adicionar parágrafo
         </button>
@@ -274,14 +274,14 @@ export function CreateNotificationTypeForm({
         <button
           type="button"
           onClick={() => appendEscopo(emptyEscopo())}
-          className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:bg-slate-100"
+          className="cursor-pointer rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:bg-slate-100"
         >
           Adicionar escopo
         </button>
       ) : null}
 
       <div className="rounded-xl border border-slate-200 p-4">
-        <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+        <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-700">
           <input type="checkbox" {...register("usarTextoApoio")} />
           Incluir texto de apoio na carta impressa
         </label>
@@ -290,7 +290,7 @@ export function CreateNotificationTypeForm({
           reforçar uma orientação específica deste modelo de notificação.
         </p>
         {usarTextoApoio ? (
-          <label className="mt-3 block space-y-1 text-sm">
+          <label className="animate-slide-down mt-3 block space-y-1 text-sm">
             <span className="font-medium text-slate-700">Texto de apoio</span>
             <textarea
               {...register("textoApoio")}
@@ -310,7 +310,7 @@ export function CreateNotificationTypeForm({
       <button
         type="submit"
         disabled={isSubmitting}
-        className="rounded-xl bg-slate-900 ml-2 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+        className="ml-2 cursor-pointer rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
       >
         {isSubmitting ? "Salvando..." : "Inserir modelo de notificação"}
       </button>

@@ -216,7 +216,7 @@ export function UnitCombobox({
       />
 
       {isOpen && !disabled ? (
-        <ul className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-xl border border-slate-200 bg-white p-1 text-sm shadow-lg">
+        <ul className="animate-slide-down absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-xl border border-slate-200 bg-white p-1 text-sm shadow-lg">
           {emptyOptionLabel ? (
             <li>
               <button
@@ -225,7 +225,7 @@ export function UnitCombobox({
                   event.preventDefault();
                   selectUnit("", "");
                 }}
-                className="block w-full rounded-lg px-3 py-2 text-left text-slate-600 hover:bg-slate-100"
+                className="block w-full cursor-pointer rounded-lg px-3 py-2 text-left text-slate-600 hover:bg-slate-100"
               >
                 {emptyOptionLabel}
               </button>
@@ -248,7 +248,7 @@ export function UnitCombobox({
                       event.preventDefault();
                       selectUnit(unit.id, getUnitLabel(unit));
                     }}
-                    className={`block w-full rounded-lg px-3 py-2 text-left transition ${
+                    className={`block w-full cursor-pointer rounded-lg px-3 py-2 text-left transition ${
                       isHighlighted
                         ? "bg-slate-100 font-semibold text-slate-900"
                         : "text-slate-700 hover:bg-slate-100"

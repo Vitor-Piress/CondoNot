@@ -15,7 +15,7 @@ export function EditUnitPage({ unitId, onNavigate }: EditUnitPageProps) {
         <button
           type="button"
           onClick={() => onNavigate(`/unidades/${unitId}`)}
-          className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:bg-slate-100"
+          className="cursor-pointer rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:bg-slate-100"
         >
           Voltar para unidade
         </button>

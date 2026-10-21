@@ -141,7 +141,7 @@ export function NotificationTypesPage({
         <button
           type="button"
           onClick={() => onNavigate("/tipos-notificacao/novo")}
-          className="rounded-xl bg-slate-900 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-slate-700"
+          className="cursor-pointer rounded-xl bg-slate-900 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-slate-700"
         >
           Inserir modelo de notificação
         </button>
@@ -163,7 +163,7 @@ export function NotificationTypesPage({
       {loading ? <p className="text-sm text-slate-500">Carregando...</p> : null}
 
       {error ? (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+        <p className="animate-slide-down rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
           {error}
         </p>
       ) : null}
@@ -171,7 +171,7 @@ export function NotificationTypesPage({
       {message ? (
         <p
           role="status"
-          className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700"
+          className="animate-slide-down mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700"
         >
           {message}
         </p>
@@ -188,11 +188,11 @@ export function NotificationTypesPage({
         <ul className="space-y-3">
           {filteredTypes.map((type) => (
             <li key={type.id}>
-              <div className="flex items-stretch gap-2">
+              <div className="animate-slide-down flex items-stretch gap-2">
                 <button
                   type="button"
                   onClick={() => onNavigate(`/tipos-notificacao/${type.id}`)}
-                  className="min-w-0 flex-1 rounded-xl border border-slate-200 p-4 text-left transition hover:border-slate-300 hover:bg-slate-50"
+                  className="min-w-0 flex-1 cursor-pointer rounded-xl border border-slate-200 p-4 text-left transition hover:border-slate-300 hover:bg-slate-50"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
@@ -224,7 +224,7 @@ export function NotificationTypesPage({
                   disabled={archivingTypeId !== null}
                   aria-label={`Arquivar ${type.titulo ?? `Modelo ${type.id}`}`}
                   title="Arquivar modelo"
-                  className="inline-flex size-11 shrink-0 self-center items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800 disabled:cursor-wait disabled:opacity-50"
+                  className="inline-flex size-11 shrink-0 cursor-pointer self-center items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800 disabled:cursor-wait disabled:opacity-50"
                 >
                   <Archive aria-hidden="true" size={17} />
                 </button>

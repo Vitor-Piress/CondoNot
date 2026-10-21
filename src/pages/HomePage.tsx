@@ -170,7 +170,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
         ) : null}
 
         {error ? (
-          <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+          <p className="animate-slide-down rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
             {error}
           </p>
         ) : null}
@@ -190,7 +190,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
                   <button
                     type="button"
                     onClick={() => onNavigate(`/notificacoes/${row.id}`)}
-                    className="flex w-full items-start justify-between rounded-xl border border-slate-200 p-3 text-left transition hover:border-slate-300 hover:bg-slate-50 cursor-pointer"
+                    className="animate-slide-down flex w-full items-start justify-between rounded-xl border border-slate-200 p-3 text-left transition hover:border-slate-300 hover:bg-slate-50 cursor-pointer"
                   >
                     <div>
                       <p className="text-sm font-semibold text-slate-900">

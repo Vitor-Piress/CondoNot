@@ -440,7 +440,7 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
 
   const summaryContent = (
     <div className="grid gap-3 sm:grid-cols-2 print:grid-cols-2">
-      <div className="rounded-xl border border-slate-200 p-3 print:border-slate-400">
+      <div className="animate-slide-down rounded-xl border border-slate-200 p-3 print:border-slate-400">
         <div className="border-slate-200 p-3 print:border-slate-400">
           <p className="text-xs font-medium uppercase tracking-widest text-slate-400">
             Notificação mais recorrente
@@ -470,7 +470,7 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
         </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200 p-3 print:border-slate-400">
+      <div className="animate-slide-down rounded-xl border border-slate-200 p-3 print:border-slate-400">
         <p className="mb-2 text-xs font-medium uppercase tracking-widest text-slate-400">
           Sumário
         </p>
@@ -499,7 +499,7 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
           </li>
         </ul>
       </div>
-      <div className="rounded-xl border border-slate-200 p-3 print:border-slate-400 sm:col-span-2 print:col-span-2">
+      <div className="animate-slide-down rounded-xl border border-slate-200 p-3 print:border-slate-400 sm:col-span-2 print:col-span-2">
         <p className="mb-3 text-xs font-medium uppercase tracking-widest text-slate-400">
           Por modelo de notificação
         </p>
@@ -604,7 +604,7 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
         ) : null}
 
         {error ? (
-          <p className="mb-5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+          <p className="animate-slide-down mb-5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
             {error}
           </p>
         ) : null}
@@ -619,7 +619,7 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
             onClick={() => setIsFiltersOpen((open) => !open)}
             aria-expanded={isFiltersOpen}
             aria-controls="report-filters-panel"
-            className="flex w-full items-center justify-between gap-3  cursor-pointer rounded-2xl px-4 py-3 text-left"
+            className="flex w-full items-center justify-between gap-3 cursor-pointer rounded-2xl px-4 py-3 text-left"
           >
             <span className="text-sm font-semibold text-slate-700">
               Filtros do relatório
@@ -628,11 +628,11 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
               className={`size-4 text-slate-500 transition-transform ${isFiltersOpen ? "rotate-180" : ""}`}
             />
           </button>
-          <div
-            id="report-filters-panel"
-            hidden={!isFiltersOpen}
-            className="border-t border-slate-200 p-4"
-          >
+          {isFiltersOpen ? (
+            <div
+              id="report-filters-panel"
+              className="animate-slide-down border-t border-slate-200 p-4"
+            >
             <div className="grid items-end gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <label className="block space-y-1.5 text-xs font-medium text-slate-600">
                 Busca
@@ -770,6 +770,7 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
               </label>
             </div>
           </div>
+          ) : null}
         </section>
 
         <section className="mb-5 rounded-2xl border border-slate-200">
@@ -778,7 +779,7 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
             onClick={() => setIsColumnsOpen((open) => !open)}
             aria-expanded={isColumnsOpen}
             aria-controls="report-columns-panel"
-            className="flex w-full items-center justify-between  cursor-pointer gap-3 rounded-2xl px-4 py-3 text-left"
+            className="flex w-full items-center justify-between cursor-pointer gap-3 rounded-2xl px-4 py-3 text-left"
           >
             <span className="text-sm font-semibold text-slate-700">
               Colunas do relatório impresso
@@ -794,7 +795,7 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
           {isColumnsOpen ? (
             <div
               id="report-columns-panel"
-              className="border-t border-slate-200 p-4"
+              className="animate-slide-down border-t border-slate-200 p-4"
             >
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 {reportColumns.map((column) => {
@@ -868,13 +869,16 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
               </div>
             </div>
 
-            <ul className="space-y-3">
+            <ul
+              key={`page-${safeCurrentPage}-size-${pageSize}`}
+              className="space-y-3"
+            >
               {renderedRows.map((row) => (
                 <li key={row.id}>
                   <button
                     type="button"
                     onClick={() => onNavigate(`/notificacoes/${row.id}`)}
-                    className="grid w-full gap-2 rounded-xl border border-slate-200 p-4 text-left transition hover:border-slate-300 hover:bg-slate-50 md:grid-cols-[minmax(0,1fr)_220px_160px] md:items-center cursor-pointer"
+                    className="animate-slide-down grid w-full gap-2 rounded-xl border border-slate-200 p-4 text-left transition hover:border-slate-300 hover:bg-slate-50 md:grid-cols-[minmax(0,1fr)_220px_160px] md:items-center cursor-pointer"
                   >
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
