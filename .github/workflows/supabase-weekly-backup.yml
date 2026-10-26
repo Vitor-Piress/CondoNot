@@ -3,7 +3,7 @@ name: Supabase Weekly Backup to Cloudflare R2
 on:
   schedule:
     # Executa toda segunda-feira às 03:00 UTC (00:00 no horário de Brasília)
-    - cron: '0 3 * * 1'
+    - cron: "0 3 * * 1"
   workflow_dispatch: # Permite disparo manual pela aba Actions do GitHub
 
 jobs:
@@ -60,7 +60,7 @@ jobs:
           [supabase_storage]
           type = s3
           provider = Other
-           access_key_id = ${SUPABASE_S3_ACCESS_KEY}
+          access_key_id = ${SUPABASE_S3_ACCESS_KEY}
           secret_access_key = ${SUPABASE_S3_SECRET_KEY}
           endpoint = ${SUPABASE_S3_ENDPOINT}
           region = ${SUPABASE_S3_REGION}
@@ -73,13 +73,14 @@ jobs:
           secret_access_key = ${R2_SECRET_ACCESS_KEY}
           endpoint = https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com
           acl = private
+          no_check_bucket = true
           EOF
 
       - name: Upload Database Dump to Cloudflare R2
         env:
           R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
         run: |
-          rclone copy "${ARCHIVE_NAME}" "cloudflare_r2:${R2_BUCKET_NAME}/database/" --progress
+          rclone copy "${ARCHIVE_NAME}" "cloudflare_r2:${R2_BUCKET_NAME}/database/" --s3-no-check-bucket --progress
 
       - name: Sync Supabase Storage Files Incrementally to Cloudflare R2
         env:
@@ -87,4 +88,4 @@ jobs:
         run: |
           # 'rclone copy' copia apenas imagens novas ou alteradas (incremental),
           # sem apagar no R2 arquivos que tenham sido deletados acidentalmente no Supabase.
-          rclone copy "supabase_storage:" "cloudflare_r2:${R2_BUCKET_NAME}/storage_buckets/" --progress
+          rclone copy "supabase_storage:" "cloudflare_r2:${R2_BUCKET_NAME}/storage_buckets/" --s3-no-check-bucket --progress
