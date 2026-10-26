@@ -74,13 +74,14 @@ jobs:
           endpoint = https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com
           acl = private
           no_check_bucket = true
+          no_head = true
           EOF
 
       - name: Upload Database Dump to Cloudflare R2
         env:
           R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
         run: |
-          rclone copy "${ARCHIVE_NAME}" "cloudflare_r2:${R2_BUCKET_NAME}/database/" --s3-no-check-bucket --progress
+          rclone copy "${ARCHIVE_NAME}" "cloudflare_r2:${R2_BUCKET_NAME}/database/" --s3-no-check-bucket --s3-no-head --progress
 
       - name: Sync Supabase Storage Files Incrementally to Cloudflare R2
         env:
@@ -88,4 +89,4 @@ jobs:
         run: |
           # 'rclone copy' copia apenas imagens novas ou alteradas (incremental),
           # sem apagar no R2 arquivos que tenham sido deletados acidentalmente no Supabase.
-          rclone copy "supabase_storage:" "cloudflare_r2:${R2_BUCKET_NAME}/storage_buckets/" --s3-no-check-bucket --progress
+          rclone copy "supabase_storage:" "cloudflare_r2:${R2_BUCKET_NAME}/storage_buckets/" --s3-no-check-bucket --s3-no-head --progress
