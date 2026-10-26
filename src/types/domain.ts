@@ -43,6 +43,7 @@ export interface Notification {
   idUnidade: string;
   tipo: string | null;
   motivo: string | null;
+  textoApoio: string | null;
   categoria: string | null;
   dataRetroativa: string | null;
   valorMulta: number | null;
@@ -89,6 +90,14 @@ export type RegimentoTexto = RegimentoEscopo[];
 
 export const MAX_ESCOPOS = 2;
 export const MAX_PARAGRAFOS_POR_ESCOPO = 5;
+export const MIN_MOTIVO_LENGTH = 6;
+export const MAX_MOTIVO_LENGTH = 800;
+export const MIN_TEXTO_APOIO_LENGTH = 5;
+export const MAX_TEXTO_APOIO_LENGTH = 500;
+export const PRINT_PAGE_MAX_LINES = 20;
+export const PRINT_MODEL_MAX_LINES = 17;
+export const PRINT_CHARS_PER_LINE = 82;
+export const PRINT_REGIMENTO_CHARS_PER_LINE = 74;
 
 export interface NotificationType {
   id: string;
@@ -296,6 +305,7 @@ export function parseNotification(row: UnknownRow): Notification {
     idUnidade: toStringValue(row.id_unidade ?? row.idUnidade, ""),
     tipo: toNullableString(row.tipo),
     motivo: toNullableString(row.motivo),
+    textoApoio: toNullableString(row.texto_apoio ?? row.textoApoio),
     categoria: toNullableString(row.categoria),
     dataRetroativa: toNullableString(row.data_retroativa ?? row.dataRetroativa),
     valorMulta: toNullableNumber(row.valor_multa ?? row.valorMulta),

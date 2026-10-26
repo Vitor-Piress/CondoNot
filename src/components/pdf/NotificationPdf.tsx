@@ -253,8 +253,10 @@ export function NotificationPdf({
           <Text>{notification.motivo ?? "Sem motivo informado."}</Text>
         </View>
 
-        {type?.textoApoio ? (
-          <Text style={styles.block}>{type.textoApoio}</Text>
+        {type?.textoApoio ?? notification.textoApoio ? (
+          <Text style={styles.block}>
+            {type?.textoApoio ?? notification.textoApoio}
+          </Text>
         ) : null}
 
         <ClosingParagraph kind={printCopy.kind} />

@@ -17,22 +17,56 @@ import {
   NOTIFICATION_ATTACHMENT_MIME_TYPES,
   validateNotificationAttachments,
 } from "../../services/storageService";
-import { type NotificationType, type Unit } from "../../types/domain";
+import {
+  MAX_MOTIVO_LENGTH,
+  MAX_TEXTO_APOIO_LENGTH,
+  MIN_MOTIVO_LENGTH,
+  MIN_TEXTO_APOIO_LENGTH,
+  type NotificationType,
+  type Unit,
+} from "../../types/domain";
 import { formatCurrency } from "../../utils/format";
+import { calculateNotificationPrintBudget } from "../../utils/notificationPrint";
 
-const createNotificationSchema = z.object({
-  idTipoNotificacao: z
-    .string()
-    .trim()
-    .min(1, "Selecione um modelo de notificação."),
-  idUnidade: z.string().trim().min(1, "Selecione uma unidade."),
-  categoria: z.enum(["Multa", "Orientacao", "Advertencia"]),
-  motivo: z
-    .string()
-    .trim()
-    .min(6, "Descreva o motivo com ao menos 6 caracteres."),
-  dataRetroativa: z.string().trim(),
-});
+const createNotificationSchema = z
+  .object({
+    idTipoNotificacao: z
+      .string()
+      .trim()
+      .min(1, "Selecione um modelo de notificação."),
+    idUnidade: z.string().trim().min(1, "Selecione uma unidade."),
+    categoria: z.enum(["Multa", "Orientacao", "Advertencia"]),
+    motivo: z
+      .string()
+      .trim()
+      .min(
+        MIN_MOTIVO_LENGTH,
+        `Descreva o motivo com ao menos ${MIN_MOTIVO_LENGTH} caracteres.`,
+      )
+      .max(
+        MAX_MOTIVO_LENGTH,
+        `O motivo deve ter no máximo ${MAX_MOTIVO_LENGTH} caracteres.`,
+      ),
+    usarTextoApoio: z.boolean(),
+    textoApoio: z
+      .string()
+      .trim()
+      .max(
+        MAX_TEXTO_APOIO_LENGTH,
+        `O texto de apoio deve ter no máximo ${MAX_TEXTO_APOIO_LENGTH} caracteres.`,
+      )
+      .optional(),
+    dataRetroativa: z.string().trim(),
+  })
+  .refine(
+    (values) =>
+      !values.usarTextoApoio ||
+      (values.textoApoio && values.textoApoio.length >= MIN_TEXTO_APOIO_LENGTH),
+    {
+      message: `Informe o texto de apoio (mínimo de ${MIN_TEXTO_APOIO_LENGTH} caracteres) ou desative essa opção.`,
+      path: ["textoApoio"],
+    },
+  );
 
 type CreateNotificationValues = z.infer<typeof createNotificationSchema>;
 
@@ -119,6 +153,8 @@ export function CreateNotificationForm({
     register,
     handleSubmit,
     reset,
+    setValue,
+    setError,
     control,
     formState: { errors, isSubmitting },
   } = useForm<CreateNotificationValues>({
@@ -128,6 +164,8 @@ export function CreateNotificationForm({
       idUnidade: "",
       categoria: "Orientacao",
       motivo: "",
+      usarTextoApoio: false,
+      textoApoio: "",
       dataRetroativa: "",
     },
   });
@@ -188,6 +226,32 @@ export function CreateNotificationForm({
     control,
     name: "idTipoNotificacao",
   });
+  const usarTextoApoio = useWatch({
+    control,
+    name: "usarTextoApoio",
+  });
+  const textoApoioValue = useWatch({
+    control,
+    name: "textoApoio",
+  });
+  const motivoValue = useWatch({
+    control,
+    name: "motivo",
+  });
+
+  const selectedType =
+    types.find((type) => type.id === selectedTypeId) ?? null;
+  const typeHasSupportText = Boolean(selectedType?.textoApoio?.trim());
+
+  const printBudget = calculateNotificationPrintBudget({
+    textoRegimento: selectedType?.textoRegimento,
+    modelTextoApoio: selectedType?.textoApoio,
+    usarCustomTextoApoio: !typeHasSupportText && Boolean(usarTextoApoio),
+    customTextoApoio: textoApoioValue,
+    motivo: motivoValue,
+  });
+  const canEnableCustomSupportText =
+    printBudget.maxSupportTextChars >= MIN_TEXTO_APOIO_LENGTH;
 
   useEffect(() => {
     onSelectionChange?.({
@@ -241,6 +305,42 @@ export function CreateNotificationForm({
       return;
     }
 
+    const submitBudget = calculateNotificationPrintBudget({
+      textoRegimento: selectedType?.textoRegimento,
+      modelTextoApoio: selectedType?.textoApoio,
+      usarCustomTextoApoio: !typeHasSupportText && values.usarTextoApoio,
+      customTextoApoio: values.textoApoio,
+      motivo: values.motivo,
+    });
+
+    if (values.motivo.trim().length > submitBudget.maxMotivoChars) {
+      setError("motivo", {
+        type: "manual",
+        message: `Para caber em 1 página A4 com o modelo selecionado, o motivo deve ter no máximo ${submitBudget.maxMotivoChars} caracteres (reduza o texto ou quebras de linha).`,
+      });
+      return;
+    }
+
+    if (
+      !typeHasSupportText &&
+      values.usarTextoApoio &&
+      (values.textoApoio?.trim().length ?? 0) > submitBudget.maxSupportTextChars
+    ) {
+      setError("textoApoio", {
+        type: "manual",
+        message: `Para caber em 1 página A4, o texto de apoio deve ter no máximo ${submitBudget.maxSupportTextChars} caracteres (reduza o texto de apoio ou o motivo).`,
+      });
+      return;
+    }
+
+    if (submitBudget.isOverBudget) {
+      setError("motivo", {
+        type: "manual",
+        message: `O conteúdo total (${submitBudget.totalUsedLines} linhas) ultrapassa o limite de ${submitBudget.maxPageLines} linhas da página A4 impressa. Reduza o motivo, o texto de apoio ou as quebras de linha.`,
+      });
+      return;
+    }
+
     try {
       const created = await createNotification({
         idCondominio: activeCondominioId,
@@ -248,6 +348,10 @@ export function CreateNotificationForm({
         idUnidade: values.idUnidade,
         categoria: values.categoria,
         motivo: values.motivo,
+        textoApoio:
+          !typeHasSupportText && values.usarTextoApoio && values.textoApoio
+            ? values.textoApoio.trim()
+            : null,
         dataRetroativa: toNullableDate(values.dataRetroativa),
         valorMulta:
           values.categoria === "Multa"
@@ -285,7 +389,14 @@ export function CreateNotificationForm({
               <NotificationTypeCombobox
                 types={types}
                 value={field.value}
-                onChange={field.onChange}
+                onChange={(nextTypeId) => {
+                  field.onChange(nextTypeId);
+                  const nextType = types.find((t) => t.id === nextTypeId);
+                  if (!nextTypeId || Boolean(nextType?.textoApoio?.trim())) {
+                    setValue("usarTextoApoio", false, { shouldValidate: true });
+                    setValue("textoApoio", "", { shouldValidate: true });
+                  }
+                }}
                 disabled={loadingOptions}
                 placeholder="Digite para buscar o modelo"
               />
@@ -343,19 +454,186 @@ export function CreateNotificationForm({
       </div>
 
       <label className="block space-y-1 text-sm">
-        <span className="font-medium text-slate-700">Motivo</span>
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-medium text-slate-700">Motivo</span>
+          <span
+            className={`text-xs ${
+              (motivoValue ?? "").trim().length > printBudget.maxMotivoChars
+                ? "font-semibold text-rose-600"
+                : "text-slate-400"
+            }`}
+          >
+            {(motivoValue ?? "").length}/{printBudget.maxMotivoChars} caracteres
+          </span>
+        </div>
         <textarea
           {...register("motivo")}
           rows={4}
+          maxLength={Math.max(
+            (motivoValue ?? "").length,
+            printBudget.maxMotivoChars,
+          )}
           className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none ring-slate-200 transition focus:ring"
           placeholder="Descreva o motivo da notificação"
         />
+        <p className="text-xs text-slate-500">
+          Limite dinâmico calculado conforme o espaço restante na folha A4 (teto
+          de {MAX_MOTIVO_LENGTH} caracteres; quebras de linha também consomem
+          espaço vertical).
+        </p>
         {errors.motivo ? (
           <p className="text-xs font-medium text-rose-600">
             {errors.motivo.message}
           </p>
         ) : null}
       </label>
+
+      <div className="rounded-xl border border-slate-200 p-4">
+        {!selectedType ? (
+          <>
+            <label className="flex cursor-not-allowed items-center gap-2 text-sm font-medium text-slate-400">
+              <input type="checkbox" disabled checked={false} readOnly />
+              Incluir texto de apoio na carta impressa
+            </label>
+            <p className="mt-1 text-xs text-slate-500">
+              Selecione um modelo de notificação primeiro. O texto de apoio
+              específico da notificação só fica disponível quando o modelo não
+              possui texto de apoio próprio.
+            </p>
+          </>
+        ) : typeHasSupportText ? (
+          <div className="space-y-2">
+            <label className="flex cursor-not-allowed items-center gap-2 text-sm font-medium text-slate-400">
+              <input type="checkbox" disabled checked={false} readOnly />
+              Incluir texto de apoio na carta impressa
+            </label>
+            <p className="text-xs text-slate-500">
+              O modelo selecionado já possui um texto de apoio padrão e será
+              utilizado automaticamente na impressão:
+            </p>
+            <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs whitespace-pre-wrap text-slate-600">
+              {selectedType.textoApoio}
+            </p>
+          </div>
+        ) : (
+          <>
+            <label
+              className={`flex items-center gap-2 text-sm font-medium ${
+                !canEnableCustomSupportText && !usarTextoApoio
+                  ? "cursor-not-allowed text-slate-400"
+                  : "cursor-pointer text-slate-700"
+              }`}
+            >
+              <input
+                type="checkbox"
+                disabled={!canEnableCustomSupportText && !usarTextoApoio}
+                {...register("usarTextoApoio")}
+              />
+              Incluir texto de apoio na carta impressa
+            </label>
+            {!canEnableCustomSupportText && !usarTextoApoio ? (
+              <p className="mt-1 text-xs text-amber-700">
+                O regimento deste modelo e o motivo digitado já ocupam todo o
+                espaço da folha A4. Reduza o tamanho do motivo caso queira
+                incluir um texto de apoio.
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-slate-500">
+                Como o modelo selecionado não possui texto de apoio, você pode
+                incluir uma orientação complementar exclusiva para esta
+                notificação (entre {MIN_TEXTO_APOIO_LENGTH} e{" "}
+                {printBudget.maxSupportTextChars} caracteres disponíveis na
+                folha A4).
+              </p>
+            )}
+            {usarTextoApoio ? (
+              <label className="animate-slide-down mt-3 block space-y-1 text-sm">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium text-slate-700">
+                    Texto de apoio
+                  </span>
+                  <span
+                    className={`text-xs ${
+                      (textoApoioValue ?? "").trim().length >
+                      printBudget.maxSupportTextChars
+                        ? "font-semibold text-rose-600"
+                        : "text-slate-400"
+                    }`}
+                  >
+                    {(textoApoioValue ?? "").length}/
+                    {printBudget.maxSupportTextChars} caracteres
+                  </span>
+                </div>
+                <textarea
+                  {...register("textoApoio")}
+                  rows={3}
+                  maxLength={Math.max(
+                    (textoApoioValue ?? "").length,
+                    printBudget.maxSupportTextChars,
+                  )}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none ring-slate-200 transition focus:ring"
+                  placeholder="Ex.: Reforçamos que o descumprimento reincidente poderá resultar em multa."
+                />
+                {errors.textoApoio ? (
+                  <p className="text-xs font-medium text-rose-600">
+                    {errors.textoApoio.message}
+                  </p>
+                ) : null}
+              </label>
+            ) : null}
+          </>
+        )}
+      </div>
+
+      {selectedType ? (
+        <div
+          className={`rounded-xl border px-3.5 py-2.5 text-xs ${
+            printBudget.isOverBudget
+              ? "border-rose-200 bg-rose-50 text-rose-800"
+              : printBudget.totalUsedLines >= printBudget.maxPageLines - 3
+                ? "border-amber-200 bg-amber-50 text-amber-800"
+                : "border-slate-200 bg-slate-50 text-slate-600"
+          }`}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="font-semibold">
+              Ocupação estimada na folha A4 impressa
+            </span>
+            <span className="font-semibold">
+              {printBudget.totalUsedLines}/{printBudget.maxPageLines} linhas (
+              {Math.min(
+                100,
+                Math.round(
+                  (printBudget.totalUsedLines / printBudget.maxPageLines) * 100,
+                ),
+              )}
+              %)
+            </span>
+          </div>
+          <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+            <div
+              className={`h-full transition-all ${
+                printBudget.isOverBudget
+                  ? "bg-rose-600"
+                  : printBudget.totalUsedLines >= printBudget.maxPageLines - 3
+                    ? "bg-amber-500"
+                    : "bg-slate-800"
+              }`}
+              style={{
+                width: `${Math.min(100, (printBudget.totalUsedLines / printBudget.maxPageLines) * 100)}%`,
+              }}
+            />
+          </div>
+          <p className="mt-1.5 text-[11px] opacity-90">
+            Regimento do modelo: {printBudget.regimentoLines} linha(s) · Motivo:{" "}
+            {printBudget.motivoLines} linha(s) · Texto de apoio:{" "}
+            {printBudget.supportTextLines} linha(s)
+            {printBudget.isOverBudget
+              ? " — O texto ultrapassa 1 página A4; reduza o tamanho ou quebras de linha."
+              : ` — Restam ${printBudget.remainingLines} linha(s) livres na página.`}
+          </p>
+        </div>
+      ) : null}
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="block space-y-1 text-sm">

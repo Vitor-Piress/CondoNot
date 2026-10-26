@@ -511,6 +511,15 @@ export function NotificationDetailPage({
                   {type.textoApoio}
                 </p>
               </div>
+            ) : row.textoApoio ? (
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                  Texto de apoio da notificação
+                </p>
+                <p className="mt-1 whitespace-pre-wrap text-sm leading-7 text-slate-700">
+                  {row.textoApoio}
+                </p>
+              </div>
             ) : null}
 
             <div>
@@ -663,10 +672,10 @@ export function NotificationDetailPage({
                   {row.motivo ?? "Sem motivo informado."}
                 </p>
               </section>
-              {type?.textoApoio ? (
+              {type?.textoApoio ?? row.textoApoio ? (
                 <section className="support-text">
                   <p className="whitespace-pre-wrap wrap-break-word">
-                    {type.textoApoio}
+                    {type?.textoApoio ?? row.textoApoio}
                   </p>
                 </section>
               ) : null}

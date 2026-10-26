@@ -51,6 +51,7 @@ const fallbackNotifications: Notification[] = [
     idUnidade: "101",
     tipo: "Advertencia",
     motivo: "Barulho após horário permitido.",
+    textoApoio: null,
     categoria: "Perturbação do sossego",
     dataRetroativa: "2026-08-09",
     valorMulta: 150,
@@ -79,6 +80,7 @@ const fallbackNotifications: Notification[] = [
     idUnidade: "102",
     tipo: "Comunicado",
     motivo: "Uso irregular de vaga de visitante.",
+    textoApoio: null,
     categoria: "Estacionamento indevido",
     dataRetroativa: null,
     valorMulta: null,
@@ -107,6 +109,7 @@ const fallbackNotifications: Notification[] = [
     idUnidade: "103",
     tipo: "Ocorrência",
     motivo: "Comportamento inadequado em área comum.",
+    textoApoio: null,
     categoria: "Convivência",
     dataRetroativa: null,
     valorMulta: 80,
@@ -302,12 +305,14 @@ export async function createNotification(input: {
   idTipoNotificacao: string;
   idUnidade: string;
   motivo: string;
+  textoApoio?: string | null;
   categoria: string;
   dataRetroativa: string | null;
   valorMulta: number | null;
   attachments?: File[];
 }): Promise<Notification> {
   const attachments = input.attachments ?? [];
+  const normalizedTextoApoio = input.textoApoio?.trim() || null;
   validateNotificationAttachments(attachments);
 
   if (!supabase) {
@@ -325,6 +330,7 @@ export async function createNotification(input: {
       idUnidade: input.idUnidade,
       tipo: null,
       motivo: input.motivo || null,
+      textoApoio: normalizedTextoApoio,
       categoria: input.categoria || null,
       dataRetroativa: input.dataRetroativa,
       valorMulta: input.valorMulta,
@@ -357,6 +363,7 @@ export async function createNotification(input: {
         id_tipo_notificacao: input.idTipoNotificacao,
         id_unidade: input.idUnidade,
         motivo: input.motivo || null,
+        texto_apoio: normalizedTextoApoio,
         categoria: input.categoria || null,
         data_retroativa: input.dataRetroativa,
         valor_multa: input.valorMulta,
