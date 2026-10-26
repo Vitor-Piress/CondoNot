@@ -1,9 +1,12 @@
 import {
   ArrowLeft,
   ArrowRight,
+  Bell,
   ChevronDown,
   Printer,
   Search,
+  ShieldOff,
+  X,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { EmptyState } from "../components/ui/EmptyState";
@@ -11,7 +14,11 @@ import { NotificationTypeCombobox } from "../components/ui/NotificationTypeCombo
 import { Panel } from "../components/ui/Panel";
 import { UnitCombobox } from "../components/ui/UnitCombobox";
 import {
+  getNotificationEmailRecipient,
+  inactivateNotificationsBatch,
+  listNotificationAttachments,
   listNotifications,
+  sendNotificationEmail,
   type NotificationFilters,
 } from "../services/notificationService";
 import { listNotificationTypes } from "../services/notificationTypeService";
@@ -38,6 +45,7 @@ const initialFilters: NotificationFilters = {
 };
 
 type StatusFilter = "ativa" | "todas";
+type EmailFilter = "todas" | "enviado" | "pendente";
 type SortOrder = "newest" | "oldest";
 type ReportColumnKey =
   | "numero"
@@ -160,6 +168,7 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
   const { activeCondominioId, activeCondominio } = useCondominio();
   const [filters, setFilters] = useState<NotificationFilters>(initialFilters);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ativa");
+  const [emailFilter, setEmailFilter] = useState<EmailFilter>("todas");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -178,10 +187,36 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
     useState(activeCondominioId);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  // Estados do modal de Baixa em Lote
+  const [isBatchBaixaModalOpen, setIsBatchBaixaModalOpen] = useState(false);
+  const [batchBaixaMotivo, setBatchBaixaMotivo] = useState("");
+  const [batchBaixaError, setBatchBaixaError] = useState<string | null>(null);
+  const [isSubmittingBatchBaixa, setIsSubmittingBatchBaixa] = useState(false);
+  const [batchBaixaSuccessCount, setBatchBaixaSuccessCount] = useState<
+    number | null
+  >(null);
+
+  // Estados do modal de Envio de E-mail em Lote
+  const [isBatchEmailModalOpen, setIsBatchEmailModalOpen] = useState(false);
+  const [isSendingBatchEmail, setIsSendingBatchEmail] = useState(false);
+  const [batchEmailCurrentIndex, setBatchEmailCurrentIndex] = useState(0);
+  const [batchEmailFinished, setBatchEmailFinished] = useState(false);
+  const [batchEmailItemResults, setBatchEmailItemResults] = useState<
+    Record<
+      string,
+      {
+        status: "pending" | "sending" | "success" | "error";
+        message?: string;
+      }
+    >
+  >({});
 
   if (previousCondominioId !== activeCondominioId) {
     setPreviousCondominioId(activeCondominioId);
     setCurrentPage(1);
+    setSelectedIds([]);
   }
 
   useEffect(() => {
@@ -241,8 +276,18 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
     [types],
   );
 
+  const typeObjectMap = useMemo(
+    () => new Map(types.map((type) => [type.id, type])),
+    [types],
+  );
+
   const unitMap = useMemo(
     () => new Map(units.map((unit) => [unit.id, getUnitLabel(unit)])),
+    [units],
+  );
+
+  const unitObjectMap = useMemo(
+    () => new Map(units.map((unit) => [unit.id, unit])),
     [units],
   );
 
@@ -255,20 +300,39 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
         const emittedAt = getOccurrenceTimestamp(row);
         const statusMatches =
           statusFilter === "todas" || row.status === "ativa";
+        const emailAlreadySent =
+          row.emailNotificacao || Boolean(row.emailEnviadoEm);
+        const emailMatches =
+          emailFilter === "todas" ||
+          (emailFilter === "enviado" ? emailAlreadySent : !emailAlreadySent);
         const categoryMatches =
           categoryFilter === "" ||
           normalizeCategory(row.categoria) === categoryFilter;
         const fromMatches = from === null || emittedAt >= from;
         const toMatches = to === null || emittedAt <= to;
 
-        return statusMatches && categoryMatches && fromMatches && toMatches;
+        return (
+          statusMatches &&
+          emailMatches &&
+          categoryMatches &&
+          fromMatches &&
+          toMatches
+        );
       })
       .sort((a, b) => {
         const difference =
           getOccurrenceTimestamp(a) - getOccurrenceTimestamp(b);
         return sortOrder === "newest" ? -difference : difference;
       });
-  }, [rows, statusFilter, categoryFilter, dateFrom, dateTo, sortOrder]);
+  }, [
+    rows,
+    statusFilter,
+    emailFilter,
+    categoryFilter,
+    dateFrom,
+    dateTo,
+    sortOrder,
+  ]);
 
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil(visibleRows.length / pageSize)),
@@ -283,6 +347,336 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
     () => visibleRows.slice(startIndex, endIndex),
     [visibleRows, startIndex, endIndex],
   );
+
+  const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+
+  const selectedNotifications = useMemo(
+    () => rows.filter((row) => selectedSet.has(row.id)),
+    [rows, selectedSet],
+  );
+
+  const allRenderedSelected =
+    renderedRows.length > 0 &&
+    renderedRows.every((row) => selectedSet.has(row.id));
+
+  const allVisibleSelected =
+    visibleRows.length > 0 &&
+    visibleRows.every((row) => selectedSet.has(row.id));
+
+  function toggleRowSelection(id: string) {
+    setSelectedIds((current) =>
+      current.includes(id)
+        ? current.filter((item) => item !== id)
+        : [...current, id],
+    );
+  }
+
+  function togglePageSelection() {
+    const pageIds = renderedRows.map((row) => row.id);
+    if (allRenderedSelected) {
+      const pageIdSet = new Set(pageIds);
+      setSelectedIds((current) =>
+        current.filter((id) => !pageIdSet.has(id)),
+      );
+    } else {
+      setSelectedIds((current) =>
+        Array.from(new Set([...current, ...pageIds])),
+      );
+    }
+  }
+
+  function toggleAllVisibleSelection() {
+    const visibleIds = visibleRows.map((row) => row.id);
+    if (allVisibleSelected) {
+      const visibleIdSet = new Set(visibleIds);
+      setSelectedIds((current) =>
+        current.filter((id) => !visibleIdSet.has(id)),
+      );
+    } else {
+      setSelectedIds((current) =>
+        Array.from(new Set([...current, ...visibleIds])),
+      );
+    }
+  }
+
+  function clearSelection() {
+    setSelectedIds([]);
+  }
+
+  const batchBaixaAnalysis = useMemo(() => {
+    const eligible: Notification[] = [];
+    const alreadyBaixadas: Notification[] = [];
+
+    for (const row of selectedNotifications) {
+      if (row.status === "ativa") {
+        eligible.push(row);
+      } else {
+        alreadyBaixadas.push(row);
+      }
+    }
+
+    return { eligible, alreadyBaixadas };
+  }, [selectedNotifications]);
+
+  const batchEmailAnalysis = useMemo(() => {
+    const items = selectedNotifications.map((row) => {
+      const unit = row.idUnidade
+        ? (unitObjectMap.get(row.idUnidade) ?? null)
+        : null;
+      const recipient = unit ? getNotificationEmailRecipient(unit) : null;
+      const alreadySent =
+        row.emailNotificacao || Boolean(row.emailEnviadoEm);
+      const isBaixada = row.status === "baixada";
+      const missingToken = !row.cienciaToken;
+
+      let blockReason: string | null = null;
+      if (alreadySent) {
+        blockReason = "E-mail já enviado anteriormente";
+      } else if (isBaixada) {
+        blockReason = "Notificação já está baixada";
+      } else if (!recipient) {
+        blockReason = "Unidade sem e-mail cadastrado";
+      } else if (missingToken) {
+        blockReason = "Notificação sem token de ciência";
+      }
+
+      return {
+        row,
+        unit,
+        recipient,
+        alreadySent,
+        isBaixada,
+        blockReason,
+        isEligible: blockReason === null,
+      };
+    });
+
+    const eligibleItems = items.filter((item) => item.isEligible);
+    const blockedItems = items.filter((item) => !item.isEligible);
+    const alreadySentCount = items.filter((item) => item.alreadySent).length;
+
+    return {
+      items,
+      eligibleItems,
+      blockedItems,
+      alreadySentCount,
+      canSendBatch:
+        items.length > 0 &&
+        blockedItems.length === 0 &&
+        eligibleItems.length === items.length,
+    };
+  }, [selectedNotifications, unitObjectMap]);
+
+  function openBatchBaixaModal() {
+    setBatchBaixaMotivo("");
+    setBatchBaixaError(null);
+    setBatchBaixaSuccessCount(null);
+    setIsBatchBaixaModalOpen(true);
+  }
+
+  function closeBatchBaixaModal() {
+    if (isSubmittingBatchBaixa) {
+      return;
+    }
+    setIsBatchBaixaModalOpen(false);
+    setBatchBaixaMotivo("");
+    setBatchBaixaError(null);
+    setBatchBaixaSuccessCount(null);
+  }
+
+  async function handleConfirmBatchBaixa() {
+    if (!activeCondominioId || isSubmittingBatchBaixa) {
+      return;
+    }
+
+    if (batchBaixaAnalysis.alreadyBaixadas.length > 0) {
+      setBatchBaixaError(
+        "Remova as notificações já baixadas da seleção antes de confirmar a baixa em lote.",
+      );
+      return;
+    }
+
+    if (batchBaixaAnalysis.eligible.length === 0) {
+      setBatchBaixaError("Nenhuma notificação ativa selecionada.");
+      return;
+    }
+
+    const trimmedMotivo = batchBaixaMotivo.trim();
+    if (!trimmedMotivo) {
+      setBatchBaixaError("Informe o motivo da baixa em lote.");
+      return;
+    }
+
+    setIsSubmittingBatchBaixa(true);
+    setBatchBaixaError(null);
+
+    try {
+      const targetIds = batchBaixaAnalysis.eligible.map((row) => row.id);
+      const updatedRows = await inactivateNotificationsBatch(
+        targetIds,
+        activeCondominioId,
+        trimmedMotivo,
+      );
+      const updatedMap = new Map(updatedRows.map((item) => [item.id, item]));
+
+      setRows((current) =>
+        current.map((row) => updatedMap.get(row.id) ?? row),
+      );
+      setBatchBaixaSuccessCount(updatedRows.length);
+      setSelectedIds([]);
+    } catch (err) {
+      setBatchBaixaError(
+        err instanceof Error
+          ? err.message
+          : "Não foi possível realizar a baixa em lote.",
+      );
+    } finally {
+      setIsSubmittingBatchBaixa(false);
+    }
+  }
+
+  function openBatchEmailModal() {
+    setBatchEmailCurrentIndex(0);
+    setBatchEmailFinished(false);
+    setBatchEmailItemResults({});
+    setIsBatchEmailModalOpen(true);
+  }
+
+  function closeBatchEmailModal() {
+    if (isSendingBatchEmail) {
+      return;
+    }
+    setIsBatchEmailModalOpen(false);
+    setBatchEmailCurrentIndex(0);
+    setBatchEmailFinished(false);
+    setBatchEmailItemResults({});
+  }
+
+  async function handleConfirmBatchEmail() {
+    if (
+      !activeCondominioId ||
+      isSendingBatchEmail ||
+      !batchEmailAnalysis.canSendBatch
+    ) {
+      return;
+    }
+
+    const queue = batchEmailAnalysis.eligibleItems;
+    setIsSendingBatchEmail(true);
+    setBatchEmailFinished(false);
+    setBatchEmailCurrentIndex(0);
+
+    const initialStatuses: Record<
+      string,
+      { status: "pending" | "sending" | "success" | "error"; message?: string }
+    > = {};
+    for (const item of queue) {
+      initialStatuses[item.row.id] = { status: "pending" };
+    }
+    setBatchEmailItemResults(initialStatuses);
+
+    const succeededIds = new Set<string>();
+
+    for (let index = 0; index < queue.length; index += 1) {
+      const item = queue[index];
+      setBatchEmailCurrentIndex(index + 1);
+      setBatchEmailItemResults((current) => ({
+        ...current,
+        [item.row.id]: { status: "sending" },
+      }));
+
+      try {
+        if (!item.unit) {
+          throw new Error("Unidade não encontrada.");
+        }
+
+        const attachments = await listNotificationAttachments(
+          item.row.id,
+          activeCondominioId,
+        );
+        const typeObj =
+          typeObjectMap.get(item.row.idTipoNotificacao) ?? null;
+        const typeTitle =
+          typeObj?.titulo ?? `Tipo ${item.row.idTipoNotificacao}`;
+
+        const updatedNotification = await sendNotificationEmail(
+          item.row,
+          item.unit,
+          typeTitle,
+          typeObj,
+          activeCondominio,
+          attachments,
+        );
+
+        succeededIds.add(item.row.id);
+        setRows((current) =>
+          current.map((row) =>
+            row.id === updatedNotification.id ? updatedNotification : row,
+          ),
+        );
+        setBatchEmailItemResults((current) => ({
+          ...current,
+          [item.row.id]: {
+            status: "success",
+            message: `Enviado para ${updatedNotification.emailEnviadoPara}`,
+          },
+        }));
+      } catch (sendError) {
+        const message =
+          sendError instanceof Error
+            ? sendError.message
+            : "Falha ao enviar o e-mail.";
+        setBatchEmailItemResults((current) => ({
+          ...current,
+          [item.row.id]: {
+            status: "error",
+            message,
+          },
+        }));
+      }
+    }
+
+    if (succeededIds.size > 0) {
+      setSelectedIds((current) =>
+        current.filter((id) => !succeededIds.has(id)),
+      );
+    }
+
+    setIsSendingBatchEmail(false);
+    setBatchEmailFinished(true);
+  }
+
+  useEffect(() => {
+    if (!isBatchBaixaModalOpen && !isBatchEmailModalOpen) {
+      return;
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape") {
+        return;
+      }
+      if (isBatchBaixaModalOpen && !isSubmittingBatchBaixa) {
+        setIsBatchBaixaModalOpen(false);
+        setBatchBaixaMotivo("");
+        setBatchBaixaError(null);
+        setBatchBaixaSuccessCount(null);
+      }
+      if (isBatchEmailModalOpen && !isSendingBatchEmail) {
+        setIsBatchEmailModalOpen(false);
+        setBatchEmailCurrentIndex(0);
+        setBatchEmailFinished(false);
+        setBatchEmailItemResults({});
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [
+    isBatchBaixaModalOpen,
+    isSubmittingBatchBaixa,
+    isBatchEmailModalOpen,
+    isSendingBatchEmail,
+  ]);
 
   const paginationItems = useMemo(
     () => buildPaginationItems(safeCurrentPage, totalPages),
@@ -579,6 +973,7 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
                   setDateFrom("");
                   setDateTo("");
                   setStatusFilter("ativa");
+                  setEmailFilter("todas");
                   setSortOrder("newest");
                   setPageSize(10);
                   setCurrentPage(1);
@@ -732,6 +1127,22 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
               </label>
 
               <label className="block space-y-1.5 text-xs font-medium text-slate-600">
+                Envio de e-mail
+                <select
+                  value={emailFilter}
+                  onChange={(event) => {
+                    setEmailFilter(event.target.value as EmailFilter);
+                    setCurrentPage(1);
+                  }}
+                  className={filterControlClass}
+                >
+                  <option value="todas">Todos</option>
+                  <option value="pendente">E-mail pendente (não enviado)</option>
+                  <option value="enviado">E-mail enviado</option>
+                </select>
+              </label>
+
+              <label className="block space-y-1.5 text-xs font-medium text-slate-600">
                 Ocorrências a partir de
                 <input
                   type="date"
@@ -845,13 +1256,39 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
         {!loading && !error && visibleRows.length > 0 ? (
           <>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm text-slate-500">
-                {renderedRows.length < visibleRows.length
-                  ? `Exibindo ${startIndex + 1}–${startIndex + renderedRows.length} de ${visibleRows.length}`
-                  : visibleRows.length}{" "}
-                notificaç
-                {visibleRows.length === 1 ? "ão" : "ões"}
-              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 text-slate-700 transition hover:bg-slate-50">
+                  <input
+                    type="checkbox"
+                    checked={allRenderedSelected}
+                    onChange={togglePageSelection}
+                    className="size-3.5 cursor-pointer accent-slate-900"
+                  />
+                  <span className="text-xs font-semibold leading-none">
+                    Selecionar página ({renderedRows.length})
+                  </span>
+                </label>
+                {visibleRows.length > renderedRows.length ? (
+                  <label className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 text-slate-700 transition hover:bg-slate-50">
+                    <input
+                      type="checkbox"
+                      checked={allVisibleSelected}
+                      onChange={toggleAllVisibleSelection}
+                      className="size-3.5 cursor-pointer accent-slate-900"
+                    />
+                    <span className="text-xs font-semibold leading-none">
+                      Selecionar todas as filtradas ({visibleRows.length})
+                    </span>
+                  </label>
+                ) : null}
+                <p className="text-xs text-slate-500">
+                  {renderedRows.length < visibleRows.length
+                    ? `Exibindo ${startIndex + 1}–${startIndex + renderedRows.length} de ${visibleRows.length}`
+                    : visibleRows.length}{" "}
+                  notificaç
+                  {visibleRows.length === 1 ? "ão" : "ões"}
+                </p>
+              </div>
               <div className="flex flex-wrap items-center gap-2">
                 <label className="flex items-center gap-2 text-sm text-slate-500">
                   Itens por página
@@ -874,64 +1311,143 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
               </div>
             </div>
 
+            {selectedNotifications.length > 0 ? (
+              <div className="animate-slide-down mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-300 bg-slate-900 px-3.5 py-2 text-white shadow-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-semibold">
+                    {selectedNotifications.length} notificação(ões)
+                    selecionada(s)
+                  </span>
+                  <button
+                    type="button"
+                    onClick={clearSelection}
+                    className="inline-flex h-7 cursor-pointer items-center rounded-lg border border-slate-700 bg-slate-800 px-2.5 text-slate-200 transition hover:bg-slate-700"
+                  >
+                    <span className="text-xs font-medium leading-none">
+                      Limpar seleção
+                    </span>
+                  </button>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={openBatchEmailModal}
+                    className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg bg-white px-2.5 text-slate-900 transition hover:bg-slate-100"
+                  >
+                    <Bell aria-hidden="true" size={13} />
+                    <span className="text-xs font-semibold leading-none">
+                      Enviar e-mail em lote
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={openBatchBaixaModal}
+                    className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg bg-rose-600 px-2.5 text-white transition hover:bg-rose-500"
+                  >
+                    <ShieldOff aria-hidden="true" size={13} />
+                    <span className="text-xs font-semibold leading-none">
+                      Dar baixa em lote
+                    </span>
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
             <ul
               key={`page-${safeCurrentPage}-size-${pageSize}`}
               className="space-y-3"
             >
-              {renderedRows.map((row) => (
-                <li key={row.id}>
-                  <button
-                    type="button"
-                    onClick={() => onNavigate(`/notificacoes/${row.id}`)}
-                    className="animate-slide-down grid w-full gap-2 rounded-xl border border-slate-200 p-4 text-left transition hover:border-slate-300 hover:bg-slate-50 md:grid-cols-[minmax(0,1fr)_220px_160px] md:items-center cursor-pointer"
-                  >
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-lg font-bold text-slate-900">
-                          {row.idUnidade
-                            ? (unitMap.get(row.idUnidade) ?? row.idUnidade)
-                            : "Sem unidade"}
-                          <span className="font-semibold text-slate-600">
-                            {" • "}
-                            {getNotificationCategoryLabel(row.categoria) ??
-                              `Notificação #${row.id}`}
-                          </span>
-                        </p>
-                        {row.status === "baixada" ? (
-                          <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-rose-700">
-                            Baixada
-                          </span>
-                        ) : null}
-                      </div>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {row.motivo ?? "Sem motivo informado"}
-                      </p>
-                      <p className="mt-1 text-[11px] font-medium text-slate-400">
-                        Criada por: {getNotificationAuthorLabel(row)}
-                      </p>
+              {renderedRows.map((row) => {
+                const isSelected = selectedSet.has(row.id);
+                const emailAlreadySent =
+                  row.emailNotificacao || Boolean(row.emailEnviadoEm);
+
+                return (
+                  <li key={row.id}>
+                    <div
+                      className={`animate-slide-down flex items-center gap-3.5 rounded-xl border px-4 py-3 transition md:h-28 ${
+                        isSelected
+                          ? "border-slate-900 bg-slate-50/90 ring-1 ring-slate-900/10"
+                          : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
+                      }`}
+                    >
+                      <label
+                        onClick={(event) => event.stopPropagation()}
+                        className="flex shrink-0 cursor-pointer items-center justify-center p-1"
+                        title={`Selecionar notificação #${row.id}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleRowSelection(row.id)}
+                          aria-label={`Selecionar notificação #${row.id}`}
+                          className="size-5 cursor-pointer rounded accent-slate-900"
+                        />
+                      </label>
+
+                      <button
+                        type="button"
+                        onClick={() => onNavigate(`/notificacoes/${row.id}`)}
+                        className="grid h-full min-w-0 flex-1 gap-2 text-left md:grid-cols-[minmax(0,1fr)_220px_160px] md:items-center cursor-pointer"
+                      >
+                        <div className="flex h-full min-w-0 flex-col justify-between">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-lg font-bold leading-snug text-slate-900">
+                              {row.idUnidade
+                                ? (unitMap.get(row.idUnidade) ?? row.idUnidade)
+                                : "Sem unidade"}
+                              <span className="font-semibold text-slate-600">
+                                {" • "}
+                                {getNotificationCategoryLabel(row.categoria) ??
+                                  `Notificação #${row.id}`}
+                              </span>
+                            </p>
+                            {row.status === "baixada" ? (
+                              <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-rose-700">
+                                Baixada
+                              </span>
+                            ) : null}
+                            {emailAlreadySent ? (
+                              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-emerald-700">
+                                E-mail enviado
+                              </span>
+                            ) : (
+                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-slate-600">
+                                E-mail pendente
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-0.5 line-clamp-2 max-w-2xl text-xs leading-snug text-slate-500">
+                            {row.motivo ?? "Sem motivo informado"}
+                          </p>
+                          <p className="mt-0.5 truncate text-[11px] font-medium text-slate-400">
+                            Criada por: {getNotificationAuthorLabel(row)}
+                          </p>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium uppercase tracking-widest text-slate-400">
+                            Modelo de notificação
+                          </p>
+                          <p className="line-clamp-2 text-sm text-slate-700">
+                            {typeMap.get(row.idTipoNotificacao) ??
+                              `Modelo ${row.idTipoNotificacao}`}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-medium text-slate-700">
+                            {formatDate(row.createdAt)}
+                          </p>
+                          <p className="text-xs uppercase tracking-widest text-slate-400">
+                            {row.valorMulta === null
+                              ? "Sem multa"
+                              : `Multa: ${formatCurrency(row.valorMulta)}`}
+                          </p>
+                        </div>
+                      </button>
                     </div>
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-widest text-slate-400">
-                        Modelo de notificação
-                      </p>
-                      <p className="text-sm text-slate-700">
-                        {typeMap.get(row.idTipoNotificacao) ??
-                          `Modelo ${row.idTipoNotificacao}`}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-slate-700">
-                        {formatDate(row.createdAt)}
-                      </p>
-                      <p className="text-xs uppercase tracking-widest text-slate-400">
-                        {row.valorMulta === null
-                          ? "Sem multa"
-                          : `Multa: ${formatCurrency(row.valorMulta)}`}
-                      </p>
-                    </div>
-                  </button>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
 
             <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
@@ -943,6 +1459,427 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
           </>
         ) : null}
       </Panel>
+
+      {isBatchBaixaModalOpen ? (
+        <div
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              closeBatchBaixaModal();
+            }
+          }}
+          className="print:hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
+        >
+          <div className="animate-slide-down flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white p-5 shadow-xl">
+            <div className="flex items-center justify-between gap-3 border-b border-slate-200 pb-3">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  Dar baixa em lote
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Esta ação é permanente e manterá o histórico para auditoria.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeBatchBaixaModal}
+                disabled={isSubmittingBatchBaixa}
+                aria-label="Fechar modal"
+                className="inline-flex size-8 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <X aria-hidden="true" size={16} />
+              </button>
+            </div>
+
+            {batchBaixaSuccessCount !== null ? (
+              <div className="mt-4 space-y-4">
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+                  <p className="font-semibold">Baixa em lote concluída!</p>
+                  <p className="mt-1">
+                    {batchBaixaSuccessCount} notificação(ões) foram marcadas
+                    como baixadas com sucesso.
+                  </p>
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={closeBatchBaixaModal}
+                    className="cursor-pointer rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+                  >
+                    Fechar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="mt-4 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                      <span className="block text-slate-500">
+                        Ativas (elegíveis)
+                      </span>
+                      <span className="text-lg font-bold text-slate-900">
+                        {batchBaixaAnalysis.eligible.length}
+                      </span>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                      <span className="block text-slate-500">Já baixadas</span>
+                      <span
+                        className={`text-lg font-bold ${
+                          batchBaixaAnalysis.alreadyBaixadas.length > 0
+                            ? "text-rose-600"
+                            : "text-slate-900"
+                        }`}
+                      >
+                        {batchBaixaAnalysis.alreadyBaixadas.length}
+                      </span>
+                    </div>
+                  </div>
+
+                  {batchBaixaAnalysis.alreadyBaixadas.length > 0 ? (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                      <p className="font-semibold">
+                        Há {batchBaixaAnalysis.alreadyBaixadas.length}{" "}
+                        notificação(ões) já baixada(s) na seleção.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSelectedIds(
+                            batchBaixaAnalysis.eligible.map((item) => item.id),
+                          )
+                        }
+                        className="mt-2 cursor-pointer rounded-lg bg-amber-800 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-amber-700"
+                      >
+                        Manter apenas ativas ({batchBaixaAnalysis.eligible.length}
+                        )
+                      </button>
+                    </div>
+                  ) : null}
+
+                  <div>
+                    <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                      Notificações selecionadas ({selectedNotifications.length})
+                    </p>
+                    <ul className="max-h-40 space-y-1.5 overflow-y-auto rounded-xl border border-slate-200 p-2 text-xs">
+                      {selectedNotifications.map((item) => (
+                        <li
+                          key={item.id}
+                          className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-2.5 py-1.5"
+                        >
+                          <span className="min-w-0 flex-1 truncate font-medium text-slate-700">
+                            {item.idUnidade
+                              ? (unitMap.get(item.idUnidade) ?? item.idUnidade)
+                              : "Sem unidade"}{" "}
+                            •{" "}
+                            {getNotificationCategoryLabel(item.categoria) ??
+                              `#${item.id}`}
+                          </span>
+                          <span
+                            className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
+                              item.status === "ativa"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-rose-100 text-rose-700"
+                            }`}
+                          >
+                            {item.status === "ativa" ? "Ativa" : "Já baixada"}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <label className="block text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                    Motivo da baixa em lote
+                    <textarea
+                      value={batchBaixaMotivo}
+                      onChange={(event) =>
+                        setBatchBaixaMotivo(event.target.value)
+                      }
+                      rows={3}
+                      disabled={isSubmittingBatchBaixa}
+                      className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-normal normal-case tracking-normal text-slate-900 outline-none focus:ring-2 focus:ring-slate-400"
+                      placeholder="Ex.: Baixa realizada em lote após deliberação do conselho."
+                    />
+                  </label>
+
+                  {batchBaixaError ? (
+                    <p className="animate-slide-down rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">
+                      {batchBaixaError}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="mt-4 flex justify-end gap-2 border-t border-slate-200 pt-3">
+                  <button
+                    type="button"
+                    onClick={closeBatchBaixaModal}
+                    disabled={isSubmittingBatchBaixa}
+                    className="inline-flex h-8 cursor-pointer items-center rounded-lg border border-slate-300 px-3 text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <span className="text-xs font-semibold leading-none">
+                      Cancelar
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleConfirmBatchBaixa()}
+                    disabled={
+                      isSubmittingBatchBaixa ||
+                      batchBaixaAnalysis.eligible.length === 0 ||
+                      batchBaixaAnalysis.alreadyBaixadas.length > 0
+                    }
+                    className="inline-flex h-8 cursor-pointer items-center rounded-lg bg-rose-600 px-3.5 text-white transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <span className="text-xs font-semibold leading-none">
+                      {isSubmittingBatchBaixa
+                        ? "Dando baixa..."
+                        : `Confirmar baixa (${batchBaixaAnalysis.eligible.length})`}
+                    </span>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
+
+      {isBatchEmailModalOpen ? (
+        <div
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              closeBatchEmailModal();
+            }
+          }}
+          className="print:hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
+        >
+          <div className="animate-slide-down flex max-h-[90vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white p-5 shadow-xl">
+            <div className="flex items-center justify-between gap-3 border-b border-slate-200 pb-3">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  Envio de e-mail em lote
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Permitido somente para notificações ativas que ainda não
+                  tiveram e-mail enviado.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeBatchEmailModal}
+                disabled={isSendingBatchEmail}
+                aria-label="Fechar modal"
+                className="inline-flex size-8 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <X aria-hidden="true" size={16} />
+              </button>
+            </div>
+
+            <div className="mt-4 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <span className="block text-slate-500">
+                    Prontas para envio (inéditas)
+                  </span>
+                  <span className="text-lg font-bold text-emerald-700">
+                    {batchEmailAnalysis.eligibleItems.length}
+                  </span>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <span className="block text-slate-500">
+                    Com impedimento no lote
+                  </span>
+                  <span
+                    className={`text-lg font-bold ${
+                      batchEmailAnalysis.blockedItems.length > 0
+                        ? "text-rose-600"
+                        : "text-slate-900"
+                    }`}
+                  >
+                    {batchEmailAnalysis.blockedItems.length}
+                  </span>
+                </div>
+              </div>
+
+              {!isSendingBatchEmail &&
+              !batchEmailFinished &&
+              batchEmailAnalysis.blockedItems.length > 0 ? (
+                <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800">
+                  <p className="font-semibold">
+                    Envio do lote bloqueado: {batchEmailAnalysis.blockedItems.length}{" "}
+                    notificação(ões) selecionada(s) não pode(m) ser enviada(s)
+                    em lote.
+                  </p>
+                  <p className="mt-1">
+                    O envio em lote é permitido exclusivamente para notificações
+                    ativas que nunca tiveram e-mail enviado e possuem e-mail na
+                    unidade.
+                  </p>
+                  {batchEmailAnalysis.eligibleItems.length > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSelectedIds(
+                          batchEmailAnalysis.eligibleItems.map(
+                            (item) => item.row.id,
+                          ),
+                        )
+                      }
+                      className="mt-2 cursor-pointer rounded-lg bg-rose-700 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-rose-600"
+                    >
+                      Manter na seleção apenas as elegíveis (
+                      {batchEmailAnalysis.eligibleItems.length})
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {isSendingBatchEmail || batchEmailFinished ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs">
+                  <div className="flex items-center justify-between gap-2 font-semibold text-slate-800">
+                    <span>
+                      {isSendingBatchEmail
+                        ? `Enviando e-mail ${batchEmailCurrentIndex} de ${Object.keys(batchEmailItemResults).length}...`
+                        : "Processamento do lote finalizado"}
+                    </span>
+                    <span>
+                      {
+                        Object.values(batchEmailItemResults).filter(
+                          (r) => r.status === "success",
+                        ).length
+                      }{" "}
+                      enviado(s) ·{" "}
+                      {
+                        Object.values(batchEmailItemResults).filter(
+                          (r) => r.status === "error",
+                        ).length
+                      }{" "}
+                      falha(s)
+                    </span>
+                  </div>
+                  <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200">
+                    <div
+                      className="h-full bg-slate-900 transition-all"
+                      style={{
+                        width: `${
+                          Object.keys(batchEmailItemResults).length > 0
+                            ? Math.round(
+                                (batchEmailCurrentIndex /
+                                  Object.keys(batchEmailItemResults).length) *
+                                  100,
+                              )
+                            : 0
+                        }%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              ) : null}
+
+              <div>
+                <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                  Prévia das notificações
+                </p>
+                <ul className="max-h-60 space-y-1.5 overflow-y-auto rounded-xl border border-slate-200 p-2 text-xs">
+                  {batchEmailAnalysis.items.map((item) => {
+                    const result = batchEmailItemResults[item.row.id];
+                    return (
+                      <li
+                        key={item.row.id}
+                        className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-semibold text-slate-800">
+                            {item.row.idUnidade
+                              ? (unitMap.get(item.row.idUnidade) ??
+                                item.row.idUnidade)
+                              : "Sem unidade"}{" "}
+                            •{" "}
+                            {getNotificationCategoryLabel(item.row.categoria) ??
+                              `#${item.row.id}`}
+                          </p>
+                          <p className="truncate text-[11px] text-slate-500">
+                            Destinatário: {item.recipient ?? "Não cadastrado"}
+                          </p>
+                          {result?.message ? (
+                            <p
+                              className={`mt-0.5 text-[11px] font-medium ${
+                                result.status === "error"
+                                  ? "text-rose-600"
+                                  : "text-emerald-700"
+                              }`}
+                            >
+                              {result.message}
+                            </p>
+                          ) : null}
+                        </div>
+
+                        {result ? (
+                          <span
+                            className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
+                              result.status === "success"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : result.status === "error"
+                                  ? "bg-rose-100 text-rose-700"
+                                  : result.status === "sending"
+                                    ? "bg-amber-100 text-amber-800"
+                                    : "bg-slate-200 text-slate-700"
+                            }`}
+                          >
+                            {result.status === "success"
+                              ? "Enviado"
+                              : result.status === "error"
+                                ? "Falha"
+                                : result.status === "sending"
+                                  ? "Enviando..."
+                                  : "Na fila"}
+                          </span>
+                        ) : item.isEligible ? (
+                          <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-emerald-700">
+                            Elegível
+                          </span>
+                        ) : (
+                          <span className="shrink-0 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-rose-700">
+                            {item.blockReason}
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            </div>
+
+            <div className="mt-4 flex justify-end gap-2 border-t border-slate-200 pt-3">
+              <button
+                type="button"
+                onClick={closeBatchEmailModal}
+                disabled={isSendingBatchEmail}
+                className="inline-flex h-8 cursor-pointer items-center rounded-lg border border-slate-300 px-3 text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <span className="text-xs font-semibold leading-none">
+                  {batchEmailFinished ? "Fechar" : "Cancelar"}
+                </span>
+              </button>
+              {!batchEmailFinished ? (
+                <button
+                  type="button"
+                  onClick={() => void handleConfirmBatchEmail()}
+                  disabled={
+                    isSendingBatchEmail || !batchEmailAnalysis.canSendBatch
+                  }
+                  className="inline-flex h-8 cursor-pointer items-center rounded-lg bg-slate-900 px-3.5 text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <span className="text-xs font-semibold leading-none">
+                    {isSendingBatchEmail
+                      ? "Enviando e-mails..."
+                      : `Confirmar envio em lote (${batchEmailAnalysis.eligibleItems.length})`}
+                  </span>
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {!loading && !error && visibleRows.length > 0 ? (
         <section className="notification-report-print hidden print:block print:px-[10mm] print:py-[8mm]">
@@ -967,7 +1904,13 @@ export function NotificationsPage({ onNavigate }: NotificationsPageProps) {
               {categoryOptions.find((option) => option.value === categoryFilter)
                 ?.label ?? "Todas"}{" "}
               · Status: {statusFilter === "ativa" ? "Ativas" : "Todas"} ·{" "}
-              {visibleRows.length} registro(s)
+              E-mail:{" "}
+              {emailFilter === "enviado"
+                ? "Enviados"
+                : emailFilter === "pendente"
+                  ? "Pendentes"
+                  : "Todos"}{" "}
+              · {visibleRows.length} registro(s)
             </p>
           </header>
           <div className="mb-4 break-inside-avoid">{summaryContent}</div>

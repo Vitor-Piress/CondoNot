@@ -406,7 +406,7 @@ export function NotificationDetailPage({
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <p className="print:hidden text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
-                  Categoria
+                  Categoria e Unidade
                 </p>
                 <span
                   className={`print:hidden rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-widest ${
@@ -421,6 +421,12 @@ export function NotificationDetailPage({
               <h3 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
                 {getNotificationCategoryLabel(row.categoria) ??
                   `Notificação #${row.id}`}
+                {row.idUnidade ? (
+                  <span className="font-semibold text-slate-600">
+                    {" • "}
+                    {unit ? getUnitLabel(unit) : `Unidade ${row.idUnidade}`}
+                  </span>
+                ) : null}
               </h3>
             </div>
 
@@ -435,7 +441,7 @@ export function NotificationDetailPage({
               </div>
             ) : null}
 
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2 md:grid-cols-3">
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
                   Tipo de notificação
@@ -470,9 +476,6 @@ export function NotificationDetailPage({
                   {formatDate(row.createdAt)}
                 </p>
               </div>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
                   Data retroativa
@@ -489,6 +492,16 @@ export function NotificationDetailPage({
                 </p>
                 <p className="mt-1 text-sm text-slate-700">
                   {getNotificationAuthorLabel(row)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                  Valor da multa
+                </p>
+                <p className="mt-1 text-sm font-medium text-slate-700">
+                  {row.valorMulta === null
+                    ? "Não informado"
+                    : formatCurrency(row.valorMulta)}
                 </p>
               </div>
             </div>
@@ -521,15 +534,6 @@ export function NotificationDetailPage({
                 </p>
               </div>
             ) : null}
-
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
-                Valor da multa
-              </p>
-              <p className="mt-1 text-sm text-slate-700">
-                {row.valorMulta === null ? "Não informado" : row.valorMulta}
-              </p>
-            </div>
 
             <div>
               <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">

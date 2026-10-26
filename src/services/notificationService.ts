@@ -498,6 +498,51 @@ export async function inactivateNotification(
   return parseNotification(data);
 }
 
+export async function inactivateNotificationsBatch(
+  ids: string[],
+  condominioId: string,
+  motivoBaixa: string,
+): Promise<Notification[]> {
+  if (ids.length === 0) {
+    return [];
+  }
+
+  const nowIso = new Date().toISOString();
+
+  if (!supabase) {
+    const updated: Notification[] = [];
+    for (const id of ids) {
+      const row = fallbackNotifications.find(
+        (item) => item.id === id && item.idCondominio === condominioId,
+      );
+      if (row) {
+        row.status = "baixada";
+        row.dataBaixa = nowIso;
+        row.motivoBaixa = motivoBaixa;
+        updated.push({ ...row });
+      }
+    }
+    return updated;
+  }
+
+  const { data, error } = await supabase
+    .from(NOTIFICATION_TABLE)
+    .update({
+      status: "baixada",
+      data_baixa: nowIso,
+      motivo_baixa: motivoBaixa,
+    })
+    .in("id", ids)
+    .eq("id_condominio", condominioId)
+    .select("*");
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? []).map((row) => parseNotification(row));
+}
+
 export const EMAIL_RESEND_COOLDOWN_MS = 10 * 60 * 1000;
 
 export function getEmailCooldownRemainingMs(
