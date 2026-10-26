@@ -2,7 +2,7 @@ name: Supabase Weekly Backup to Cloudflare R2
 
 on:
   schedule:
-    # Executa toda segunda-feira às 03:00 UTC (00:00 no horário de Brasília)
+    # Executa todo dia às 03:00 UTC (00:00 no horário de Brasília)
     - cron: "0 3 * * *"
   workflow_dispatch: # Permite disparo manual pela aba Actions do GitHub
 
