@@ -2,11 +2,38 @@ import { useEffect, useState } from "react";
 import type { PropsWithChildren } from "react";
 import { checkIsAdmin } from "../services/accessService";
 import { getCondominios } from "../services/condominioService";
+import { isDemoMode } from "../services/demoMode";
 import type { Condominio } from "../types/domain";
 import { CondominioContext } from "./CondominioContext";
 import { useAuth } from "./useAuth";
 
 const STORAGE_KEY = "condonoti.activeCondominioId";
+const DEMO_STORAGE_KEY = "condonoti.demo.activeCondominioId";
+
+function getActiveStorage() {
+  if (typeof window === "undefined") return null;
+  return isDemoMode() ? window.sessionStorage : window.localStorage;
+}
+
+function getStorageKey() {
+  return isDemoMode() ? DEMO_STORAGE_KEY : STORAGE_KEY;
+}
+
+function getStoredCondominioId(): string | null {
+  const storage = getActiveStorage();
+  return storage?.getItem(getStorageKey()) ?? null;
+}
+
+function setStoredCondominioId(id: string | null): void {
+  const storage = getActiveStorage();
+  if (!storage) return;
+  const key = getStorageKey();
+  if (id) {
+    storage.setItem(key, id);
+  } else {
+    storage.removeItem(key);
+  }
+}
 
 export function CondominioProvider({ children }: PropsWithChildren) {
   const { session } = useAuth();
@@ -29,17 +56,13 @@ export function CondominioProvider({ children }: PropsWithChildren) {
       setCondominios(rows);
       setIsAdmin(adminStatus);
 
-      const savedId = window.localStorage.getItem(STORAGE_KEY);
+      const savedId = getStoredCondominioId();
       const nextId = [preferredId, savedId, activeCondominioId].find(
         (candidate) => rows.some((condominio) => condominio.id === candidate),
       ) ?? rows[0]?.id ?? null;
 
       setActiveCondominioIdState(nextId);
-      if (nextId) {
-        window.localStorage.setItem(STORAGE_KEY, nextId);
-      } else {
-        window.localStorage.removeItem(STORAGE_KEY);
-      }
+      setStoredCondominioId(nextId);
     } catch (error) {
       setCondominioError(
         error instanceof Error
@@ -53,7 +76,7 @@ export function CondominioProvider({ children }: PropsWithChildren) {
 
   function setActiveCondominioId(id: string) {
     setActiveCondominioIdState(id);
-    window.localStorage.setItem(STORAGE_KEY, id);
+    setStoredCondominioId(id);
   }
 
   useEffect(() => {
@@ -71,16 +94,12 @@ export function CondominioProvider({ children }: PropsWithChildren) {
 
         setCondominios(rows);
         setIsAdmin(adminStatus);
-        const savedId = window.localStorage.getItem(STORAGE_KEY);
+        const savedId = getStoredCondominioId();
         const nextId = savedId && rows.some((row) => row.id === savedId)
           ? savedId
           : rows[0]?.id ?? null;
         setActiveCondominioIdState(nextId);
-        if (nextId) {
-          window.localStorage.setItem(STORAGE_KEY, nextId);
-        } else {
-          window.localStorage.removeItem(STORAGE_KEY);
-        }
+        setStoredCondominioId(nextId);
       } catch (error) {
         if (!active) return;
         setCondominioError(

@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { getDemoState, isDemoMode } from "./demoMode";
 import {
   parseNotificationType,
   serializeRegimentoTexto,
@@ -54,6 +55,12 @@ let fallbackTypes: NotificationType[] = [
 export async function listNotificationTypes(
   condominioId: string,
 ): Promise<NotificationType[]> {
+  if (isDemoMode()) {
+    return getDemoState().notificationTypes.filter(
+      (type) => type.idCondominio === condominioId && type.deletedAt === null,
+    );
+  }
+
   if (!supabase) {
     return fallbackTypes.filter(
       (type) => type.idCondominio === condominioId && type.deletedAt === null,
@@ -78,6 +85,14 @@ export async function getNotificationTypeById(
   id: string,
   condominioId: string,
 ): Promise<NotificationType | null> {
+  if (isDemoMode()) {
+    return (
+      getDemoState().notificationTypes.find(
+        (type) => type.id === id && type.idCondominio === condominioId,
+      ) ?? null
+    );
+  }
+
   if (!supabase) {
     return (
       fallbackTypes.find(
@@ -110,8 +125,26 @@ export async function createNotificationType(input: {
   textoRegimento: RegimentoTexto;
   textoApoio: string | null;
 }): Promise<NotificationType> {
+  if (isDemoMode()) {
+    const list = getDemoState().notificationTypes;
+    const nextId = String(
+      Math.max(0, ...list.map((type) => Number(type.id) || 0)) + 1,
+    );
+    const created: NotificationType = {
+      id: nextId,
+      idCondominio: input.idCondominio,
+      createdAt: new Date().toISOString(),
+      deletedAt: null,
+      titulo: input.titulo,
+      textoRegimento: input.textoRegimento,
+      textoApoio: input.textoApoio,
+    };
+    getDemoState().notificationTypes = [...list, created];
+    return created;
+  }
+
   if (!supabase) {
-    return {
+    const created: NotificationType = {
       id: crypto.randomUUID(),
       idCondominio: input.idCondominio,
       createdAt: new Date().toISOString(),
@@ -120,6 +153,8 @@ export async function createNotificationType(input: {
       textoRegimento: input.textoRegimento,
       textoApoio: input.textoApoio,
     };
+    fallbackTypes = [...fallbackTypes, created];
+    return created;
   }
 
   const { data, error } = await supabase
@@ -147,6 +182,23 @@ export async function softDeleteNotificationType(
   condominioId: string,
 ): Promise<void> {
   const deletedAt = new Date().toISOString();
+
+  if (isDemoMode()) {
+    const list = getDemoState().notificationTypes;
+    const type = list.find(
+      (item) =>
+        item.id === id &&
+        item.idCondominio === condominioId &&
+        item.deletedAt === null,
+    );
+    if (!type) throw new Error("Modelo não encontrado ou já arquivado.");
+    getDemoState().notificationTypes = list.map((item) =>
+      item.id === id && item.idCondominio === condominioId
+        ? { ...item, deletedAt }
+        : item,
+    );
+    return;
+  }
 
   if (!supabase) {
     const type = fallbackTypes.find(

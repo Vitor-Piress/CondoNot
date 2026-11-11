@@ -1,6 +1,7 @@
 import { createElement, type ReactElement } from "react";
 import type { DocumentProps } from "@react-pdf/renderer";
 import { supabase } from "./supabase";
+import { getDemoState, isDemoMode } from "./demoMode";
 import { includesQuery } from "../utils/format";
 import { buildNotificationEmail } from "../utils/notificationEmail";
 import {
@@ -42,7 +43,7 @@ export interface NotificationFilters {
   unitId: string;
 }
 
-const fallbackNotifications: Notification[] = [
+let fallbackNotifications: Notification[] = [
   {
     id: "401",
     idCondominio: "1",
@@ -164,6 +165,17 @@ export async function listNotifications(
   filters: NotificationFilters,
   condominioId: string,
 ): Promise<Notification[]> {
+  if (isDemoMode()) {
+    return applyFilters(
+      sortByDateDesc(
+        getDemoState().notifications.filter(
+          (row) => row.idCondominio === condominioId,
+        ),
+      ),
+      filters,
+    );
+  }
+
   if (!supabase) {
     return applyFilters(
       sortByDateDesc(
@@ -195,6 +207,21 @@ export async function listNotificationsByUnitId(
   unitId: string,
   condominioId: string,
 ): Promise<Notification[]> {
+  if (isDemoMode()) {
+    return applyFilters(
+      sortByDateDesc(
+        getDemoState().notifications.filter(
+          (row) => row.idCondominio === condominioId,
+        ),
+      ),
+      {
+        query: "",
+        typeId: "",
+        unitId,
+      },
+    );
+  }
+
   if (!supabase) {
     return applyFilters(
       sortByDateDesc(
@@ -239,6 +266,14 @@ export async function getNotificationById(
   id: string,
   condominioId: string,
 ): Promise<Notification | null> {
+  if (isDemoMode()) {
+    return (
+      getDemoState().notifications.find(
+        (item) => item.id === id && item.idCondominio === condominioId,
+      ) ?? null
+    );
+  }
+
   if (!supabase) {
     return (
       fallbackNotifications.find(
@@ -269,6 +304,10 @@ export async function listNotificationAttachments(
   notificationId: string,
   condominioId: string,
 ): Promise<NotificationAttachment[]> {
+  if (isDemoMode()) {
+    return getDemoState().attachments[notificationId] ?? [];
+  }
+
   if (!supabase) {
     return [];
   }
@@ -315,6 +354,61 @@ export async function createNotification(input: {
   const normalizedTextoApoio = input.textoApoio?.trim() || null;
   validateNotificationAttachments(attachments);
 
+  if (isDemoMode()) {
+    const list = getDemoState().notifications;
+    const nextId = String(
+      Math.max(0, ...list.map((n) => Number(n.id) || 0)) + 1,
+    );
+    const created: Notification = {
+      id: nextId,
+      idCondominio: input.idCondominio,
+      createdAt: new Date().toISOString(),
+      idTipoNotificacao: input.idTipoNotificacao,
+      idUnidade: input.idUnidade,
+      tipo: null,
+      motivo: input.motivo || null,
+      textoApoio: normalizedTextoApoio,
+      categoria: input.categoria || null,
+      dataRetroativa: input.dataRetroativa,
+      valorMulta: input.valorMulta,
+      status: "ativa",
+      dataBaixa: null,
+      motivoBaixa: null,
+      emailNotificacao: false,
+      emailEnviadoEm: null,
+      emailEnviadoPara: null,
+      emailResendId: null,
+      emailEntregueEm: null,
+      emailAbertoEm: null,
+      emailFalhaEm: null,
+      emailFalhaMotivo: null,
+      cienciaToken: crypto.randomUUID(),
+      cienciaEm: null,
+      criadoPor: "demo-admin-1",
+      criadoPorEmail: "admin@condonot.com.br",
+      criadoPorNome: "Administrador Demo",
+    };
+    getDemoState().notifications = [created, ...list];
+
+    if (attachments.length > 0) {
+      const demoAttachments: NotificationAttachment[] = attachments.map(
+        (file) => ({
+          id: crypto.randomUUID(),
+          idCondominio: input.idCondominio,
+          idNotificacao: created.id,
+          storagePath: `demo/${file.name}`,
+          fileName: file.name,
+          mimeType: file.type,
+          fileSizeBytes: file.size,
+          signedUrl: URL.createObjectURL(file),
+        }),
+      );
+      getDemoState().attachments[created.id] = demoAttachments;
+    }
+
+    return created;
+  }
+
   if (!supabase) {
     if (attachments.length > 0) {
       throw new Error(
@@ -322,7 +416,7 @@ export async function createNotification(input: {
       );
     }
 
-    return {
+    const created: Notification = {
       id: crypto.randomUUID(),
       idCondominio: input.idCondominio,
       createdAt: new Date().toISOString(),
@@ -351,6 +445,8 @@ export async function createNotification(input: {
       criadoPorEmail: "admin@condonot.com.br",
       criadoPorNome: "Administrador Geral",
     };
+    fallbackNotifications = [created, ...fallbackNotifications];
+    return created;
   }
 
   await validateNotificationAttachmentContents(attachments);
@@ -466,6 +562,26 @@ export async function inactivateNotification(
   condominioId: string,
   motivoBaixa: string,
 ): Promise<Notification> {
+  if (isDemoMode()) {
+    const list = getDemoState().notifications;
+    const row = list.find(
+      (item) => item.id === id && item.idCondominio === condominioId,
+    );
+    if (!row) {
+      throw new Error("Notificação não encontrada.");
+    }
+    const updated: Notification = {
+      ...row,
+      status: "baixada",
+      dataBaixa: new Date().toISOString(),
+      motivoBaixa,
+    };
+    getDemoState().notifications = list.map((item) =>
+      item.id === id && item.idCondominio === condominioId ? updated : item,
+    );
+    return updated;
+  }
+
   if (!supabase) {
     const row = fallbackNotifications.find(
       (item) => item.id === id && item.idCondominio === condominioId,
@@ -508,6 +624,25 @@ export async function inactivateNotificationsBatch(
   }
 
   const nowIso = new Date().toISOString();
+
+  if (isDemoMode()) {
+    const idsSet = new Set(ids);
+    const updated: Notification[] = [];
+    getDemoState().notifications = getDemoState().notifications.map((item) => {
+      if (idsSet.has(item.id) && item.idCondominio === condominioId) {
+        const rowUpdated: Notification = {
+          ...item,
+          status: "baixada",
+          dataBaixa: nowIso,
+          motivoBaixa,
+        };
+        updated.push(rowUpdated);
+        return rowUpdated;
+      }
+      return item;
+    });
+    return updated;
+  }
 
   if (!supabase) {
     const updated: Notification[] = [];
@@ -619,6 +754,33 @@ export async function sendNotificationEmail(
   condominio: Condominio | null,
   attachments: NotificationAttachment[],
 ): Promise<Notification> {
+  if (isDemoMode()) {
+    if (getEmailCooldownRemainingMs(notification) > 0) {
+      throw new Error("Aguarde alguns minutos antes de reenviar o e-mail.");
+    }
+
+    const recipient = getNotificationEmailRecipient(unit);
+    if (!recipient) {
+      throw new Error(
+        "Nenhum e-mail cadastrado para o inquilino ou proprietário da unidade.",
+      );
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    const nowIso = new Date().toISOString();
+    const updated: Notification = {
+      ...notification,
+      emailNotificacao: true,
+      emailEnviadoEm: nowIso,
+      emailEnviadoPara: recipient,
+      emailEntregueEm: nowIso,
+    };
+    getDemoState().notifications = getDemoState().notifications.map((item) =>
+      item.id === notification.id ? updated : item,
+    );
+    return updated;
+  }
+
   if (!supabase) {
     throw new Error("Supabase não configurado.");
   }

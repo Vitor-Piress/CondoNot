@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { isDemoMode, toDemoPath } from "../services/demoMode";
 import {
   ArrowLeft,
   BellRing,
@@ -301,11 +302,12 @@ export function UnitDetailPage({ unitId, onNavigate }: UnitDetailPageProps) {
                 <li key={notification.id}>
                   <button
                     type="button"
-                    onClick={() =>
-                      routerNavigate(`/notificacoes/${notification.id}`, {
+                    onClick={() => {
+                      const target = `/notificacoes/${notification.id}`;
+                      routerNavigate(isDemoMode() ? toDemoPath(target) : target, {
                         state: { fromUnitId: unitId },
-                      })
-                    }
+                      });
+                    }}
                     className="animate-slide-down group grid w-full cursor-pointer grid-cols-1 gap-y-2.5 rounded-lg border border-slate-200 bg-white p-3.5 text-left transition hover:border-teal-300 hover:bg-teal-50/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 sm:grid-cols-[minmax(0,1fr)_auto_1rem] sm:items-center sm:gap-x-5 sm:gap-y-0 sm:p-4"
                   >
                     <span className="col-start-1 row-start-1 flex min-w-0 items-start gap-3">

@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { getDemoState, isDemoMode } from "./demoMode";
 import { includesQuery } from "../utils/format";
 import {
   type ResidentInfo,
@@ -109,6 +110,15 @@ export async function listUnits(
   query: string,
   condominioId: string,
 ): Promise<Unit[]> {
+  if (isDemoMode()) {
+    return applyQueryFilter(
+      sortByBlocoApartamento(
+        getDemoState().units.filter((unit) => unit.idCondominio === condominioId),
+      ),
+      query,
+    );
+  }
+
   if (!supabase) {
     return applyQueryFilter(
       sortByBlocoApartamento(
@@ -139,6 +149,14 @@ export async function getUnitById(
   id: string,
   condominioId: string,
 ): Promise<Unit | null> {
+  if (isDemoMode()) {
+    return (
+      getDemoState().units.find(
+        (unit) => unit.id === id && unit.idCondominio === condominioId,
+      ) ?? null
+    );
+  }
+
   if (!supabase) {
     return (
       fallbackUnits.find(
@@ -181,17 +199,48 @@ export async function updateUnit(
   const proprietarioDb = toDbResident(input.proprietario);
   const inquilinoDb = input.alugado ? toDbResident(input.inquilino) : null;
 
-  if (!supabase) {
-    return {
+  if (isDemoMode()) {
+    const list = getDemoState().units;
+    const existing = list.find(
+      (unit) => unit.id === id && unit.idCondominio === condominioId,
+    );
+    const updated: Unit = {
       id,
       idCondominio: condominioId,
-      createdAt: new Date().toISOString(),
+      createdAt: existing?.createdAt ?? new Date().toISOString(),
       bloco: input.bloco,
       apartamento: input.apartamento,
       alugado: input.alugado,
       proprietario,
       inquilino,
     };
+    getDemoState().units = list.map((unit) =>
+      unit.id === id && unit.idCondominio === condominioId ? updated : unit,
+    );
+    return updated;
+  }
+
+  if (!supabase) {
+    const existing = fallbackUnits.find(
+      (unit) => unit.id === id && unit.idCondominio === condominioId,
+    );
+    const updated: Unit = {
+      id,
+      idCondominio: condominioId,
+      createdAt: existing?.createdAt ?? new Date().toISOString(),
+      bloco: input.bloco,
+      apartamento: input.apartamento,
+      alugado: input.alugado,
+      proprietario,
+      inquilino,
+    };
+    const index = fallbackUnits.findIndex(
+      (unit) => unit.id === id && unit.idCondominio === condominioId,
+    );
+    if (index >= 0) {
+      fallbackUnits[index] = updated;
+    }
+    return updated;
   }
 
   const { data, error } = await supabase

@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { getDemoState, isDemoMode } from "./demoMode";
 
 export const NOTIFICATION_ATTACHMENT_BUCKET = "notificacoes-anexos";
 export const MAX_NOTIFICATION_ATTACHMENTS = 5;
@@ -130,6 +131,26 @@ export async function uploadCondominioRegimento(
   condominioId: string,
   file: File,
 ): Promise<string> {
+  if (isDemoMode()) {
+    if (!file.name.toLocaleLowerCase().endsWith(".pdf")) {
+      throw new Error("Selecione um arquivo PDF.");
+    }
+
+    if (file.size > MAX_REGIMENTO_SIZE_BYTES) {
+      throw new Error("O PDF deve ter no máximo 20 MB.");
+    }
+
+    const signature = await file.slice(0, 5).text();
+    if (signature !== "%PDF-") {
+      throw new Error("O arquivo selecionado não parece ser um PDF válido.");
+    }
+
+    const path = `demo-regimento/${condominioId}/${crypto.randomUUID()}.pdf`;
+    const objectUrl = URL.createObjectURL(file);
+    getDemoState().regimentoUrls[path] = objectUrl;
+    return path;
+  }
+
   if (!supabase) {
     throw new Error("O Supabase não está configurado.");
   }
@@ -162,6 +183,10 @@ export async function uploadCondominioRegimento(
 export async function createCondominioRegimentoSignedUrl(
   path: string,
 ): Promise<string> {
+  if (isDemoMode()) {
+    return getDemoState().regimentoUrls[path] ?? "about:blank";
+  }
+
   if (!supabase) {
     throw new Error("O Supabase não está configurado.");
   }
@@ -175,6 +200,11 @@ export async function createCondominioRegimentoSignedUrl(
 }
 
 export async function deleteCondominioRegimento(path: string): Promise<void> {
+  if (isDemoMode()) {
+    delete getDemoState().regimentoUrls[path];
+    return;
+  }
+
   if (!supabase) return;
 
   const { error } = await supabase.storage
@@ -278,6 +308,21 @@ export async function uploadCondominioLogo(
   condominioId: string,
   file: File,
 ): Promise<{ publicUrl: string; path: string }> {
+  if (isDemoMode()) {
+    if (!file.type.startsWith("image/")) {
+      throw new Error("Selecione um arquivo de imagem.");
+    }
+
+    if (file.size > MAX_LOGO_SIZE_BYTES) {
+      throw new Error("A imagem deve ter no máximo 5 MB.");
+    }
+
+    return {
+      publicUrl: URL.createObjectURL(file),
+      path: `demo/condominios/${condominioId}/logo-${Date.now()}.png`,
+    };
+  }
+
   if (!supabase) {
     throw new Error("O Supabase não está configurado.");
   }
@@ -311,7 +356,7 @@ export async function uploadCondominioLogo(
 export async function deleteCondominioLogoFromStorage(
   publicUrl: string | null,
 ): Promise<void> {
-  if (!supabase || !publicUrl) return;
+  if (isDemoMode() || !supabase || !publicUrl) return;
 
   const publicPath = `/storage/v1/object/public/${CONDOMINIO_LOGO_BUCKET}/`;
   const pathStart = publicUrl.indexOf(publicPath);

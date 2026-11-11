@@ -1,5 +1,6 @@
 import type { UserAccess } from "../types/domain";
 import { supabase } from "./supabase";
+import { getDemoState, isDemoMode } from "./demoMode";
 
 let fallbackUsersAccess: UserAccess[] = [
   {
@@ -43,7 +44,7 @@ function parseUserAccess(row: Record<string, unknown>): UserAccess {
 }
 
 export async function checkIsAdmin(): Promise<boolean> {
-  if (!supabase) {
+  if (isDemoMode() || !supabase) {
     return true;
   }
 
@@ -58,6 +59,13 @@ export async function checkIsAdmin(): Promise<boolean> {
 }
 
 export async function listUsersAccess(): Promise<UserAccess[]> {
+  if (isDemoMode()) {
+    return getDemoState().usersAccess.map((user) => ({
+      ...user,
+      condominioIds: [...user.condominioIds],
+    }));
+  }
+
   if (!supabase) {
     return fallbackUsersAccess.map((user) => ({
       ...user,
@@ -87,6 +95,20 @@ export async function updateUserAccess(input: {
   isAdmin: boolean;
   condominioIds: string[];
 }): Promise<void> {
+  if (isDemoMode()) {
+    getDemoState().usersAccess = getDemoState().usersAccess.map((user) =>
+      user.userId === input.userId
+        ? {
+            ...user,
+            nome: input.nome?.trim() || null,
+            isAdmin: input.isAdmin,
+            condominioIds: [...input.condominioIds],
+          }
+        : user,
+    );
+    return;
+  }
+
   if (!supabase) {
     fallbackUsersAccess = fallbackUsersAccess.map((user) =>
       user.userId === input.userId

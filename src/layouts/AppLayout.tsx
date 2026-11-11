@@ -1,11 +1,20 @@
-import { Building2, KeyRound, Loader2, LogOut, Users } from "lucide-react";
+import {
+  Building2,
+  KeyRound,
+  Loader2,
+  LogIn,
+  LogOut,
+  RotateCcw,
+  Sparkles,
+  Users,
+} from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import type { PropsWithChildren } from "react";
-import { useMatch } from "react-router-dom";
 import { NotificationUnitSidebarCard } from "../components/ui/NotificationUnitSidebarCard";
 import { SidebarNav } from "../components/ui/SidebarNav";
 import { useCondominio } from "../contexts/useCondominio";
 import { useAuth } from "../contexts/useAuth";
+import { resetDemoState } from "../services/demoMode";
 
 const CONDOMINIO_SWITCH_FEEDBACK_MS = 600;
 
@@ -14,6 +23,7 @@ interface AppLayoutProps extends PropsWithChildren {
   onNavigate: (to: string) => void;
   supabaseConfigError: string | null;
   draftNotificationSelection?: { unitId: string; typeId: string };
+  isDemo?: boolean;
 }
 
 export function AppLayout({
@@ -21,6 +31,7 @@ export function AppLayout({
   onNavigate,
   supabaseConfigError,
   draftNotificationSelection,
+  isDemo = false,
   children,
 }: AppLayoutProps) {
   const {
@@ -31,6 +42,7 @@ export function AppLayout({
     loadingCondominios,
     condominioError,
     setActiveCondominioId,
+    reloadCondominios,
   } = useCondominio();
   const { session, updatePassword, signOut } = useAuth();
   const [isSwitchingCondominio, setIsSwitchingCondominio] = useState(false);
@@ -40,11 +52,11 @@ export function AppLayout({
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
-  const notificationDetailMatch = useMatch("/notificacoes/:notificationId");
+
+  const notificationMatch = currentPath.match(/^\/notificacoes\/([^/]+)$/);
   const activeNotificationId =
-    notificationDetailMatch?.params.notificationId &&
-    notificationDetailMatch.params.notificationId !== "nova"
-      ? notificationDetailMatch.params.notificationId
+    notificationMatch && notificationMatch[1] !== "nova"
+      ? notificationMatch[1]
       : null;
 
   function handleCondominioChange(id: string) {
@@ -130,6 +142,11 @@ export function AppLayout({
             />
           </button>
           <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+            {isDemo ? (
+              <span className="rounded-md border border-amber-400/40 bg-amber-400/10 px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-300">
+                Demo
+              </span>
+            ) : null}
             <label className="flex min-w-0 flex-1 items-center gap-2 text-xs font-medium text-slate-300 sm:flex-none">
               <select
                 value={activeCondominioId ?? ""}
@@ -220,6 +237,56 @@ export function AppLayout({
         </div>
       </header>
 
+      {isDemo ? (
+        <section
+          aria-label="Aviso de demonstração"
+          className="print:hidden border-b border-amber-300 bg-amber-50 px-4 py-2.5 text-amber-950 sm:px-6"
+        >
+          <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-amber-200 text-amber-900 font-bold">
+                <Sparkles aria-hidden="true" size={16} />
+              </span>
+              <div className="text-xs sm:text-sm">
+                <strong className="font-semibold text-amber-950">
+                  Ambiente de Demonstração
+                </strong>
+                <span className="hidden sm:inline"> — </span>
+                <span className="block text-amber-800 sm:inline">
+                  Os dados exibidos são exemplos interativos. Qualquer alteração feita aqui fica apenas na memória e não altera o banco de dados.
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  resetDemoState();
+                  void reloadCondominios();
+                  onNavigate("/");
+                }}
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 shadow-xs transition hover:bg-amber-100"
+              >
+                <RotateCcw aria-hidden="true" size={13} />
+                Restaurar exemplos
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    window.location.href = "/";
+                  }
+                }}
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition hover:bg-slate-700"
+              >
+                <LogIn aria-hidden="true" size={13} />
+                Acessar conta real
+              </button>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       <div className="mx-auto grid w-full max-w-7xl flex-1 grid-cols-1 gap-6 px-4 py-6 print:mx-0 print:block print:max-w-none print:px-0 print:py-0 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-6">
         <div className="print:hidden space-y-4 lg:sticky lg:top-6 lg:self-start">
           <SidebarNav currentPath={currentPath} onNavigate={onNavigate} />
@@ -248,7 +315,7 @@ export function AppLayout({
               {condominioError}
             </section>
           ) : null}
-          {supabaseConfigError ? (
+          {supabaseConfigError && !isDemo ? (
             <section className="animate-slide-down rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
               {supabaseConfigError}. O sistema segue com dados de demonstração
               enquanto o ambiente não é configurado.

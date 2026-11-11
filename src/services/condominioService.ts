@@ -4,6 +4,7 @@ import type {
   CondominioUpdate,
 } from "../types/domain";
 import { supabase } from "./supabase";
+import { getDemoState, isDemoMode } from "./demoMode";
 
 function parseCondominio(row: Record<string, unknown>): Condominio {
   return {
@@ -67,6 +68,10 @@ let fallbackCondominios: Condominio[] = [
 ];
 
 export async function getCondominios(): Promise<Condominio[]> {
+  if (isDemoMode()) {
+    return getDemoState().condominios.slice();
+  }
+
   if (!supabase) {
     return fallbackCondominios.slice();
   }
@@ -83,6 +88,13 @@ export async function getCondominios(): Promise<Condominio[]> {
 export async function getCondominioById(
   id: string,
 ): Promise<Condominio | null> {
+  if (isDemoMode()) {
+    return (
+      getDemoState().condominios.find((condominio) => condominio.id === id) ??
+      null
+    );
+  }
+
   if (!supabase) {
     return (
       fallbackCondominios.find((condominio) => condominio.id === id) ?? null
@@ -102,6 +114,27 @@ export async function getCondominioById(
 export async function createCondominio(
   condominioData: CondominioInsert,
 ): Promise<Condominio> {
+  if (isDemoMode()) {
+    const list = getDemoState().condominios;
+    const nextId = String(
+      Math.max(0, ...list.map((condominio) => Number(condominio.id) || 0)) + 1,
+    );
+    const created: Condominio = {
+      id: nextId,
+      createdAt: new Date().toISOString(),
+      name: condominioData.name,
+      location: condominioData.location,
+      logo_url: condominioData.logo_url ?? null,
+      valor_multa: condominioData.valor_multa ?? null,
+      regimento_pdf_path: null,
+      regimento_pdf_filename: null,
+      regimento_pdf_uploaded_at: null,
+      regimento_pdf_size_bytes: null,
+    };
+    getDemoState().condominios = [created, ...list];
+    return created;
+  }
+
   if (!supabase) {
     const nextId = String(
       Math.max(
@@ -134,6 +167,20 @@ export async function updateCondominio(
   id: string,
   condominioData: CondominioUpdate,
 ): Promise<Condominio> {
+  if (isDemoMode()) {
+    const list = getDemoState().condominios;
+    const index = list.findIndex((condominio) => condominio.id === id);
+    if (index < 0) throw new Error("Condomínio não encontrado.");
+    const updated: Condominio = {
+      ...list[index],
+      ...condominioData,
+    };
+    getDemoState().condominios = list.map((condominio, rowIndex) =>
+      rowIndex === index ? updated : condominio,
+    );
+    return updated;
+  }
+
   if (!supabase) {
     const index = fallbackCondominios.findIndex(
       (condominio) => condominio.id === id,
@@ -157,6 +204,13 @@ export async function updateCondominio(
 }
 
 export async function deleteCondominio(id: string): Promise<void> {
+  if (isDemoMode()) {
+    getDemoState().condominios = getDemoState().condominios.filter(
+      (condominio) => condominio.id !== id,
+    );
+    return;
+  }
+
   if (!supabase) {
     fallbackCondominios = fallbackCondominios.filter(
       (condominio) => condominio.id !== id,
@@ -172,7 +226,7 @@ export async function updateCondominioLogo(
   id: string,
   logoUrl: string,
 ): Promise<void> {
-  if (!supabase) {
+  if (!supabase || isDemoMode()) {
     await updateCondominio(id, { logo_url: logoUrl });
     return;
   }
@@ -185,7 +239,7 @@ export async function updateCondominioLogo(
 }
 
 export async function removeCondominioLogo(id: string): Promise<void> {
-  if (!supabase) {
+  if (!supabase || isDemoMode()) {
     await updateCondominio(id, { logo_url: null });
     return;
   }

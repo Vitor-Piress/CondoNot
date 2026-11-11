@@ -5,6 +5,7 @@ import {
   useLocation,
   useNavigate,
   useParams,
+  type NavigateOptions,
 } from "react-router-dom";
 import "./App.css";
 import { AppLayout } from "./layouts/AppLayout";
@@ -29,6 +30,7 @@ import { CienciaPage } from "./pages/CienciaPage";
 import { CondominiosPage } from "./pages/CondominiosPage";
 import { AcessosPage } from "./pages/AcessosPage";
 import { RegimentoInternoPage } from "./pages/RegimentoInternoPage";
+import { stripDemoPrefix, toDemoPath } from "./services/demoMode";
 
 interface RoutedPageProps {
   onNavigate: (to: string) => void;
@@ -73,7 +75,7 @@ function EditUnitRoute({ onNavigate }: RoutedPageProps) {
   );
 }
 
-function AdminApp() {
+function AdminApp({ isDemo = false }: { isDemo?: boolean }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [draftNotificationSelection, setDraftNotificationSelection] = useState<{
@@ -81,71 +83,80 @@ function AdminApp() {
     typeId: string;
   }>({ unitId: "", typeId: "" });
 
+  const normalizedPath = isDemo
+    ? stripDemoPrefix(location.pathname)
+    : location.pathname;
+
+  function handleNavigate(to: string, options?: NavigateOptions) {
+    navigate(isDemo ? toDemoPath(to) : to, options);
+  }
+
   return (
     <CondominioProvider>
       <AppLayout
-        currentPath={location.pathname}
-        onNavigate={navigate}
-        supabaseConfigError={supabaseConfigError}
+        currentPath={normalizedPath}
+        onNavigate={handleNavigate}
+        supabaseConfigError={isDemo ? null : supabaseConfigError}
         draftNotificationSelection={draftNotificationSelection}
+        isDemo={isDemo}
       >
         <Routes>
-          <Route path="/" element={<HomePage onNavigate={navigate} />} />
+          <Route path="/" element={<HomePage onNavigate={handleNavigate} />} />
           <Route
             path="/condominios"
-            element={<CondominiosPage onNavigate={navigate} />}
+            element={<CondominiosPage onNavigate={handleNavigate} />}
           />
           <Route
             path="/acessos"
-            element={<AcessosPage onNavigate={navigate} />}
+            element={<AcessosPage onNavigate={handleNavigate} />}
           />
           <Route path="/regimento-interno" element={<RegimentoInternoPage />} />
           <Route
             path="/notificacoes"
-            element={<NotificationsPage onNavigate={navigate} />}
+            element={<NotificationsPage onNavigate={handleNavigate} />}
           />
           <Route
             path="/relatorios"
-            element={<NotificationsPage onNavigate={navigate} />}
+            element={<NotificationsPage onNavigate={handleNavigate} />}
           />
           <Route
             path="/notificacoes/nova"
             element={
               <CreateNotificationPage
-                onNavigate={navigate}
+                onNavigate={handleNavigate}
                 onSelectionChange={setDraftNotificationSelection}
               />
             }
           />
           <Route
             path="/notificacoes/:notificationId"
-            element={<NotificationDetailRoute onNavigate={navigate} />}
+            element={<NotificationDetailRoute onNavigate={handleNavigate} />}
           />
           <Route
             path="/tipos-notificacao"
-            element={<NotificationTypesPage onNavigate={navigate} />}
+            element={<NotificationTypesPage onNavigate={handleNavigate} />}
           />
           <Route
             path="/tipos-notificacao/novo"
-            element={<CreateNotificationTypePage onNavigate={navigate} />}
+            element={<CreateNotificationTypePage onNavigate={handleNavigate} />}
           />
           <Route
             path="/tipos-notificacao/:typeId"
-            element={<NotificationTypeDetailRoute onNavigate={navigate} />}
+            element={<NotificationTypeDetailRoute onNavigate={handleNavigate} />}
           />
           <Route
             path="/unidades"
-            element={<UnitsPage onNavigate={navigate} />}
+            element={<UnitsPage onNavigate={handleNavigate} />}
           />
           <Route
             path="/unidades/:unitId/editar"
-            element={<EditUnitRoute onNavigate={navigate} />}
+            element={<EditUnitRoute onNavigate={handleNavigate} />}
           />
           <Route
             path="/unidades/:unitId"
-            element={<UnitDetailRoute onNavigate={navigate} />}
+            element={<UnitDetailRoute onNavigate={handleNavigate} />}
           />
-          <Route path="*" element={<NotFoundPage onNavigate={navigate} />} />
+          <Route path="*" element={<NotFoundPage onNavigate={handleNavigate} />} />
         </Routes>
       </AppLayout>
     </CondominioProvider>
@@ -169,6 +180,7 @@ export default function App() {
     <AuthProvider>
       <Routes>
         <Route path="/ciencia/:token" element={<CienciaPage />} />
+        <Route path="/demo/*" element={<AdminApp isDemo />} />
         <Route path="*" element={<ProtectedApp />} />
       </Routes>
     </AuthProvider>
