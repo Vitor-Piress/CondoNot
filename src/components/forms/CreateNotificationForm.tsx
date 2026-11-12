@@ -154,6 +154,7 @@ export function CreateNotificationForm({
   const [previousMotivoDraft, setPreviousMotivoDraft] = useState<string | null>(
     null,
   );
+  const [lastRefinedText, setLastRefinedText] = useState<string | null>(null);
   const [refineFeedback, setRefineFeedback] = useState<{
     tone: "success" | "warning" | "error";
     message: string;
@@ -272,6 +273,9 @@ export function CreateNotificationForm({
     motivo: "",
   });
   const aiMaxChars = continuousBudget.maxMotivoChars;
+  const isAlreadyRefined = Boolean(
+    lastRefinedText && (motivoValue ?? "").trim() === lastRefinedText.trim(),
+  );
   const canEnableCustomSupportText =
     printBudget.maxSupportTextChars >= MIN_TEXTO_APOIO_LENGTH;
 
@@ -319,6 +323,15 @@ export function CreateNotificationForm({
       return;
     }
 
+    if (lastRefinedText && currentDraft === lastRefinedText.trim()) {
+      setRefineFeedback({
+        tone: "warning",
+        message:
+          "Este texto já foi refinado pela IA. Altere o motivo ou adicione mais detalhes caso deseje uma nova reformulação.",
+      });
+      return;
+    }
+
     if (aiMaxChars < MIN_MOTIVO_LENGTH) {
       setRefineFeedback({
         tone: "warning",
@@ -343,6 +356,7 @@ export function CreateNotificationForm({
 
       if (result.status === "success" && result.textoRefinado) {
         setPreviousMotivoDraft(motivoValue ?? "");
+        setLastRefinedText(result.textoRefinado);
         setValue("motivo", result.textoRefinado, {
           shouldValidate: true,
           shouldDirty: true,
@@ -381,6 +395,7 @@ export function CreateNotificationForm({
         shouldTouch: true,
       });
       setPreviousMotivoDraft(null);
+      setLastRefinedText(null);
       setRefineFeedback(null);
     }
   }
@@ -461,6 +476,7 @@ export function CreateNotificationForm({
       reset();
       setAttachmentFiles([]);
       setPreviousMotivoDraft(null);
+      setLastRefinedText(null);
       setRefineFeedback(null);
       onSuccess(created.id);
     } catch (error) {
@@ -562,6 +578,16 @@ export function CreateNotificationForm({
             Motivo
           </label>
           <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={`text-xs ${
+                (motivoValue ?? "").trim().length > printBudget.maxMotivoChars
+                  ? "font-semibold text-rose-600"
+                  : "text-slate-400"
+              }`}
+            >
+              {(motivoValue ?? "").length}/{printBudget.maxMotivoChars}{" "}
+              caracteres
+            </span>
             {previousMotivoDraft !== null && !isRefining ? (
               <button
                 type="button"
@@ -580,14 +606,17 @@ export function CreateNotificationForm({
                 isRefining ||
                 isSubmitting ||
                 (motivoValue ?? "").trim().length < MIN_MOTIVO_LENGTH ||
-                aiMaxChars < MIN_MOTIVO_LENGTH
+                aiMaxChars < MIN_MOTIVO_LENGTH ||
+                isAlreadyRefined
               }
               title={
-                (motivoValue ?? "").trim().length < MIN_MOTIVO_LENGTH
-                  ? `Digite ao menos ${MIN_MOTIVO_LENGTH} caracteres para refinar com IA`
-                  : aiMaxChars < MIN_MOTIVO_LENGTH
-                    ? "Espaço insuficiente na folha A4 para refinar"
-                    : "Refinar redação do motivo com IA baseando-se no regimento"
+                isAlreadyRefined
+                  ? "Este texto já foi refinado pela IA. Altere o motivo caso deseje refinar novamente"
+                  : (motivoValue ?? "").trim().length < MIN_MOTIVO_LENGTH
+                    ? `Digite ao menos ${MIN_MOTIVO_LENGTH} caracteres para refinar com IA`
+                    : aiMaxChars < MIN_MOTIVO_LENGTH
+                      ? "Espaço insuficiente na folha A4 para refinar"
+                      : "Refinar redação do motivo com IA baseando-se no regimento"
               }
               className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700 shadow-2xs transition hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50"
             >
@@ -607,16 +636,6 @@ export function CreateNotificationForm({
                 </>
               )}
             </button>
-            <span
-              className={`text-xs ${
-                (motivoValue ?? "").trim().length > printBudget.maxMotivoChars
-                  ? "font-semibold text-rose-600"
-                  : "text-slate-400"
-              }`}
-            >
-              {(motivoValue ?? "").length}/{printBudget.maxMotivoChars}{" "}
-              caracteres
-            </span>
           </div>
         </div>
         <textarea
