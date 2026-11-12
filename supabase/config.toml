@@ -433,3 +433,9 @@ entrypoint = "./functions/confirm-ciencia/index.ts"
 enabled = true
 verify_jwt = false
 entrypoint = "./functions/resend-webhook/index.ts"
+
+[functions.refine-motivo]
+enabled = true
+verify_jwt = true
+import_map = "./functions/refine-motivo/deno.json"
+entrypoint = "./functions/refine-motivo/index.ts"

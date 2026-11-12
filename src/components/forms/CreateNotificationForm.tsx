@@ -1,10 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2, RotateCcw, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { useCondominio } from "../../contexts/useCondominio";
 import { NotificationTypeCombobox } from "../ui/NotificationTypeCombobox";
 import { UnitCombobox } from "../ui/UnitCombobox";
+import { refineNotificationReason } from "../../services/aiRefineService";
 import {
   createNotification,
   NotificationAttachmentCreationError,
@@ -148,6 +150,14 @@ export function CreateNotificationForm({
   const [partialNotificationId, setPartialNotificationId] = useState<
     string | null
   >(null);
+  const [isRefining, setIsRefining] = useState(false);
+  const [previousMotivoDraft, setPreviousMotivoDraft] = useState<string | null>(
+    null,
+  );
+  const [refineFeedback, setRefineFeedback] = useState<{
+    tone: "success" | "warning" | "error";
+    message: string;
+  } | null>(null);
 
   const {
     register,
@@ -155,6 +165,7 @@ export function CreateNotificationForm({
     reset,
     setValue,
     setError,
+    clearErrors,
     control,
     formState: { errors, isSubmitting },
   } = useForm<CreateNotificationValues>({
@@ -238,9 +249,12 @@ export function CreateNotificationForm({
     control,
     name: "motivo",
   });
+  const dataRetroativaValue = useWatch({
+    control,
+    name: "dataRetroativa",
+  });
 
-  const selectedType =
-    types.find((type) => type.id === selectedTypeId) ?? null;
+  const selectedType = types.find((type) => type.id === selectedTypeId) ?? null;
   const typeHasSupportText = Boolean(selectedType?.textoApoio?.trim());
 
   const printBudget = calculateNotificationPrintBudget({
@@ -250,6 +264,14 @@ export function CreateNotificationForm({
     customTextoApoio: textoApoioValue,
     motivo: motivoValue,
   });
+  const continuousBudget = calculateNotificationPrintBudget({
+    textoRegimento: selectedType?.textoRegimento,
+    modelTextoApoio: selectedType?.textoApoio,
+    usarCustomTextoApoio: !typeHasSupportText && Boolean(usarTextoApoio),
+    customTextoApoio: textoApoioValue,
+    motivo: "",
+  });
+  const aiMaxChars = continuousBudget.maxMotivoChars;
   const canEnableCustomSupportText =
     printBudget.maxSupportTextChars >= MIN_TEXTO_APOIO_LENGTH;
 
@@ -285,6 +307,82 @@ export function CreateNotificationForm({
     setAttachmentFiles((files) =>
       files.filter((_, fileIndex) => fileIndex !== index),
     );
+  }
+
+  async function handleRefineMotivo() {
+    const currentDraft = (motivoValue ?? "").trim();
+    if (currentDraft.length < MIN_MOTIVO_LENGTH) {
+      setRefineFeedback({
+        tone: "warning",
+        message: `Digite ao menos ${MIN_MOTIVO_LENGTH} caracteres no motivo antes de solicitar o refinamento com IA.`,
+      });
+      return;
+    }
+
+    if (aiMaxChars < MIN_MOTIVO_LENGTH) {
+      setRefineFeedback({
+        tone: "warning",
+        message:
+          "O regimento do modelo e o texto de apoio selecionados já ocupam todo o espaço da página A4.",
+      });
+      return;
+    }
+
+    setIsRefining(true);
+    setRefineFeedback(null);
+
+    try {
+      const result = await refineNotificationReason({
+        motivoRascunho: currentDraft,
+        categoria: selectedCategory,
+        modeloTitulo: selectedType?.titulo ?? null,
+        textoRegimento: selectedType?.textoRegimento ?? null,
+        dataOcorrencia: dataRetroativaValue || null,
+        limiteCaracteres: aiMaxChars,
+      });
+
+      if (result.status === "success" && result.textoRefinado) {
+        setPreviousMotivoDraft(motivoValue ?? "");
+        setValue("motivo", result.textoRefinado, {
+          shouldValidate: true,
+          shouldDirty: true,
+          shouldTouch: true,
+        });
+        clearErrors("motivo");
+        setRefineFeedback({
+          tone: "success",
+          message: result.mensagemFeedback,
+        });
+      } else {
+        // Mantém o texto digitado intacto e exibe o feedback instrutivo
+        setRefineFeedback({
+          tone: "warning",
+          message: result.mensagemFeedback,
+        });
+      }
+    } catch (error) {
+      setRefineFeedback({
+        tone: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Erro ao refinar o motivo com IA. Seu rascunho original foi mantido.",
+      });
+    } finally {
+      setIsRefining(false);
+    }
+  }
+
+  function handleUndoRefine() {
+    if (previousMotivoDraft !== null) {
+      setValue("motivo", previousMotivoDraft, {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true,
+      });
+      setPreviousMotivoDraft(null);
+      setRefineFeedback(null);
+    }
   }
 
   const onSubmit = handleSubmit(async (values) => {
@@ -362,6 +460,8 @@ export function CreateNotificationForm({
 
       reset();
       setAttachmentFiles([]);
+      setPreviousMotivoDraft(null);
+      setRefineFeedback(null);
       onSuccess(created.id);
     } catch (error) {
       if (error instanceof NotificationAttachmentCreationError) {
@@ -453,29 +553,105 @@ export function CreateNotificationForm({
         </label>
       </div>
 
-      <label className="block space-y-1 text-sm">
-        <div className="flex items-center justify-between gap-2">
-          <span className="font-medium text-slate-700">Motivo</span>
-          <span
-            className={`text-xs ${
-              (motivoValue ?? "").trim().length > printBudget.maxMotivoChars
-                ? "font-semibold text-rose-600"
-                : "text-slate-400"
-            }`}
+      <div className="space-y-1.5 text-sm">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <label
+            htmlFor="motivo-textarea"
+            className="font-medium text-slate-700"
           >
-            {(motivoValue ?? "").length}/{printBudget.maxMotivoChars} caracteres
-          </span>
+            Motivo
+          </label>
+          <div className="flex flex-wrap items-center gap-2">
+            {previousMotivoDraft !== null && !isRefining ? (
+              <button
+                type="button"
+                onClick={handleUndoRefine}
+                className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-slate-300 bg-white px-2 py-1 font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-800"
+                title="Desfazer refinamento e restaurar texto original"
+              >
+                <RotateCcw size={12} aria-hidden="true" />
+                Desfazer
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => void handleRefineMotivo()}
+              disabled={
+                isRefining ||
+                isSubmitting ||
+                (motivoValue ?? "").trim().length < MIN_MOTIVO_LENGTH ||
+                aiMaxChars < MIN_MOTIVO_LENGTH
+              }
+              title={
+                (motivoValue ?? "").trim().length < MIN_MOTIVO_LENGTH
+                  ? `Digite ao menos ${MIN_MOTIVO_LENGTH} caracteres para refinar com IA`
+                  : aiMaxChars < MIN_MOTIVO_LENGTH
+                    ? "Espaço insuficiente na folha A4 para refinar"
+                    : "Refinar redação do motivo com IA baseando-se no regimento"
+              }
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700 shadow-2xs transition hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isRefining ? (
+                <>
+                  <Loader2
+                    size={13}
+                    className="animate-spin"
+                    aria-hidden="true"
+                  />
+                  Refinando...
+                </>
+              ) : (
+                <>
+                  <Sparkles size={13} aria-hidden="true" />
+                  Refinar com IA
+                </>
+              )}
+            </button>
+            <span
+              className={`text-xs ${
+                (motivoValue ?? "").trim().length > printBudget.maxMotivoChars
+                  ? "font-semibold text-rose-600"
+                  : "text-slate-400"
+              }`}
+            >
+              {(motivoValue ?? "").length}/{printBudget.maxMotivoChars}{" "}
+              caracteres
+            </span>
+          </div>
         </div>
         <textarea
+          id="motivo-textarea"
           {...register("motivo")}
           rows={4}
           maxLength={Math.max(
             (motivoValue ?? "").length,
             printBudget.maxMotivoChars,
           )}
-          className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none ring-slate-200 transition focus:ring"
+          disabled={isRefining}
+          className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none ring-slate-200 transition focus:ring disabled:bg-slate-50 disabled:text-slate-500"
           placeholder="Descreva o motivo da notificação"
         />
+        {refineFeedback ? (
+          <div
+            className={`flex items-start justify-between gap-2 rounded-xl border p-2.5 text-xs ${
+              refineFeedback.tone === "success"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                : refineFeedback.tone === "warning"
+                  ? "border-amber-200 bg-amber-50 text-amber-800"
+                  : "border-rose-200 bg-rose-50 text-rose-800"
+            }`}
+          >
+            <p className="flex-1 leading-relaxed">{refineFeedback.message}</p>
+            <button
+              type="button"
+              onClick={() => setRefineFeedback(null)}
+              className="cursor-pointer text-slate-400 hover:text-slate-600"
+              aria-label="Fechar mensagem de feedback da IA"
+            >
+              ✕
+            </button>
+          </div>
+        ) : null}
         <p className="text-xs text-slate-500">
           Limite dinâmico calculado conforme o espaço restante na folha A4 (teto
           de {MAX_MOTIVO_LENGTH} caracteres; quebras de linha também consomem
@@ -486,7 +662,7 @@ export function CreateNotificationForm({
             {errors.motivo.message}
           </p>
         ) : null}
-      </label>
+      </div>
 
       <div className="rounded-xl border border-slate-200 p-4">
         {!selectedType ? (
